@@ -1,0 +1,2 @@
+- [x] Update app/api/absensi/route.ts to use session.user.name for guruPembimbing filter
+- [x] Test the teacher absensi page to ensure data displays

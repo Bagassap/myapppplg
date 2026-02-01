@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
+process.env.TURBOPACK = '0';
+
 const nextConfig: NextConfig = {
-  /* config options here */
+  transpilePackages: ['pg'],
 };
 
 export default nextConfig;
