@@ -5,6 +5,7 @@ import TopBar from "@/components/layout/TopBar";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import {
+  Filter,
   CheckSquare,
   Clock,
   X,
@@ -13,6 +14,8 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
+  QrCode,
+  UserCheck,
   Camera,
   MapPin,
   Clock as ClockIcon,
@@ -47,11 +50,6 @@ export default function SiswaAbsensi() {
     tandaTangan: null as File | null,
   });
 
-  /* ... (Keep existing Logic fetchPresensiHariIni, useEffect, etc. UNCHANGED) ... */
-  // Untuk menghemat ruang, saya asumsikan logika fetch & handler tidak berubah.
-  // Copy dari kode lama Anda untuk bagian Logic JavaScript-nya.
-
-  // Placeholder untuk logic yang sama:
   const getLocalDateString = (date: Date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -60,7 +58,6 @@ export default function SiswaAbsensi() {
   };
 
   const fetchPresensiHariIni = async () => {
-    // ... Logic same as original ...
     try {
       const params = new URLSearchParams();
       const now = new Date();
@@ -100,7 +97,6 @@ export default function SiswaAbsensi() {
   };
 
   useEffect(() => {
-    // ... Logic same as original ...
     if (status === "loading") return;
     if (!session) {
       setError("Unauthorized: Silakan login terlebih dahulu.");
@@ -148,7 +144,6 @@ export default function SiswaAbsensi() {
   const currentData = presensiData.slice(startIndex, endIndex);
 
   const getCurrentLocation = () => {
-    // ... Logic same as original ...
     if (navigator.geolocation) {
       setAbsenForm((prev) => ({
         ...prev,
@@ -175,7 +170,6 @@ export default function SiswaAbsensi() {
   };
 
   const handleAbsenSubmit = async () => {
-    // ... Logic same as original ...
     let isValid = true;
     if (
       absenForm.status === "Hadir" &&
@@ -272,19 +266,61 @@ export default function SiswaAbsensi() {
 
   const getKeterangan = (status: string, catatan: string) => {
     if (catatan) return catatan;
-    return "-";
+    switch (status) {
+      case "Hadir":
+        return "Siswa absen hadir";
+      case "Pulang":
+        return "Siswa absen pulang";
+      case "Izin":
+        return "Siswa absen izin";
+      case "Libur":
+        return "Siswa absen libur";
+      case "Sakit":
+        return "Siswa absen sakit";
+      case "Terlambat":
+        return "Siswa absen terlambat";
+      default:
+        return "-";
+    }
   };
 
-  if (loading) return <div>Loading...</div>; // Simplifikasi
-  if (error) return <div>Error: {error}</div>; // Simplifikasi
+  if (loading) {
+    return (
+      <div className="flex h-screen bg-gray-50">
+        <Sidebar />
+        <div className="flex-1 flex flex-col min-w-0">
+          <TopBar />
+          <main className="flex-1 flex items-center justify-center p-6 sm:p-8 lg:p-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-screen bg-gray-50">
+        <Sidebar />
+        <div className="flex-1 flex flex-col min-w-0">
+          <TopBar />
+          <main className="flex-1 flex items-center justify-center p-6 sm:p-8 lg:p-12">
+            <div className="text-center text-red-600 font-semibold">
+              {error}
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
-        {/* Main Wrapper */}
-        <main className="flex-1 p-4 sm:p-8 lg:p-12 overflow-y-auto w-full">
+        {/* Main Wrapper with increased padding (p-6 sm:p-8 lg:p-12) */}
+        <main className="flex-1 p-6 sm:p-8 lg:p-12 overflow-y-auto w-full">
           {/* Header Section */}
           <div className="mb-8">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 flex flex-wrap items-center gap-3">
@@ -299,6 +335,7 @@ export default function SiswaAbsensi() {
           {/* Action Section */}
           <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              {/* Indikator Tanggal */}
               <div className="flex items-center gap-3 w-full md:w-auto">
                 <div className="p-3 bg-indigo-100 rounded-full shrink-0">
                   <Calendar className="w-6 h-6 text-indigo-600" />
@@ -328,7 +365,7 @@ export default function SiswaAbsensi() {
             </div>
           </div>
 
-          {/* Tabel Riwayat Presensi Responsive */}
+          {/* Tabel Riwayat Presensi (Hari Ini) */}
           <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg mb-8 border border-gray-100">
             <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
               <CheckSquare className="w-6 h-6 text-green-600" />
@@ -336,28 +373,31 @@ export default function SiswaAbsensi() {
             </h3>
 
             <div className="w-full overflow-x-auto">
-              <table className="w-full table-auto border-collapse min-w-full">
+              <table className="w-full table-auto border-collapse min-w-[700px]">
                 <thead>
                   <tr className="bg-gradient-to-r from-indigo-100 to-blue-100">
-                    <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 rounded-tl-xl text-xs sm:text-base whitespace-nowrap">
+                    <th className="px-6 py-4 text-left font-semibold text-gray-700 rounded-tl-xl whitespace-nowrap">
                       Tanggal
                     </th>
-                    <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base whitespace-nowrap">
+                    <th className="px-6 py-4 text-left font-semibold text-gray-700 whitespace-nowrap">
                       Status
                     </th>
-                    <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base whitespace-nowrap">
+                    <th className="px-6 py-4 text-left font-semibold text-gray-700 whitespace-nowrap">
                       Waktu
                     </th>
-                    <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base whitespace-nowrap hidden sm:table-cell">
+                    <th className="px-6 py-4 text-left font-semibold text-gray-700 whitespace-nowrap">
                       Kegiatan
                     </th>
-                    <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base whitespace-nowrap hidden md:table-cell">
+                    <th className="px-6 py-4 text-left font-semibold text-gray-700 whitespace-nowrap">
                       Lokasi
                     </th>
-                    <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base whitespace-nowrap">
+                    <th className="px-6 py-4 text-left font-semibold text-gray-700 whitespace-nowrap">
                       Foto
                     </th>
-                    <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 rounded-tr-xl text-xs sm:text-base whitespace-nowrap hidden sm:table-cell">
+                    <th className="px-6 py-4 text-left font-semibold text-gray-700 whitespace-nowrap">
+                      TTD
+                    </th>
+                    <th className="px-6 py-4 text-left font-semibold text-gray-700 rounded-tr-xl whitespace-nowrap">
                       Keterangan
                     </th>
                   </tr>
@@ -366,7 +406,7 @@ export default function SiswaAbsensi() {
                   {currentData.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={7}
+                        colSpan={8}
                         className="px-6 py-8 text-center text-gray-500"
                       >
                         Belum ada data absensi untuk hari ini.
@@ -378,36 +418,81 @@ export default function SiswaAbsensi() {
                         key={item.id}
                         className="border-b border-gray-100 hover:bg-indigo-50 transition-colors duration-200"
                       >
-                        <td className="px-2 py-3 sm:px-6 sm:py-4 font-medium text-gray-900 text-xs sm:text-base whitespace-nowrap">
+                        <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
                           {item.tanggal}
                         </td>
-                        <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base flex items-center gap-1 sm:gap-2 whitespace-nowrap">
+                        <td className="px-6 py-4 text-gray-700 flex items-center gap-2 whitespace-nowrap">
                           {item.status === "Hadir" && (
-                            <CheckSquare className="w-3 h-3 sm:w-4 sm:h-4 text-green-600" />
+                            <CheckSquare className="w-4 h-4 text-green-600" />
+                          )}
+                          {item.status === "Pulang" && (
+                            <Clock className="w-4 h-4 text-blue-500" />
+                          )}
+                          {item.status === "Terlambat" && (
+                            <Clock className="w-4 h-4 text-yellow-500" />
+                          )}
+                          {(item.status === "Izin" ||
+                            item.status === "Sakit") && (
+                            <AlertCircle className="w-4 h-4 text-red-500" />
+                          )}
+                          {item.status === "Libur" && (
+                            <Calendar className="w-4 h-4 text-purple-500" />
                           )}
                           {item.status}
                         </td>
-                        <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base whitespace-nowrap">
+                        <td className="px-6 py-4 text-gray-700 whitespace-nowrap">
                           {item.waktu}
                         </td>
-                        <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base hidden sm:table-cell">
+                        <td className="px-6 py-4 text-gray-700 min-w-[150px]">
                           {item.kegiatan || "-"}
                         </td>
-                        <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base whitespace-nowrap hidden md:table-cell">
-                          {item.lokasi ? "Ada Lokasi" : "-"}
+                        <td className="px-6 py-4 text-gray-700 whitespace-nowrap">
+                          {item.lokasi ? (
+                            <a
+                              href={`http://googleusercontent.com/maps.google.com/?q=${item.lokasi}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-blue-600 underline flex items-center gap-1 text-sm"
+                            >
+                              <MapPin className="w-3 h-3" /> Map
+                            </a>
+                          ) : (
+                            "-"
+                          )}
                         </td>
-                        <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base">
-                          {item.foto ? (
+                        <td className="px-6 py-4 text-gray-700">
+                          {item.status === "Izin" || item.status === "Sakit" ? (
+                            item.bukti ? (
+                              <img
+                                src={item.bukti}
+                                alt="Bukti"
+                                className="w-10 h-10 object-cover rounded-md border shadow-sm"
+                              />
+                            ) : (
+                              "-"
+                            )
+                          ) : item.foto ? (
                             <img
                               src={item.foto}
                               alt="Foto"
-                              className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded-md border shadow-sm"
+                              className="w-10 h-10 object-cover rounded-md border shadow-sm"
                             />
                           ) : (
                             "-"
                           )}
                         </td>
-                        <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base hidden sm:table-cell">
+                        <td className="px-6 py-4 text-gray-700">
+                          {item.tandaTangan ? (
+                            <img
+                              src={item.tandaTangan}
+                              alt="TTD"
+                              className="w-16 h-8 object-contain bg-white rounded-sm border"
+                            />
+                          ) : (
+                            "-"
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-gray-700 text-sm min-w-[150px]">
                           {getKeterangan(item.status, item.catatan)}
                         </td>
                       </tr>
@@ -416,11 +501,10 @@ export default function SiswaAbsensi() {
                 </tbody>
               </table>
             </div>
-
             {/* Pagination Controls */}
             {presensiData.length > itemsPerPage && (
               <div className="flex flex-col sm:flex-row justify-between items-center mt-4 gap-4 sm:gap-0">
-                <p className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
+                <p className="text-sm text-gray-600 text-center sm:text-left">
                   Menampilkan {startIndex + 1}-
                   {Math.min(endIndex, presensiData.length)} dari{" "}
                   {presensiData.length}
@@ -429,14 +513,14 @@ export default function SiswaAbsensi() {
                   <button
                     onClick={handlePrevious}
                     disabled={currentPage === 1}
-                    className="px-3 py-1 bg-indigo-500 text-white rounded disabled:bg-gray-300 text-xs sm:text-sm"
+                    className="px-3 py-1 bg-indigo-500 text-white rounded disabled:bg-gray-300"
                   >
                     Prev
                   </button>
                   <button
                     onClick={handleNext}
                     disabled={currentPage === totalPages}
-                    className="px-3 py-1 bg-indigo-500 text-white rounded disabled:bg-gray-300 text-xs sm:text-sm"
+                    className="px-3 py-1 bg-indigo-500 text-white rounded disabled:bg-gray-300"
                   >
                     Next
                   </button>
@@ -445,7 +529,7 @@ export default function SiswaAbsensi() {
             )}
           </div>
 
-          {/* Modal Absen Harian (Logic & UI Tetap, hanya styling responsif sedikit) */}
+          {/* Modal Absen Harian */}
           {showAbsenModal && (
             <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
               <div
@@ -458,8 +542,6 @@ export default function SiswaAbsensi() {
                 role="dialog"
                 aria-modal="true"
               >
-                {/* ... Form Content Same as before, just ensure padding is responsive ... */}
-                {/* Shortened for brevity as logic is identical, focus is on responsiveness */}
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-3">
                     <CheckSquare className="w-8 h-8 text-green-600" />
@@ -480,11 +562,10 @@ export default function SiswaAbsensi() {
                   }}
                   className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 text-gray-800"
                 >
-                  {/* ... (Isi form sama persis dengan kode asli, style input sudah w-full) ... */}
                   {/* Readonly Fields */}
                   {["nama", "nis", "kelas", "tempatPKL"].map((field, idx) => (
                     <div className="flex flex-col" key={field}>
-                      <label className="mb-1 font-medium text-gray-700 capitalize text-sm sm:text-base">
+                      <label className="mb-1 font-medium text-gray-700 capitalize">
                         {field === "tempatPKL"
                           ? "Tempat PKL"
                           : field.charAt(0).toUpperCase() + field.slice(1)}
@@ -493,14 +574,14 @@ export default function SiswaAbsensi() {
                         type="text"
                         value={(siswaData as any)[field]}
                         readOnly
-                        className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full text-sm sm:text-base"
+                        className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
                       />
                     </div>
                   ))}
 
                   {/* Status */}
                   <div className="flex flex-col md:col-span-2">
-                    <label className="mb-1 font-medium text-gray-700 text-sm sm:text-base">
+                    <label className="mb-1 font-medium text-gray-700">
                       Status Kehadiran
                     </label>
                     <select
@@ -508,7 +589,7 @@ export default function SiswaAbsensi() {
                       onChange={(e) =>
                         setAbsenForm({ ...absenForm, status: e.target.value })
                       }
-                      className="px-4 py-3 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full text-sm sm:text-base"
+                      className="px-4 py-3 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
                     >
                       <option value="Hadir">Hadir</option>
                       <option value="Pulang">Pulang</option>
@@ -517,11 +598,11 @@ export default function SiswaAbsensi() {
                     </select>
                   </div>
 
-                  {/* Dynamic Inputs (Hadir/Pulang/Izin/Libur) - Logic same as original */}
+                  {/* Input Dinamis based on status */}
                   {absenForm.status === "Hadir" && (
                     <>
                       <div className="flex flex-col">
-                        <label className="mb-1 font-medium flex items-center gap-2 text-sm sm:text-base">
+                        <label className="mb-1 font-medium flex items-center gap-2">
                           <Camera className="w-4 h-4" /> Foto Selfie/Lokasi
                         </label>
                         <input
@@ -534,13 +615,13 @@ export default function SiswaAbsensi() {
                               foto: e.target.files?.[0] || null,
                             })
                           }
-                          className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full text-sm sm:text-base"
+                          className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
                           required
                         />
                       </div>
 
                       <div className="flex flex-col">
-                        <label className="mb-1 font-medium flex items-center gap-2 text-sm sm:text-base">
+                        <label className="mb-1 font-medium flex items-center gap-2">
                           <MapPin className="w-4 h-4" /> Koordinat GPS
                         </label>
                         <div className="flex gap-2">
@@ -548,7 +629,7 @@ export default function SiswaAbsensi() {
                             type="text"
                             value={absenForm.lokasi}
                             readOnly
-                            className="flex-1 px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-0 text-sm sm:text-base"
+                            className="flex-1 px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-0"
                             required
                           />
                           <button
@@ -561,24 +642,141 @@ export default function SiswaAbsensi() {
                         </div>
                       </div>
 
-                      {/* Jam */}
                       <div className="flex flex-col">
-                        <label className="mb-1 font-medium flex items-center gap-2 text-sm sm:text-base">
+                        <label className="mb-1 font-medium flex items-center gap-2">
                           <ClockIcon className="w-4 h-4" /> Jam
                         </label>
                         <input
                           type="text"
                           value={absenForm.waktuLokasi}
                           readOnly
-                          className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full text-sm sm:text-base"
+                          className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
                         />
                       </div>
                     </>
                   )}
 
-                  {/* ... (Rest of logic Pulang/Izin etc omitted for brevity, logic remains identical) ... */}
-                  {/* Just ensure Buttons are responsive */}
+                  {absenForm.status === "Pulang" && (
+                    <>
+                      <div className="flex flex-col md:col-span-2">
+                        <label className="mb-1 font-medium">
+                          Laporan Kegiatan
+                        </label>
+                        <textarea
+                          value={absenForm.kegiatan}
+                          onChange={(e) =>
+                            setAbsenForm({
+                              ...absenForm,
+                              kegiatan: e.target.value,
+                            })
+                          }
+                          className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
+                          rows={3}
+                          required
+                        />
+                      </div>
 
+                      <div className="flex flex-col">
+                        <label className="mb-1 font-medium flex items-center gap-2">
+                          <Camera className="w-4 h-4" /> Foto Kegiatan
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) =>
+                            setAbsenForm({
+                              ...absenForm,
+                              foto: e.target.files?.[0] || null,
+                            })
+                          }
+                          className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
+                          required
+                        />
+                      </div>
+
+                      <div className="flex flex-col">
+                        <label className="mb-1 font-medium flex items-center gap-2">
+                          <MapPin className="w-4 h-4" /> GPS Pulang
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={absenForm.lokasi}
+                            readOnly
+                            className="flex-1 px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-0"
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={getCurrentLocation}
+                            className="px-3 bg-indigo-600 text-white rounded-lg shrink-0"
+                          >
+                            <MapPin className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {(absenForm.status === "Izin" ||
+                    absenForm.status === "Libur") && (
+                    <div className="flex flex-col md:col-span-2">
+                      <label className="mb-1 font-medium">
+                        Alasan/Keterangan
+                      </label>
+                      <textarea
+                        value={absenForm.catatan}
+                        onChange={(e) =>
+                          setAbsenForm({
+                            ...absenForm,
+                            catatan: e.target.value,
+                          })
+                        }
+                        className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
+                        rows={3}
+                        required
+                      />
+                      {absenForm.status === "Izin" && (
+                        <div className="mt-3">
+                          <label className="mb-1 font-medium block">
+                            Bukti Surat
+                          </label>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) =>
+                              setAbsenForm({
+                                ...absenForm,
+                                bukti: e.target.files?.[0] || null,
+                              })
+                            }
+                            className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
+                            required
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Tanda Tangan */}
+                  <div className="flex flex-col md:col-span-2">
+                    <label className="mb-1 font-medium flex items-center gap-2">
+                      <Edit className="w-4 h-4" /> Tanda Tangan (Foto/Scan)
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) =>
+                        setAbsenForm({
+                          ...absenForm,
+                          tandaTangan: e.target.files?.[0] || null,
+                        })
+                      }
+                      className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
+                    />
+                  </div>
+
+                  {/* Buttons */}
                   <div className="md:col-span-2 flex flex-col-reverse sm:flex-row justify-end gap-4 mt-4">
                     <button
                       type="button"
