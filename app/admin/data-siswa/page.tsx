@@ -46,7 +46,6 @@ export default function AdminDataSiswa() {
   });
 
   const itemsPerPage = 10;
-
   const [siswaData, setSiswaData] = useState<Record<string, SiswaType[]>>({});
 
   useEffect(() => {
@@ -117,7 +116,7 @@ export default function AdminDataSiswa() {
       username: selectedSiswa.userId,
       email: "",
       password: "",
-      namaLengkap: selectedSiswa.name, // Ambil dari name, bukan userId
+      namaLengkap: selectedSiswa.name,
       kelas: selectedSiswa.kelas,
       tempatPKL: selectedSiswa.tempatPKL || "",
     });
@@ -168,7 +167,7 @@ export default function AdminDataSiswa() {
       }
       alert("Siswa berhasil ditambahkan");
       closeAddModal();
-      setSelectedClass("Semua Kelas"); // Trigger reload
+      setSelectedClass("Semua Kelas");
     } catch (error) {
       alert((error as Error).message);
     }
@@ -198,20 +197,18 @@ export default function AdminDataSiswa() {
       alert("Siswa berhasil diupdate");
       closeEditModal();
       closeDetailModal();
-      setSelectedClass("Semua Kelas"); // Trigger reload data
+      setSelectedClass("Semua Kelas");
     } catch (error) {
       alert((error as Error).message);
     }
   };
 
-  // LOGIC FIX: Enforce max 10 items logic
   const displayedSiswa = (kelas: string) => {
     const all = siswaData[kelas] || [];
     if (selectedClass === kelas) {
       const start = (currentPage - 1) * itemsPerPage;
       return all.slice(start, start + itemsPerPage);
     }
-    // Strict limit 10 rows per table when showing all classes
     return all.slice(0, 10);
   };
 
@@ -288,24 +285,24 @@ export default function AdminDataSiswa() {
                 {kelas}
               </h3>
 
-              {/* TABLE WRAPPER MODIFIED: Responsive font & padding */}
-              <div className="w-full overflow-x-auto">
-                <table className="w-full table-auto border-collapse min-w-[800px]">
+              {/* === START PERBAIKAN TABLE === */}
+              <div className="w-full overflow-x-auto rounded-xl border border-gray-100">
+                <table className="w-full table-auto border-collapse min-w-[800px] whitespace-nowrap">
                   <thead>
                     <tr className="bg-linear-to-r from-indigo-100 to-blue-100">
-                      <th className="px-4 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 rounded-tl-xl whitespace-nowrap text-xs sm:text-sm md:text-base">
+                      <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base">
                         Nomor
                       </th>
-                      <th className="px-4 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 whitespace-nowrap text-xs sm:text-sm md:text-base">
+                      <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base">
                         Nama Siswa
                       </th>
-                      <th className="px-4 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 whitespace-nowrap text-xs sm:text-sm md:text-base">
+                      <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base">
                         NIS
                       </th>
-                      <th className="px-4 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 whitespace-nowrap text-xs sm:text-sm md:text-base">
+                      <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base">
                         Kelas
                       </th>
-                      <th className="px-4 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 rounded-tr-xl whitespace-nowrap text-xs sm:text-sm md:text-base">
+                      <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-left font-semibold text-gray-700 text-xs sm:text-sm lg:text-base">
                         Tempat PKL
                       </th>
                     </tr>
@@ -317,21 +314,21 @@ export default function AdminDataSiswa() {
                         className="border-b border-gray-100 cursor-pointer hover:bg-indigo-50 transition"
                         onClick={() => openDetailModal(siswa)}
                       >
-                        <td className="px-4 py-3 sm:px-6 sm:py-4 font-medium text-gray-900 text-xs sm:text-sm md:text-base">
+                        <td className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 font-medium text-gray-900 text-xs sm:text-sm lg:text-base">
                           {selectedClass === kelas
                             ? (currentPage - 1) * itemsPerPage + idx + 1
                             : idx + 1}
                         </td>
-                        <td className="px-4 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-sm md:text-base">
+                        <td className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-gray-700 text-xs sm:text-sm lg:text-base">
                           {siswa.name}
                         </td>
-                        <td className="px-4 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-sm md:text-base">
+                        <td className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-gray-700 text-xs sm:text-sm lg:text-base">
                           {siswa.userId}
                         </td>
-                        <td className="px-4 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-sm md:text-base">
+                        <td className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-gray-700 text-xs sm:text-sm lg:text-base">
                           {kelas}
                         </td>
-                        <td className="px-4 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-sm md:text-base">
+                        <td className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-gray-700 text-xs sm:text-sm lg:text-base">
                           {siswa.tempatPKL || "-"}
                         </td>
                       </tr>
@@ -339,6 +336,7 @@ export default function AdminDataSiswa() {
                   </tbody>
                 </table>
               </div>
+              {/* === END PERBAIKAN TABLE === */}
 
               <p className="text-sm text-gray-600 mt-4">
                 Menampilkan {displayedSiswa(kelas).length} dari{" "}

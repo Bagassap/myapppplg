@@ -78,6 +78,16 @@ export default function GuruDataSiswa() {
       itemsPerPage,
   );
 
+  // LOGIC FIX: Sinkronkan dengan Admin untuk paginasi per table/filter
+  const displayedSiswa = (pkl: string) => {
+    const all = siswaData[pkl] || [];
+    if (selectedPKL === pkl) {
+      const start = (currentPage - 1) * itemsPerPage;
+      return all.slice(start, start + itemsPerPage);
+    }
+    return all.slice(0, 10);
+  };
+
   const openModal = (siswa: Siswa) => {
     setSelectedSiswa(siswa);
     setShowModal(true);
@@ -136,7 +146,7 @@ export default function GuruDataSiswa() {
             </p>
           </div>
 
-          {/* Filter Section - TIDAK DIUBAH */}
+          {/* Filter Section - LOCKED UI */}
           <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <Filter className="w-5 h-5 text-indigo-500" />
@@ -149,7 +159,10 @@ export default function GuruDataSiswa() {
                 </label>
                 <select
                   value={selectedPKL}
-                  onChange={(e) => setSelectedPKL(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedPKL(e.target.value);
+                    setCurrentPage(1);
+                  }}
                   className="px-4 py-3 border border-indigo-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 hover:shadow-md w-full"
                 >
                   <option>Semua Tempat PKL</option>
@@ -174,34 +187,36 @@ export default function GuruDataSiswa() {
                 {pkl}
               </h3>
 
-              {/* MODIFIKASI DIMULAI: Table Wrapper & Responsive Classes */}
-              <div className="w-full overflow-x-auto">
-                <table className="w-full table-auto border-collapse min-w-[800px]">
+              {/* === START PERBAIKAN TABLE === */}
+              <div className="w-full overflow-x-auto rounded-xl border border-gray-100">
+                <table className="w-full table-auto border-collapse min-w-[800px] whitespace-nowrap">
                   <thead>
                     <tr className="bg-linear-to-r from-indigo-100 to-blue-100">
-                      <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-left font-semibold text-gray-700 rounded-tl-xl whitespace-nowrap">
+                      <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-left font-semibold text-gray-700">
                         Nomor
                       </th>
-                      <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-left font-semibold text-gray-700 whitespace-nowrap">
+                      <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-left font-semibold text-gray-700">
                         Nama Siswa
                       </th>
-                      <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-left font-semibold text-gray-700 whitespace-nowrap">
+                      <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-left font-semibold text-gray-700">
                         NIS
                       </th>
-                      <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-left font-semibold text-gray-700 rounded-tr-xl whitespace-nowrap">
+                      <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-left font-semibold text-gray-700">
                         Kelas
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {(siswaData[pkl] || []).slice(0, 10).map((siswa, idx) => (
+                    {displayedSiswa(pkl).map((siswa, idx) => (
                       <tr
                         key={siswa.id}
                         className="border-b border-gray-100 cursor-pointer hover:bg-indigo-50 transition"
                         onClick={() => openModal(siswa)}
                       >
                         <td className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base font-medium text-gray-900">
-                          {idx + 1}
+                          {selectedPKL === pkl
+                            ? (currentPage - 1) * itemsPerPage + idx + 1
+                            : idx + 1}
                         </td>
                         <td className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-gray-700">
                           {siswa.nama}
@@ -217,11 +232,11 @@ export default function GuruDataSiswa() {
                   </tbody>
                 </table>
               </div>
-              {/* MODIFIKASI BERAKHIR */}
+              {/* === END PERBAIKAN TABLE === */}
 
               <p className="text-sm text-gray-600 mt-4">
-                Menampilkan 10 dari {(siswaData[pkl] || []).length} siswa di{" "}
-                {pkl}
+                Menampilkan {displayedSiswa(pkl).length} dari{" "}
+                {(siswaData[pkl] || []).length} siswa di {pkl}
               </p>
             </div>
           ))}
@@ -324,7 +339,7 @@ export default function GuruDataSiswa() {
           )}
 
           {/* Pagination */}
-          {totalPages > 1 && (
+          {totalPages > 1 && selectedPKL !== "Semua Tempat PKL" && (
             <div className="flex justify-center items-center mt-8">
               <div className="flex gap-2">
                 <button

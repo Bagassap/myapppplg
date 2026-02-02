@@ -18,12 +18,8 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
-  QrCode,
   UserCheck,
-  MessageSquare,
-  Camera,
   MapPin,
-  Clock as ClockIcon,
 } from "lucide-react";
 
 export default function AdminAbsensi() {
@@ -45,7 +41,6 @@ export default function AdminAbsensi() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Helper untuk mendapatkan keterangan (Ditambahkan untuk mencegah error undefined function)
   const getKeterangan = (status: string, catatan: string) => {
     return catatan || "-";
   };
@@ -149,25 +144,6 @@ export default function AdminAbsensi() {
   const endIndex = startIndex + itemsPerPage;
   const currentData = filteredData.slice(startIndex, endIndex);
 
-  // Logic Handlers (Disederhanakan untuk contoh)
-  const handleApprove = (id: number) => {
-    setPresensiData(
-      presensiData.map((item) =>
-        item.id === id
-          ? { ...item, permintaan: false, status: "Disetujui" }
-          : item,
-      ),
-    );
-  };
-  const handleReject = (id: number) => {
-    setPresensiData(
-      presensiData.map((item) =>
-        item.id === id
-          ? { ...item, permintaan: false, status: "Ditolak" }
-          : item,
-      ),
-    );
-  };
   const handleEditNote = (id: number) => {
     setPresensiData(
       presensiData.map((item) =>
@@ -181,8 +157,7 @@ export default function AdminAbsensi() {
   const handleExport = async () => {
     /* Export Logic */
   };
-  const handleScanQR = () => alert("Fitur scan QR!");
-  const handleManualInput = () => alert("Fitur input manual!");
+
   const handleViewSiswaPresensi = (siswa: string) => {
     setSelectedSiswa(siswa);
     setShowSiswaPresensi(true);
@@ -212,25 +187,25 @@ export default function AdminAbsensi() {
     );
   }
 
-  // Header Table (Desktop View Only)
+  // Header Table (Responsive: text-xs on mobile, text-base on PC)
   const renderTableHeaders = () => (
     <>
-      <th className="px-6 py-4 text-left font-semibold text-gray-700 rounded-tl-xl text-base">
+      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 rounded-tl-xl text-xs sm:text-base">
         Siswa
       </th>
-      <th className="px-6 py-4 text-left font-semibold text-gray-700 text-base">
+      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base hidden sm:table-cell">
         Tempat PKL
       </th>
-      <th className="px-6 py-4 text-left font-semibold text-gray-700 text-base">
+      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base">
         Status
       </th>
-      <th className="px-6 py-4 text-left font-semibold text-gray-700 text-base">
+      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base">
         Waktu
       </th>
-      <th className="px-6 py-4 text-left font-semibold text-gray-700 text-base">
+      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base hidden md:table-cell">
         Catatan
       </th>
-      <th className="px-6 py-4 text-left font-semibold text-gray-700 rounded-tr-xl text-base">
+      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 rounded-tr-xl text-xs sm:text-base">
         Aksi
       </th>
     </>
@@ -241,33 +216,43 @@ export default function AdminAbsensi() {
       key={item.id}
       className="border-b border-gray-100 hover:bg-indigo-50 transition-colors"
     >
-      <td className="px-6 py-4 font-medium text-gray-900 text-base">
+      <td className="px-2 py-3 sm:px-6 sm:py-4 font-medium text-gray-900 text-xs sm:text-base break-words">
         {item.siswa}
+        {/* Tampilkan Tempat PKL di bawah nama pada Mobile */}
+        <div className="text-[10px] text-gray-500 sm:hidden mt-1">
+          {item.tempatPKL}
+        </div>
       </td>
-      <td className="px-6 py-4 text-gray-700 text-base">{item.tempatPKL}</td>
-      <td className="px-6 py-4 text-gray-700 text-base flex items-center gap-2">
-        {item.status === "Hadir" && (
-          <CheckSquare className="w-4 h-4 text-green-600" />
-        )}
-        {item.status}
+      <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base hidden sm:table-cell">
+        {item.tempatPKL}
       </td>
-      <td className="px-6 py-4 text-gray-700 text-base">{item.waktu}</td>
-      <td className="px-6 py-4 text-gray-700 text-base">
+      <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base">
+        <div className="flex items-center gap-1 sm:gap-2">
+          {item.status === "Hadir" && (
+            <CheckSquare className="w-3 h-3 sm:w-4 sm:h-4 text-green-600 shrink-0" />
+          )}
+          <span>{item.status}</span>
+        </div>
+      </td>
+      <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base whitespace-nowrap">
+        {item.waktu}
+      </td>
+      <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base hidden md:table-cell">
         {item.catatan || "-"}
       </td>
-      <td className="px-6 py-4 text-gray-700">
-        <div className="flex flex-wrap gap-2">
+      <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700">
+        <div className="flex flex-wrap gap-1 sm:gap-2">
           <button
             onClick={() => handleViewSiswaPresensi(item.siswa)}
-            className="p-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
+            className="p-1 sm:p-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
           >
-            <UserCheck className="w-4 h-4" />
+            <UserCheck className="w-3 h-3 sm:w-4 sm:h-4" />
           </button>
           <button
             onClick={() => setEditingNote(item.id)}
-            className="p-2 bg-indigo-500 text-white rounded-lg"
+            className="p-1 sm:p-2 bg-indigo-500 text-white rounded-lg"
           >
-            <Edit className="w-4 h-4" />
+            <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
           </button>
         </div>
       </td>
@@ -279,8 +264,8 @@ export default function AdminAbsensi() {
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar />
-        {/* Main Wrapper with increased padding (p-6 sm:p-8 lg:p-12) */}
-        <main className="flex-1 p-6 sm:p-8 lg:p-12 overflow-y-auto overflow-x-hidden w-full max-w-full">
+        {/* Main Wrapper */}
+        <main className="flex-1 p-4 sm:p-8 lg:p-12 overflow-y-auto overflow-x-hidden w-full max-w-full">
           {/* Header Section */}
           <div className="mb-6 sm:mb-8">
             <h1 className="text-xl sm:text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2 sm:gap-3">
@@ -351,35 +336,16 @@ export default function AdminAbsensi() {
               <div className="flex items-end">
                 <button
                   onClick={handleExport}
-                  className="w-full flex items-center justify-center gap-2 py-2 sm:py-3 bg-indigo-600 text-white rounded-xl shadow hover:bg-indigo-700 transition-all text-sm sm:text-base font-medium"
+                  // Perubahan: Ukuran tombol disesuaikan, label jadi Download
+                  className="w-full sm:w-auto px-6 flex items-center justify-center gap-2 py-2 sm:py-3 bg-indigo-600 text-white rounded-xl shadow hover:bg-indigo-700 transition-all text-sm sm:text-base font-medium"
                 >
-                  <Download className="w-4 h-4 sm:w-5 sm:h-5" /> Ekspor
+                  <Download className="w-4 h-4 sm:w-5 sm:h-5" /> Download
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Quick Action Card */}
-          <div className="bg-white p-4 sm:p-8 rounded-2xl sm:rounded-3xl shadow-lg border border-gray-200 mb-6 sm:mb-10">
-            <h3 className="text-lg sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center gap-2">
-              <UserCheck className="w-5 h-5 sm:w-7 sm:h-7 text-indigo-600" />
-              Metode Pencatatan
-            </h3>
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-              <button
-                onClick={handleScanQR}
-                className="flex-1 flex items-center justify-center gap-2 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-all text-sm sm:text-base"
-              >
-                <QrCode className="w-5 h-5" /> Scan QR
-              </button>
-              <button
-                onClick={handleManualInput}
-                className="flex-1 flex items-center justify-center gap-2 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-all text-sm sm:text-base"
-              >
-                <UserCheck className="w-5 h-5" /> Input Manual
-              </button>
-            </div>
-          </div>
+          {/* METODE PENCATATAN DIHAPUS UNTUK ADMIN */}
 
           {/* Table Card */}
           <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-200 overflow-hidden">
@@ -390,9 +356,9 @@ export default function AdminAbsensi() {
               </h3>
             </div>
 
-            {/* Table Wrapper with horizontal scroll and no parent meluber */}
+            {/* Table Wrapper Responsive: Hapus min-w keras di mobile */}
             <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300">
-              <table className="w-full table-auto min-w-[800px] sm:min-w-full">
+              <table className="w-full table-auto min-w-full">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-100">
                     {renderTableHeaders()}
@@ -436,7 +402,7 @@ export default function AdminAbsensi() {
             </div>
           </div>
 
-          {/* Modal Riwayat (Mobile Optimized) */}
+          {/* Modal Riwayat (Tetap ada untuk lihat detail) */}
           {showSiswaPresensi && selectedSiswa && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4">
               <div
@@ -456,29 +422,45 @@ export default function AdminAbsensi() {
                   </button>
                 </div>
                 <div className="flex-1 overflow-auto p-2 sm:p-6">
-                  <div className="min-w-[800px]">
-                    {/* Inner Modal Table */}
-                    <table className="w-full text-sm sm:text-base">
+                  {/* Inner Modal Table Responsive */}
+                  <div className="w-full overflow-x-auto">
+                    <table className="w-full text-xs sm:text-base min-w-[600px] sm:min-w-full">
                       <thead className="bg-gray-50 sticky top-0">
                         <tr>
-                          <th className="px-4 py-3 text-left">Tanggal</th>
-                          <th className="px-4 py-3 text-left">Status</th>
-                          <th className="px-4 py-3 text-left">Waktu</th>
-                          <th className="px-4 py-3 text-left">Lokasi</th>
-                          <th className="px-4 py-3 text-left">Foto/TTD</th>
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">
+                            Tanggal
+                          </th>
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">
+                            Status
+                          </th>
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">
+                            Waktu
+                          </th>
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">
+                            Lokasi
+                          </th>
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">
+                            Foto/TTD
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
                         {(siswaPresensiData[selectedSiswa] || []).map(
                           (item: any) => (
                             <tr key={item.id} className="border-b">
-                              <td className="px-4 py-3">{item.tanggal}</td>
-                              <td className="px-4 py-3">{item.status}</td>
-                              <td className="px-4 py-3">{item.waktu}</td>
-                              <td className="px-4 py-3">
+                              <td className="px-2 py-2 sm:px-4 sm:py-3">
+                                {item.tanggal}
+                              </td>
+                              <td className="px-2 py-2 sm:px-4 sm:py-3">
+                                {item.status}
+                              </td>
+                              <td className="px-2 py-2 sm:px-4 sm:py-3">
+                                {item.waktu}
+                              </td>
+                              <td className="px-2 py-2 sm:px-4 sm:py-3">
                                 {item.lokasi && (
                                   <a
-                                    href={`https://google.com/maps?q=${item.lokasi}`}
+                                    href={`http://googleusercontent.com/maps.google.com/?q=${item.lokasi}`}
                                     target="_blank"
                                     className="text-blue-600 flex items-center gap-1"
                                   >
@@ -486,11 +468,11 @@ export default function AdminAbsensi() {
                                   </a>
                                 )}
                               </td>
-                              <td className="px-4 py-3">
+                              <td className="px-2 py-2 sm:px-4 sm:py-3">
                                 {item.foto && (
                                   <img
                                     src={item.foto}
-                                    className="w-10 h-10 rounded border"
+                                    className="w-8 h-8 sm:w-10 sm:h-10 rounded border"
                                     alt="bukti"
                                   />
                                 )}

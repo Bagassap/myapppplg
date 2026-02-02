@@ -1,484 +1,239 @@
 "use client";
 
-import Sidebar from "@/components/layout/SidebarAdmin";
+import React from "react";
+import Sidebar from "@/components/layout/SidebarSiswa";
 import TopBar from "@/components/layout/TopBar";
-import {
-  Users,
-  School,
-  ChevronLeft,
-  ChevronRight,
-  XCircle,
-  Filter,
-} from "lucide-react";
 import { useState, useEffect } from "react";
+import {
+  User,
+  Edit,
+  Camera,
+  Phone,
+  Mail,
+  MapPin,
+  Calendar,
+  XCircle,
+  Save,
+  Loader,
+} from "lucide-react";
 
-type SiswaType = {
-  id: number;
-  userId: string;
-  name: string;
-  kelas: string;
-  tempatPKL: string | null;
-  guruPembimbing: string | null;
-};
-
-export default function AdminDataSiswa() {
-  const [selectedClass, setSelectedClass] = useState("Semua Kelas");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [showModal, setShowModal] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
+export default function SiswaDataSiswa() {
   const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedSiswa, setSelectedSiswa] = useState<null | SiswaType>(null);
-
-  const [formData, setFormData] = useState<{
-    username: string;
-    email?: string;
-    password: string;
-    namaLengkap: string;
-    kelas: string;
-    tempatPKL: string;
-  }>({
-    username: "",
+  const [editForm, setEditForm] = useState({
+    foto: null as File | null,
+    telepon: "",
     email: "",
-    password: "",
-    namaLengkap: "",
-    kelas: "XII RPL 1",
-    tempatPKL: "",
   });
-
-  const itemsPerPage = 10;
-
-  const [siswaData, setSiswaData] = useState<Record<string, SiswaType[]>>({});
+  const [siswaData, setSiswaData] = useState({
+    nama: "",
+    nis: "",
+    kelas: "",
+    tempatPKL: "",
+    tanggalLahir: "",
+    alamat: "",
+    telepon: "",
+    email: "",
+    foto: null as string | null,
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchData() {
+    const fetchData = async () => {
       try {
-        const url =
-          selectedClass === "Semua Kelas"
-            ? "/api/data-siswa"
-            : `/api/data-siswa?kelas=${encodeURIComponent(selectedClass)}`;
+        const response = await fetch("/api/data-siswa");
+        if (!response.ok) throw new Error("Gagal mengambil data.");
 
-        const res = await fetch(url, { credentials: "include" });
+        const data = await response.json();
+        if (!data || data.length === 0)
+          throw new Error("Data tidak ditemukan.");
 
-        if (!res.ok) throw new Error("Gagal memuat data");
-        const data: SiswaType[] = await res.json();
-
-        const grouped: Record<string, SiswaType[]> = {};
-        data.forEach((item) => {
-          const kelas = item.kelas || "Tidak Diketahui";
-          if (!grouped[kelas]) grouped[kelas] = [];
-          grouped[kelas].push(item);
+        const siswa = data[0];
+        setSiswaData({
+          nama: siswa.name || "",
+          nis: siswa.userId || "",
+          kelas: siswa.kelas || "",
+          tempatPKL: siswa.tempatPKL || "",
+          tanggalLahir: siswa.tanggalLahir || "",
+          alamat: siswa.alamat || "",
+          telepon: siswa.telepon || "",
+          email: siswa.email || "",
+          foto: siswa.foto || null,
         });
-
-        setSiswaData(grouped);
-        setCurrentPage(1);
-      } catch (error) {
-        alert((error as Error).message);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Terjadi kesalahan.");
+      } finally {
+        setLoading(false);
       }
-    }
+    };
+
     fetchData();
-  }, [selectedClass]);
+  }, []);
 
-  const totalPages = Math.ceil(
-    (siswaData[selectedClass] || []).length / itemsPerPage,
-  );
-
-  const classes = Object.keys(siswaData);
-  const filteredClasses: string[] =
-    selectedClass === "Semua Kelas" ? classes : [selectedClass];
-
-  const openDetailModal = (siswa: SiswaType) => {
-    setSelectedSiswa(siswa);
-    setShowModal(true);
-  };
-  const closeDetailModal = () => {
-    setSelectedSiswa(null);
-    setShowModal(false);
-  };
-
-  const openAddModal = () => {
-    setFormData({
-      username: "",
-      email: "",
-      password: "",
-      namaLengkap: "",
-      kelas: classes[0] || "XII RPL 1",
-      tempatPKL: "",
-    });
-    setShowAddModal(true);
-  };
-
-  const closeAddModal = () => {
-    setShowAddModal(false);
-  };
-
-  const openEditModal = () => {
-    if (!selectedSiswa) return;
-    setFormData({
-      username: selectedSiswa.userId,
-      email: "",
-      password: "",
-      namaLengkap: selectedSiswa.name,
-      kelas: selectedSiswa.kelas,
-      tempatPKL: selectedSiswa.tempatPKL || "",
-    });
-    setShowEditModal(true);
-  };
-
-  const closeEditModal = () => {
-    setShowEditModal(false);
-  };
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleAddSiswa = async () => {
-    const { username, email, password, namaLengkap, kelas, tempatPKL } =
-      formData;
-    if (
-      !username ||
-      !email ||
-      !password ||
-      !namaLengkap ||
-      !kelas ||
-      !tempatPKL
-    ) {
-      alert("Harap isi semua field!");
-      return;
-    }
-
+  const handleEditSubmit = async () => {
     try {
-      const res = await fetch("/api/data-siswa", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username,
-          email,
-          password,
-          namaLengkap,
-          kelas,
-          tempatPKL,
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Gagal menambahkan siswa");
-      }
-      alert("Siswa berhasil ditambahkan");
-      closeAddModal();
-      setSelectedClass("Semua Kelas");
-    } catch (error) {
-      alert((error as Error).message);
-    }
-  };
+      const responseFetch = await fetch("/api/data-siswa");
+      const data = await responseFetch.json();
+      const siswaId = data[0]?.id;
+      if (!siswaId) throw new Error("ID siswa tidak ditemukan.");
 
-  const handleEditSiswa = async () => {
-    if (!selectedSiswa) return;
-    const { username, password, namaLengkap, kelas, tempatPKL } = formData;
-    if (!username || !namaLengkap || !kelas || !tempatPKL) {
-      alert("Harap isi semua field yang wajib!");
-      return;
-    }
+      const formData = new FormData();
+      if (editForm.foto) formData.append("foto", editForm.foto);
+      formData.append("telepon", editForm.telepon);
+      formData.append("email", editForm.email);
 
-    try {
-      const body: any = { username, namaLengkap, kelas, tempatPKL };
-      if (password) body.password = password;
-
-      const res = await fetch(`/api/data-siswa/${selectedSiswa.id}`, {
+      const response = await fetch(`/api/data-siswa/${siswaId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: formData,
       });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Gagal mengupdate siswa");
-      }
-      alert("Siswa berhasil diupdate");
-      closeEditModal();
-      closeDetailModal();
-      setSelectedClass("Semua Kelas");
-    } catch (error) {
-      alert((error as Error).message);
+
+      if (!response.ok) throw new Error("Gagal memperbarui data.");
+
+      const updatedData = {
+        ...siswaData,
+        telepon: editForm.telepon || siswaData.telepon,
+        email: editForm.email || siswaData.email,
+        foto: editForm.foto
+          ? URL.createObjectURL(editForm.foto)
+          : siswaData.foto,
+      };
+      setSiswaData(updatedData);
+      setEditForm({ foto: null, telepon: "", email: "" });
+      setShowEditModal(false);
+      alert("Data berhasil diperbarui! Menunggu persetujuan admin.");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Terjadi kesalahan.");
     }
   };
 
-  const displayedSiswa = (kelas: string) => {
-    const all = siswaData[kelas] || [];
-    if (selectedClass === kelas) {
-      const start = (currentPage - 1) * itemsPerPage;
-      return all.slice(start, start + itemsPerPage);
-    }
-    return all;
+  const handleCloseModal = () => {
+    setShowEditModal(false);
+    setEditForm({ foto: null, telepon: "", email: "" });
   };
 
-  const kelasOptions = ["XII PG 1", "XII RPL 1", "XII RPL 2"];
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader className="w-8 h-8 animate-spin text-indigo-600" />
+        <span className="ml-2">Memuat data...</span>
+      </div>
+    );
+  }
 
-  const showPagination =
-    selectedClass !== "Semua Kelas" &&
-    siswaData[selectedClass]?.length > itemsPerPage;
+  if (error) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <p className="text-red-600">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-gray-50">
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col">
         <TopBar />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto overflow-x-hidden w-full">
-          {/* Header */}
+        <main className="flex-1 p-18 overflow-auto">
+          {/* Header Section */}
           <div className="mb-8">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-              <Users className="w-8 h-8 sm:w-10 sm:h-10 text-indigo-600 animate-pulse" />
-              Data Siswa PKL
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+              <User className="w-10 h-10 text-indigo-600 animate-pulse" />
+              Data Pribadi Siswa
             </h1>
-            <p className="text-gray-600 text-sm sm:text-base md:text-lg">
-              Kelola dan pantau data siswa yang mengikuti Program Kerja Lapangan
-              (PKL).
+            <p className="text-gray-600 text-lg">
+              Lihat dan edit data pribadi Anda. Perubahan memerlukan persetujuan
+              admin.
             </p>
           </div>
 
-          {/* Filter & Tambah - TIDAK DIUBAH */}
-          <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Filter className="w-5 h-5 text-indigo-500" />
-              Filter Kelas
-            </h3>
-            <div className="flex flex-col md:flex-row gap-4 sm:gap-6 items-end justify-between">
-              <div className="flex flex-col w-full md:w-auto">
-                <label className="text-sm font-medium text-gray-700 mb-2">
-                  Pilih Kelas
-                </label>
-                <select
-                  value={selectedClass}
-                  onChange={(e) => {
-                    setSelectedClass(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="px-4 py-3 border border-indigo-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 hover:shadow-md w-full"
-                >
-                  <option>Semua Kelas</option>
-                  {kelasOptions.map((k) => (
-                    <option key={k} value={k}>
-                      {k}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          {/* Card Data Pribadi */}
+          <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                <User className="w-6 h-6 text-indigo-600" />
+                Informasi Pribadi
+              </h3>
               <button
-                onClick={openAddModal}
-                className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-linear-to-r from-indigo-600 to-blue-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                onClick={() => setShowEditModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors"
               >
-                <Users className="w-5 h-5" />
-                Tambah Siswa
+                <Edit className="w-4 h-4" />
+                Edit Data
               </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Foto Profil */}
+              <div className="flex flex-col items-center">
+                <div className="w-32 h-32 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+                  {siswaData.foto ? (
+                    <img
+                      src={siswaData.foto}
+                      alt="Foto Profil"
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-16 h-16 text-gray-500" />
+                  )}
+                </div>
+                <p className="text-sm text-gray-500">Foto Profil</p>
+              </div>
+
+              {/* Data Teks */}
+              <div className="space-y-4">
+                <Field
+                  label="Nama"
+                  icon={<User className="w-5 h-5 text-indigo-500" />}
+                  value={siswaData.nama}
+                />
+                <Field
+                  label="NIS"
+                  icon={<Calendar className="w-5 h-5 text-indigo-500" />}
+                  value={siswaData.nis}
+                />
+                <Field
+                  label="Kelas"
+                  icon={<Calendar className="w-5 h-5 text-indigo-500" />}
+                  value={siswaData.kelas}
+                />
+                <Field
+                  label="Tempat PKL"
+                  icon={<MapPin className="w-5 h-5 text-indigo-500" />}
+                  value={siswaData.tempatPKL}
+                />
+                <Field
+                  label="Tanggal Lahir"
+                  icon={<Calendar className="w-5 h-5 text-indigo-500" />}
+                  value={siswaData.tanggalLahir}
+                />
+                <Field
+                  label="Alamat"
+                  icon={<MapPin className="w-5 h-5 text-indigo-500" />}
+                  value={siswaData.alamat}
+                />
+                <Field
+                  label="Telepon"
+                  icon={<Phone className="w-5 h-5 text-indigo-500" />}
+                  value={siswaData.telepon}
+                />
+                <Field
+                  label="Email"
+                  icon={<Mail className="w-5 h-5 text-indigo-500" />}
+                  value={siswaData.email}
+                />
+              </div>
             </div>
           </div>
 
-          {/* Tables per kelas */}
-          {filteredClasses.map((kelas) => (
-            <div
-              key={kelas}
-              className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg mb-8 border border-gray-100"
-            >
-              <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
-                <School className="w-6 h-6 text-indigo-600" />
-                {kelas}
-              </h3>
-
-              {/* MODIFIKASI DIMULAI DARI SINI: Table Wrapper & Responsive Classes */}
-              <div className="w-full overflow-x-auto">
-                <table className="w-full table-auto border-collapse min-w-[800px]">
-                  <thead>
-                    <tr className="bg-linear-to-r from-indigo-100 to-blue-100">
-                      <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-left font-semibold text-gray-700 rounded-tl-xl whitespace-nowrap">
-                        Nomor
-                      </th>
-                      <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-left font-semibold text-gray-700 whitespace-nowrap">
-                        Nama Siswa
-                      </th>
-                      <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-left font-semibold text-gray-700 whitespace-nowrap">
-                        NIS
-                      </th>
-                      <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-left font-semibold text-gray-700 whitespace-nowrap">
-                        Kelas
-                      </th>
-                      <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-left font-semibold text-gray-700 rounded-tr-xl whitespace-nowrap">
-                        Tempat PKL
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {displayedSiswa(kelas).map((siswa, idx) => (
-                      <tr
-                        key={siswa.id}
-                        className="border-b border-gray-100 cursor-pointer hover:bg-indigo-50 transition"
-                        onClick={() => openDetailModal(siswa)}
-                      >
-                        <td className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base font-medium text-gray-900">
-                          {(currentPage - 1) * itemsPerPage + idx + 1}
-                        </td>
-                        <td className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-gray-700">
-                          {siswa.name}
-                        </td>
-                        <td className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-gray-700">
-                          {siswa.userId}
-                        </td>
-                        <td className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-gray-700">
-                          {kelas}
-                        </td>
-                        <td className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-gray-700">
-                          {siswa.tempatPKL || "-"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {/* MODIFIKASI BERAKHIR */}
-
-              <p className="text-sm text-gray-600 mt-4">
-                Menampilkan {displayedSiswa(kelas).length} dari{" "}
-                {siswaData[kelas]?.length || 0} siswa di {kelas}
-              </p>
-            </div>
-          ))}
-
-          {/* Pagination */}
-          {showPagination && (
-            <div className="flex justify-center items-center mt-8">
-              <div className="flex gap-2">
-                <button
-                  onClick={() =>
-                    currentPage > 1 && setCurrentPage(currentPage - 1)
-                  }
-                  disabled={currentPage === 1}
-                  className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-1"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Sebelumnya
-                </button>
-                <span className="px-4 py-2 text-gray-700">
-                  Halaman {currentPage} dari {totalPages}
-                </span>
-                <button
-                  onClick={() =>
-                    currentPage < totalPages && setCurrentPage(currentPage + 1)
-                  }
-                  disabled={currentPage === totalPages}
-                  className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-1"
-                >
-                  Selanjutnya
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Modal Detail Siswa */}
-          {showModal && selectedSiswa && (
-            <div
-              className="fixed inset-0 flex items-center justify-center z-50 p-4"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="modal-title"
-            >
-              <div
-                className="fixed inset-0 bg-black/50 transition-opacity"
-                onClick={closeDetailModal}
-              />
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 sm:p-8 relative z-10 overflow-y-auto max-h-[90vh]">
-                <div className="flex justify-between items-center mb-8">
-                  <h3
-                    id="modal-title"
-                    className="text-2xl font-bold text-gray-900 flex items-center gap-3"
-                  >
-                    <Users className="w-8 h-8 text-indigo-600 animate-pulse" />
-                    Detail Data Siswa
-                  </h3>
-                  <button
-                    onClick={closeDetailModal}
-                    className="text-gray-500 hover:text-gray-700 transition-colors"
-                    aria-label="Close modal"
-                  >
-                    <XCircle className="w-7 h-7" />
-                  </button>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full table-auto border-collapse text-gray-800 mb-6">
-                    <tbody>
-                      <tr className="border-b border-gray-200">
-                        <th className="px-4 sm:px-6 py-4 text-left font-semibold w-1/3">
-                          Nama
-                        </th>
-                        <td className="px-4 sm:px-6 py-4">
-                          {selectedSiswa.name}
-                        </td>
-                      </tr>
-                      <tr className="border-b border-gray-200">
-                        <th className="px-4 sm:px-6 py-4 text-left font-semibold">
-                          NIS
-                        </th>
-                        <td className="px-4 sm:px-6 py-4">
-                          {selectedSiswa.userId}
-                        </td>
-                      </tr>
-                      <tr className="border-b border-gray-200">
-                        <th className="px-4 sm:px-6 py-4 text-left font-semibold">
-                          Kelas
-                        </th>
-                        <td className="px-4 sm:px-6 py-4">
-                          {selectedSiswa.kelas}
-                        </td>
-                      </tr>
-                      <tr>
-                        <th className="px-4 sm:px-6 py-4 text-left font-semibold">
-                          Tempat PKL
-                        </th>
-                        <td className="px-4 sm:px-6 py-4">
-                          {selectedSiswa.tempatPKL || "-"}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <button
-                  onClick={() => {
-                    closeDetailModal();
-                    openEditModal();
-                  }}
-                  className="w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white rounded-xl shadow-lg hover:bg-indigo-700 transition transform hover:scale-105"
-                >
-                  Edit Data
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Modal Tambah Siswa */}
-          {showAddModal && (
-            <ModalSiswaForm
-              title="Tambah Siswa Baru"
-              formData={formData}
-              setFormData={setFormData}
-              onClose={closeAddModal}
-              onSubmit={handleAddSiswa}
-              kelasOptions={kelasOptions}
-              isEdit={false}
-            />
-          )}
-
-          {/* Modal Edit Siswa */}
+          {/* Modal Edit Data */}
           {showEditModal && (
-            <ModalSiswaForm
-              title="Edit Data Siswa"
-              formData={formData}
-              setFormData={setFormData}
-              onClose={closeEditModal}
-              onSubmit={handleEditSiswa}
-              kelasOptions={classes}
-              isEdit={true}
+            <EditModal
+              editForm={editForm}
+              setEditForm={setEditForm}
+              onSubmit={handleEditSubmit}
+              onClose={handleCloseModal}
             />
           )}
         </main>
@@ -487,65 +242,59 @@ export default function AdminDataSiswa() {
   );
 }
 
-type ModalSiswaFormProps = {
-  title: string;
-  formData: {
-    username: string;
-    email?: string;
-    password: string;
-    namaLengkap: string;
-    kelas: string;
-    tempatPKL: string;
-  };
-  setFormData: React.Dispatch<
-    React.SetStateAction<{
-      username: string;
-      email?: string;
-      password: string;
-      namaLengkap: string;
-      kelas: string;
-      tempatPKL: string;
-    }>
-  >;
-  onClose: () => void;
-  onSubmit: () => void;
-  kelasOptions: string[];
-  isEdit: boolean;
-};
+interface FieldProps {
+  label: string;
+  icon: React.ReactElement;
+  value: string;
+}
 
-function ModalSiswaForm({
-  title,
-  formData,
-  setFormData,
-  onClose,
-  onSubmit,
-  kelasOptions,
-  isEdit,
-}: ModalSiswaFormProps) {
+function Field({ label, icon, value }: FieldProps) {
   return (
-    <div
-      className="fixed inset-0 flex items-center justify-center z-50 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-title"
-    >
+    <div className="flex items-center gap-3">
+      {icon}
+      <div>
+        <p className="text-sm font-medium text-gray-700">{label}</p>
+        <p className="text-gray-900">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+interface EditModalProps {
+  editForm: { foto: File | null; telepon: string; email: string };
+  setEditForm: React.Dispatch<
+    React.SetStateAction<{ foto: File | null; telepon: string; email: string }>
+  >;
+  onSubmit: () => void;
+  onClose: () => void;
+}
+
+function EditModal({
+  editForm,
+  setEditForm,
+  onSubmit,
+  onClose,
+}: EditModalProps) {
+  return (
+    <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
       <div
-        className="fixed inset-0 bg-black/50 transition-opacity"
-        onClick={onClose}
-      />
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 sm:p-8 relative z-10 overflow-y-auto max-h-[90vh]">
+        className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full mx-4 p-10 pointer-events-auto animate-fade-scale transform-gpu transition duration-300 ease-out"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="edit-modal-title"
+      >
         <div className="flex justify-between items-center mb-8">
           <h3
-            id="modal-title"
-            className="text-2xl font-semibold text-gray-900 flex items-center gap-3"
+            id="edit-modal-title"
+            className="text-2xl font-bold text-gray-900 flex items-center gap-3"
           >
-            {title}
+            <Edit className="w-8 h-8 text-indigo-600 animate-pulse" />
+            Edit Data Pribadi
           </h3>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 transition-colors"
-            aria-label="Tutup modal"
-            type="button"
+            aria-label="Close modal"
           >
             <XCircle className="w-7 h-7" />
           </button>
@@ -556,153 +305,77 @@ function ModalSiswaForm({
             e.preventDefault();
             onSubmit();
           }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-900"
+          className="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-800"
         >
+          {/* Foto Profil */}
           <div className="flex flex-col">
-            <label className="mb-1 font-medium text-gray-700 flex items-center gap-2">
-              <Users className="w-5 h-5 text-indigo-600" />
-              NIS (Username)
+            <label className="mb-2 font-medium text-gray-700 flex items-center gap-2">
+              <Camera className="w-5 h-5" />
+              Foto Profil Baru
             </label>
             <input
-              type="text"
-              name="username"
-              placeholder="NIS"
-              value={formData.username}
+              type="file"
+              accept="image/*"
               onChange={(e) =>
-                setFormData({ ...formData, username: e.target.value })
+                setEditForm({
+                  ...editForm,
+                  foto: e.target.files?.[0] || null,
+                })
               }
-              required
-              className="px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-              disabled={isEdit}
+              className="px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
-          {!isEdit && (
-            <div className="flex flex-col">
-              <label className="mb-1 font-medium text-gray-700">Email</label>
-              <input
-                type="email"
-                name="email"
-                placeholder="Email"
-                value={formData.email || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                required
-                className="px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-              />
-            </div>
-          )}
-
-          {!isEdit && (
-            <div className="flex flex-col">
-              <label className="mb-1 font-medium text-gray-700">
-                Password Default
-              </label>
-              <input
-                type="password"
-                name="password"
-                placeholder="Password Default"
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-                required
-                className="px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-              />
-            </div>
-          )}
-
-          {isEdit && (
-            <div className="flex flex-col">
-              <label className="mb-1 font-medium text-gray-700">
-                Ubah Password (Kosongkan jika tidak ganti)
-              </label>
-              <input
-                type="password"
-                name="password"
-                placeholder="Password Baru"
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-                className="px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-              />
-            </div>
-          )}
-
+          {/* Telepon */}
           <div className="flex flex-col">
-            <label className="mb-1 font-medium text-gray-700 flex items-center gap-2">
-              <Users className="w-5 h-5 text-indigo-600" />
-              Nama Lengkap
+            <label className="mb-2 font-medium text-gray-700 flex items-center gap-2">
+              <Phone className="w-5 h-5" />
+              Telepon
             </label>
             <input
-              type="text"
-              name="namaLengkap"
-              placeholder="Nama Lengkap"
-              value={formData.namaLengkap}
+              type="tel"
+              placeholder="Masukkan nomor telepon"
+              value={editForm.telepon}
               onChange={(e) =>
-                setFormData({ ...formData, namaLengkap: e.target.value })
+                setEditForm({ ...editForm, telepon: e.target.value })
               }
-              required
-              className="px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+              className="px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
-          <div className="flex flex-col">
-            <label className="mb-1 font-medium text-gray-700 flex items-center gap-2">
-              <School className="w-5 h-5 text-indigo-600" />
-              Kelas
-            </label>
-            <select
-              name="kelas"
-              value={formData.kelas}
-              onChange={(e) =>
-                setFormData({ ...formData, kelas: e.target.value })
-              }
-              required
-              className="px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-            >
-              {kelasOptions.map((k) => (
-                <option key={k} value={k}>
-                  {k}
-                </option>
-              ))}
-            </select>
-          </div>
-
+          {/* Email */}
           <div className="flex flex-col md:col-span-2">
-            <label className="mb-1 font-medium text-gray-700 flex items-center gap-2">
-              Tempat PKL
+            <label className="mb-2 font-medium text-gray-700 flex items-center gap-2">
+              <Mail className="w-5 h-5" />
+              Email
             </label>
             <input
-              type="text"
-              name="tempatPKL"
-              placeholder="Tempat PKL"
-              value={formData.tempatPKL}
+              type="email"
+              placeholder="Masukkan alamat email"
+              value={editForm.email}
               onChange={(e) =>
-                setFormData({ ...formData, tempatPKL: e.target.value })
+                setEditForm({ ...editForm, email: e.target.value })
               }
-              required
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+              className="px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
-          <div className="md:col-span-2 flex flex-col-reverse sm:flex-row justify-end gap-4 sm:gap-6 mt-4">
+          {/* Tombol Aksi */}
+          <div className="md:col-span-2 flex justify-end gap-6 mt-6">
+            <button
+              type="submit"
+              className="flex items-center gap-2 px-8 py-3 bg-linear-to-r from-indigo-600 to-blue-600 text-white rounded-xl shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-blue-700 transform transition duration-200 hover:scale-105"
+            >
+              <Save className="w-5 h-5" />
+              Simpan Perubahan
+            </button>
             <button
               type="button"
               onClick={onClose}
-              className="flex items-center justify-center gap-2 px-8 py-3 bg-gray-500 text-white rounded-xl shadow-inner hover:bg-gray-600 transition transform hover:scale-105"
+              className="flex items-center gap-2 px-8 py-3 bg-gray-500 text-white rounded-xl shadow-inner hover:bg-gray-600 transition-colors duration-200 hover:scale-105"
             >
               <XCircle className="w-5 h-5" />
               Batal
-            </button>
-            <button
-              type="submit"
-              className="flex items-center justify-center gap-2 px-8 py-3 bg-linear-to-r from-indigo-600 to-blue-600 text-white rounded-xl shadow-lg hover:shadow-xl transition transform hover:scale-105"
-            >
-              <Users className="w-5 h-5" />
-              {isEdit ? "Update" : "Tambah"}
             </button>
           </div>
         </form>
