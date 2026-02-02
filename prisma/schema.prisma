@@ -54,6 +54,41 @@ model Absensi {
   @@unique([userId, tanggal, tipe])
 }
 
+model Informasi {
+  id        Int      @id @default(autoincrement())
+  judul     String
+  isi       String   @db.Text
+  tanggal   String   
+  kategori  String   
+  tipe      String   @default("umum") 
+  tempatPKL String?  
+  createdAt DateTime @default(now())
+
+  komentar  Komentar[]
+  laporan   LaporanMasalah[]
+}
+
+model Komentar {
+  id          Int       @id @default(autoincrement())
+  informasiId Int
+  nama        String    
+  isi         String    @db.Text
+  tanggal     String    
+  createdAt   DateTime  @default(now())
+
+  informasi   Informasi @relation(fields: [informasiId], references: [id], onDelete: Cascade)
+}
+
+model LaporanMasalah {
+  id          Int       @id @default(autoincrement())
+  informasiId Int
+  judul       String
+  deskripsi   String    @db.Text
+  createdAt   DateTime  @default(now())
+
+  informasi   Informasi @relation(fields: [informasiId], references: [id], onDelete: Cascade)
+}
+
 enum Role {
   ADMIN
   GURU

@@ -12,8 +12,8 @@ const satoshi = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "NS App",
-  description: "Dashboard Guru",
+  title: "PresensiPPLG",
+  description: "Web Absensi PKL PPLG",
 };
 
 export default function RootLayout({

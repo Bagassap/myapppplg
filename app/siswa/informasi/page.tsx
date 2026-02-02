@@ -2,28 +2,20 @@
 
 import Sidebar from "@/components/layout/SidebarSiswa";
 import TopBar from "@/components/layout/TopBar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Info,
-  Calendar,
-  FileText,
   Megaphone,
-  CheckCircle,
-  Clock,
-  AlertTriangle,
-  Plus,
-  X,
-  Edit,
-  Trash2,
-  Send,
-  Filter,
   MessageSquare,
   User,
   Flag,
   XCircle,
+  X,
+  Send,
 } from "lucide-react";
 
 interface Announcement {
+  id?: number;
   judul: string;
   isi: string;
   tanggal: string;
@@ -34,8 +26,6 @@ interface Announcement {
 }
 
 export default function SiswaInformasi() {
-  const [selectedCategory, setSelectedCategory] = useState("Semua");
-  const [selectedType, setSelectedType] = useState("Semua");
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportForm, setReportForm] = useState({
     judul: "",
@@ -44,78 +34,91 @@ export default function SiswaInformasi() {
   });
   const [newComment, setNewComment] = useState<{ [key: number]: string }>({});
 
-  // Data pengumuman (dalam aplikasi nyata, ambil dari API)
-  const [pengumuman, setPengumuman] = useState<Announcement[]>([
-    {
-      judul: "Pengingat Monitoring PKL",
-      isi: "Monitoring PKL di PT. ABC Industri akan dilakukan pada tanggal 15 Oktober 2023.",
-      tanggal: "2023-10-01",
-      kategori: "Kebijakan PKL",
-      tipe: "pkl",
-      tempatPKL: "PT. ABC Industri",
-      komentar: [
-        {
-          nama: "Ahmad Fauzi",
-          isi: "Baik, saya akan siap.",
-          tanggal: "2023-10-02",
-        },
-      ],
-    },
-  ]);
+  // STATE: Data awal kosong
+  const [pengumuman, setPengumuman] = useState<Announcement[]>([]);
 
-  const categories = [
-    "Berita Sekolah",
-    "Pengingat Absensi",
-    "Kebijakan PKL",
-    "Libur",
-  ];
+  // INTEGRASI: Fetch Data
+  const fetchInformasi = async () => {
+    try {
+      const res = await fetch("/api/informasi");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setPengumuman(data);
+        }
+      }
+    } catch (error) {
+      console.error("Gagal mengambil data:", error);
+    }
+  };
 
-  const types = ["Semua", "Umum", "PKL Khusus"];
+  useEffect(() => {
+    fetchInformasi();
+  }, []);
 
-  const filteredPengumuman = pengumuman.filter((p) => {
-    const categoryMatch =
-      selectedCategory === "Semua" || p.kategori === selectedCategory;
-    const typeMatch =
-      selectedType === "Semua" ||
-      (selectedType === "Umum" && p.tipe === "umum") ||
-      (selectedType === "PKL Khusus" && p.tipe === "pkl");
-    return categoryMatch && typeMatch;
-  });
+  const handleAddComment = async (idx: number) => {
+    const commentContent = newComment[idx];
+    if (commentContent) {
+      try {
+        const idInfo = pengumuman[idx].id;
+        const payload = {
+          nama: "Anda (Siswa)",
+          isi: commentContent,
+          tanggal: new Date().toISOString().split("T")[0],
+        };
 
-  const handleAddComment = (idx: number) => {
-    const comment = newComment[idx];
-    if (comment) {
-      const updated = pengumuman.map((p, i) =>
-        i === idx
-          ? {
-              ...p,
-              komentar: [
-                ...(p.komentar || []),
-                {
-                  nama: "Anda (Siswa)", // Dalam aplikasi nyata, ambil nama dari login
-                  isi: comment,
-                  tanggal: new Date().toISOString().split("T")[0],
-                },
-              ],
-            }
-          : p,
-      );
-      setPengumuman(updated);
-      setNewComment({ ...newComment, [idx]: "" });
+        const res = await fetch(`/api/informasi/${idInfo}/komentar`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.ok) {
+          await fetchInformasi();
+          setNewComment({ ...newComment, [idx]: "" });
+        }
+      } catch (error) {
+        alert("Gagal mengirim komentar.");
+      }
     }
   };
 
   const handleReportIssue = (idx: number) => {
-    setReportForm({ ...reportForm, announcementId: idx });
+    const realId = pengumuman[idx].id || null;
+    setReportForm({ ...reportForm, announcementId: realId });
     setShowReportModal(true);
   };
 
-  const handleSubmitReport = () => {
-    if (reportForm.judul && reportForm.deskripsi) {
-      // Simulasi submit laporan (dalam aplikasi nyata, kirim ke API)
-      alert(`Laporan dikirim: ${reportForm.judul}`);
-      setReportForm({ judul: "", deskripsi: "", announcementId: null });
-      setShowReportModal(false);
+  const handleSubmitReport = async () => {
+    if (reportForm.judul && reportForm.deskripsi && reportForm.announcementId) {
+      try {
+        const res = await fetch(
+          `/api/informasi/${reportForm.announcementId}/lapor`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              judul: reportForm.judul,
+              deskripsi: reportForm.deskripsi,
+            }),
+          },
+        );
+
+        if (res.ok) {
+          alert(`Laporan dikirim: ${reportForm.judul}`);
+          setReportForm({
+            judul: "",
+            deskripsi: "",
+            announcementId: null,
+          });
+          setShowReportModal(false);
+        } else {
+          alert("Gagal mengirim laporan.");
+        }
+      } catch (error) {
+        console.error(error);
+        alert("Terjadi kesalahan.");
+      }
     } else {
       alert("Harap isi judul dan deskripsi laporan!");
     }
@@ -131,7 +134,7 @@ export default function SiswaInformasi() {
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto overflow-x-hidden w-full">
+        <main className="flex-1 p-4 sm:p-8 lg:p-12 overflow-y-auto overflow-x-hidden w-full max-w-full">
           {/* Header Section */}
           <div className="mb-8">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 flex items-center gap-3">
@@ -145,66 +148,22 @@ export default function SiswaInformasi() {
             </p>
           </div>
 
-          {/* Filter Section */}
-          <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Filter className="w-5 h-5 text-indigo-500" />
-              Filter Pengumuman
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 items-end">
-              {/* Filter Kategori */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-700 mb-2">
-                  Pilih Kategori
-                </label>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="px-4 py-3 border border-indigo-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 hover:shadow-md w-full"
-                >
-                  <option>Semua</option>
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {/* Filter Tipe */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-700 mb-2">
-                  Pilih Tipe
-                </label>
-                <select
-                  value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value)}
-                  className="px-4 py-3 border border-indigo-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 hover:shadow-md w-full"
-                >
-                  {types.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Card Pengumuman */}
+          {/* Card Pengumuman (Filter Dihapus) */}
           <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:scale-[1.01]">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
                 <Megaphone className="w-6 h-6 text-indigo-600 animate-bounce" />
-                Pengumuman
+                Daftar Pengumuman
               </h3>
             </div>
-            {filteredPengumuman.length === 0 ? (
+
+            {pengumuman.length === 0 ? (
               <p className="text-gray-500 italic text-center sm:text-left">
-                Belum ada pengumuman yang sesuai filter.
+                Belum ada pengumuman yang ditambahkan.
               </p>
             ) : (
               <div className="space-y-6">
-                {filteredPengumuman.map((p, idx) => (
+                {pengumuman.map((p, idx) => (
                   <div
                     key={idx}
                     className="bg-linear-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border-l-4 border-indigo-500 hover:bg-indigo-100 transition-all duration-200"
@@ -282,11 +241,11 @@ export default function SiswaInformasi() {
                               [idx]: e.target.value,
                             })
                           }
-                          className="flex-1 px-3 py-2 border rounded-lg text-sm min-w-0"
+                          className="flex-1 px-3 py-2 border rounded-lg text-sm min-w-0 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
                         />
                         <button
                           onClick={() => handleAddComment(idx)}
-                          className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 text-sm shrink-0"
+                          className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 text-sm shrink-0 transition-colors"
                         >
                           Kirim
                         </button>
@@ -305,24 +264,15 @@ export default function SiswaInformasi() {
                 className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
                 onClick={handleCloseReportModal}
               />
-              <div
-                className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl p-6 sm:p-10 relative z-10 animate-fade-scale transform-gpu transition duration-300 ease-out flex flex-col max-h-[90vh] overflow-y-auto"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="report-modal-title"
-              >
+              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl p-6 sm:p-10 relative z-10 animate-fade-scale transform-gpu transition duration-300 ease-out flex flex-col max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-6 sm:mb-8">
-                  <h3
-                    id="report-modal-title"
-                    className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3"
-                  >
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
                     <Flag className="w-6 h-6 sm:w-8 sm:h-8 text-red-600 animate-pulse" />
                     Laporkan Masalah
                   </h3>
                   <button
                     onClick={handleCloseReportModal}
                     className="text-gray-500 hover:text-gray-700 transition-colors"
-                    aria-label="Close modal"
                   >
                     <XCircle className="w-6 h-6 sm:w-7 sm:h-7" />
                   </button>
@@ -335,7 +285,6 @@ export default function SiswaInformasi() {
                   }}
                   className="grid grid-cols-1 gap-6 text-gray-800"
                 >
-                  {/* Judul Laporan */}
                   <div className="flex flex-col">
                     <label className="mb-2 font-medium text-gray-700">
                       Judul Laporan
@@ -352,7 +301,6 @@ export default function SiswaInformasi() {
                     />
                   </div>
 
-                  {/* Deskripsi Laporan */}
                   <div className="flex flex-col">
                     <label className="mb-2 font-medium text-gray-700">
                       Deskripsi
@@ -372,7 +320,6 @@ export default function SiswaInformasi() {
                     />
                   </div>
 
-                  {/* Tombol Aksi */}
                   <div className="flex flex-col-reverse sm:flex-row justify-end gap-4 sm:gap-6 mt-2">
                     <button
                       type="button"

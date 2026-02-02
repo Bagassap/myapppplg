@@ -1,7 +1,7 @@
 "use client";
 import Sidebar from "@/components/layout/SidebarGuru";
 import TopBar from "@/components/layout/TopBar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Users,
   CheckCircle,
@@ -9,37 +9,70 @@ import {
   TrendingUp,
   Download,
   Filter,
-  Bell,
 } from "lucide-react";
 
 export default function GuruDashboard() {
   const [selectedPKL, setSelectedPKL] = useState("Semua Tempat PKL");
-  const [selectedPeriod, setSelectedPeriod] = useState("Hari Ini");
+  const [selectedPeriod, setSelectedPeriod] = useState("Semua Periode");
+  const [loading, setLoading] = useState(true);
 
-  const stats = {
-    totalSiswaPKL: 50,
-    hadirHariIni: 45,
-    tidakHadir: 5,
-    persentaseKehadiran: 90,
-  };
+  // Stats Dashboard
+  const [stats, setStats] = useState({
+    totalSiswaPKL: 0,
+    hadirHariIni: 0,
+    tidakHadir: 0,
+    persentaseKehadiran: 0,
+  });
+  const [pklData, setPklData] = useState<any[]>([]);
 
-  const pklData = [
-    { tempatPKL: "PT. ABC Industri", siswa: "Ahmad", hadir: 25, totalHari: 30 },
-    { tempatPKL: "CV. XYZ Teknologi", siswa: "Budi", hadir: 28, totalHari: 30 },
-    { tempatPKL: "PT. DEF Jasa", siswa: "Citra", hadir: 22, totalHari: 30 },
-  ];
+  // State Filter Real
+  const [filters, setFilters] = useState({
+    tempatPKL: [] as { id: string; label: string }[],
+    tanggal: [] as string[],
+  });
 
-  const notifications = [
-    {
-      siswa: "Ahmad",
-      pesan: "Sering absen dalam 3 hari terakhir",
-      tingkat: "Tinggi",
-    },
-    { siswa: "Budi", pesan: "Absen kemarin tanpa alasan", tingkat: "Sedang" },
-  ];
+  // Fetch Data
+  useEffect(() => {
+    const fetchAllData = async () => {
+      try {
+        // 1. Fetch Filters
+        const filterRes = await fetch("/api/dashboard/filters");
+        if (filterRes.ok) {
+          const filterData = await filterRes.json();
+          setFilters({
+            tempatPKL: filterData.tempatPKL || [], // Menggunakan key tempatPKL dari API
+            tanggal: filterData.tanggal || [],
+          });
+
+          // Set default periode
+          if (filterData.tanggal && filterData.tanggal.length > 0) {
+            setSelectedPeriod(filterData.tanggal[0]);
+          }
+        }
+
+        // 2. Fetch Dashboard
+        const dashboardRes = await fetch("/api/dashboard");
+        if (dashboardRes.ok) {
+          const data = await dashboardRes.json();
+          setStats(data.cards);
+          setPklData(data.table);
+        }
+      } catch (error) {
+        console.error("Gagal mengambil data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAllData();
+  }, []);
 
   const handleExport = () => {
-    alert("Data diekspor ke file CSV!");
+    // Menambahkan filter ke export
+    const query = new URLSearchParams({
+      tempatPKL: selectedPKL !== "Semua Tempat PKL" ? selectedPKL : "",
+      tanggal: selectedPeriod !== "Semua Periode" ? selectedPeriod : "",
+    }).toString();
+    window.location.href = `/api/dashboard/export?${query}`;
   };
 
   return (
@@ -47,7 +80,6 @@ export default function GuruDashboard() {
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
-        {/* PERUBAHAN: Padding diperbesar (p-6 sm:p-8 lg:p-12) */}
         <main className="flex-1 p-6 sm:p-8 lg:p-12 overflow-y-auto overflow-x-hidden">
           <div className="mb-6 sm:mb-8">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">
@@ -65,6 +97,7 @@ export default function GuruDashboard() {
               Filter dan Ekspor Data
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 items-end">
+              {/* Filter Tempat PKL (REAL DATA) */}
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-gray-700 mb-2">
                   Pilih Tempat PKL
@@ -75,11 +108,15 @@ export default function GuruDashboard() {
                   className="w-full px-4 py-3 border border-indigo-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 hover:shadow-md"
                 >
                   <option>Semua Tempat PKL</option>
-                  <option>PT. ABC Industri</option>
-                  <option>CV. XYZ Teknologi</option>
-                  <option>PT. DEF Jasa</option>
+                  {filters.tempatPKL.map((pkl) => (
+                    <option key={pkl.id} value={pkl.id}>
+                      {pkl.label}
+                    </option>
+                  ))}
                 </select>
               </div>
+
+              {/* Filter Periode (REAL DATA TANGGAL) */}
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-gray-700 mb-2">
                   Pilih Periode
@@ -89,11 +126,15 @@ export default function GuruDashboard() {
                   onChange={(e) => setSelectedPeriod(e.target.value)}
                   className="w-full px-4 py-3 border border-indigo-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 hover:shadow-md"
                 >
-                  <option>Hari Ini</option>
-                  <option>Bulan Ini</option>
-                  <option>Tahun Ini</option>
+                  <option>Semua Periode</option>
+                  {filters.tanggal.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
                 </select>
               </div>
+
               <div className="flex justify-start md:justify-end">
                 <button
                   onClick={handleExport}
@@ -117,7 +158,7 @@ export default function GuruDashboard() {
                 Total Siswa PKL
               </h3>
               <p className="text-3xl font-bold text-blue-600">
-                {stats.totalSiswaPKL}
+                {loading ? "..." : stats.totalSiswaPKL}
               </p>
             </div>
             <div className="bg-gradient-to-br from-green-100 to-green-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-green-200">
@@ -131,7 +172,7 @@ export default function GuruDashboard() {
                 Hadir Hari Ini
               </h3>
               <p className="text-3xl font-bold text-green-600">
-                {stats.hadirHariIni}
+                {loading ? "..." : stats.hadirHariIni}
               </p>
             </div>
             <div className="bg-gradient-to-br from-red-100 to-red-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-red-200">
@@ -143,7 +184,7 @@ export default function GuruDashboard() {
                 Tidak Hadir
               </h3>
               <p className="text-3xl font-bold text-red-600">
-                {stats.tidakHadir}
+                {loading ? "..." : stats.tidakHadir}
               </p>
             </div>
             <div className="bg-gradient-to-br from-indigo-100 to-blue-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-indigo-200">
@@ -157,40 +198,8 @@ export default function GuruDashboard() {
                 Persentase Kehadiran
               </h3>
               <p className="text-3xl font-bold text-indigo-600">
-                {stats.persentaseKehadiran}%
+                {loading ? "..." : stats.persentaseKehadiran}%
               </p>
-            </div>
-          </div>
-
-          {/* Notifikasi */}
-          <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
-            <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
-              <Bell className="w-6 h-6 text-orange-600" />
-              Notifikasi Siswa Sering Absen
-            </h3>
-            <div className="space-y-4">
-              {notifications.map((notif, index) => (
-                <div
-                  key={index}
-                  className={`p-4 rounded-xl border-l-4 ${
-                    notif.tingkat === "Tinggi"
-                      ? "border-red-500 bg-red-50"
-                      : "border-yellow-500 bg-yellow-50"
-                  }`}
-                >
-                  <p className="font-semibold text-gray-900">{notif.siswa}</p>
-                  <p className="text-gray-700">{notif.pesan}</p>
-                  <span
-                    className={`text-sm font-medium ${
-                      notif.tingkat === "Tinggi"
-                        ? "text-red-600"
-                        : "text-yellow-600"
-                    }`}
-                  >
-                    Tingkat: {notif.tingkat}
-                  </span>
-                </div>
-              ))}
             </div>
           </div>
 
@@ -219,21 +228,39 @@ export default function GuruDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {pklData.map((item, index) => (
-                    <tr
-                      key={index}
-                      className="border-b border-gray-100 hover:bg-indigo-50 transition-colors duration-200"
-                    >
-                      <td className="px-6 py-4 font-medium text-gray-900">
-                        {item.tempatPKL}
-                      </td>
-                      <td className="px-6 py-4 text-gray-700">{item.siswa}</td>
-                      <td className="px-6 py-4 text-gray-700">{item.hadir}</td>
-                      <td className="px-6 py-4 text-gray-700">
-                        {item.totalHari}
+                  {loading ? (
+                    <tr>
+                      <td colSpan={4} className="text-center py-4">
+                        Memuat data...
                       </td>
                     </tr>
-                  ))}
+                  ) : pklData.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="text-center py-4">
+                        Tidak ada data siswa bimbingan.
+                      </td>
+                    </tr>
+                  ) : (
+                    pklData.map((item, index) => (
+                      <tr
+                        key={index}
+                        className="border-b border-gray-100 hover:bg-indigo-50 transition-colors duration-200"
+                      >
+                        <td className="px-6 py-4 font-medium text-gray-900">
+                          {item.tempatPKL}
+                        </td>
+                        <td className="px-6 py-4 text-gray-700">
+                          {item.siswa}
+                        </td>
+                        <td className="px-6 py-4 text-gray-700">
+                          {item.hadir}
+                        </td>
+                        <td className="px-6 py-4 text-gray-700">
+                          {item.totalHari}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

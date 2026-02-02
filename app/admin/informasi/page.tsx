@@ -3,24 +3,21 @@
 import Sidebar from "@/components/layout/SidebarAdmin";
 import TopBar from "@/components/layout/TopBar";
 import { CheckCircle2, XCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Info,
-  Calendar,
-  FileText,
   Megaphone,
   CheckCircle,
-  Clock,
-  AlertTriangle,
   Plus,
   X,
   Edit,
   Trash2,
   Send,
-  Filter,
 } from "lucide-react";
 
+// Tipe data disesuaikan dengan response API
 interface Announcement {
+  id: number;
   judul: string;
   isi: string;
   tanggal: string;
@@ -28,78 +25,93 @@ interface Announcement {
 }
 
 export default function AdminInformasi() {
-  const [selectedCategory, setSelectedCategory] = useState("Semua");
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<number | null>(
     null,
   );
+
+  // Default state form
   const [newAnnouncement, setNewAnnouncement] = useState({
     judul: "",
     isi: "",
     tanggal: "",
-    kategori: "Berita Sekolah",
+    kategori: "Pengumuman", // Default value hardcoded
   });
 
-  // State untuk data yang dimulai kosong
   const [pengumuman, setPengumuman] = useState<Announcement[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const categories = [
-    "Berita Sekolah",
-    "Pengingat Absensi",
-    "Kebijakan PKL",
-    "Libur",
-  ];
+  // Fetch Data dari API
+  const fetchInformasi = async () => {
+    try {
+      const res = await fetch("/api/informasi");
+      const data = await res.json();
+      setPengumuman(data);
+    } catch (error) {
+      console.error("Gagal mengambil data:", error);
+    }
+  };
 
-  const filteredPengumuman =
-    selectedCategory === "Semua"
-      ? pengumuman
-      : pengumuman.filter((p) => p.kategori === selectedCategory);
+  useEffect(() => {
+    fetchInformasi();
+  }, []);
 
-  const handleAddAnnouncement = () => {
-    if (
-      newAnnouncement.judul &&
-      newAnnouncement.isi &&
-      newAnnouncement.tanggal &&
-      newAnnouncement.kategori
-    ) {
+  const handleAddAnnouncement = async () => {
+    setIsLoading(true);
+    try {
       if (editingAnnouncement !== null) {
-        // Edit existing
-        const updated = pengumuman.map((p, idx) =>
-          idx === editingAnnouncement ? newAnnouncement : p,
-        );
-        setPengumuman(updated);
-        setEditingAnnouncement(null);
+        // Edit Mode (PUT)
+        const idToUpdate = pengumuman[editingAnnouncement].id;
+        const res = await fetch(`/api/informasi/${idToUpdate}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newAnnouncement),
+        });
+        if (!res.ok) throw new Error("Gagal update");
       } else {
-        // Add new
-        setPengumuman([...pengumuman, newAnnouncement]);
+        // Add Mode (POST)
+        const res = await fetch("/api/informasi", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newAnnouncement),
+        });
+        if (!res.ok) throw new Error("Gagal simpan");
       }
-      setNewAnnouncement({
-        judul: "",
-        isi: "",
-        tanggal: "",
-        kategori: "Berita Sekolah",
-      });
-      setShowAddModal(false);
-    } else {
-      alert("Harap isi semua field!");
+
+      await fetchInformasi(); // Refresh data
+      handleCloseModal();
+    } catch (error) {
+      alert("Terjadi kesalahan saat menyimpan data.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleEditAnnouncement = (idx: number) => {
     setEditingAnnouncement(idx);
-    setNewAnnouncement(pengumuman[idx]);
+    setNewAnnouncement({
+      judul: pengumuman[idx].judul,
+      isi: pengumuman[idx].isi,
+      tanggal: pengumuman[idx].tanggal,
+      kategori: "Pengumuman",
+    });
     setShowAddModal(true);
   };
 
-  const handleDeleteAnnouncement = (idx: number) => {
+  const handleDeleteAnnouncement = async (idx: number) => {
     if (confirm("Apakah Anda yakin ingin menghapus pengumuman ini?")) {
-      setPengumuman(pengumuman.filter((_, i) => i !== idx));
+      const idToDelete = pengumuman[idx].id;
+      try {
+        await fetch(`/api/informasi/${idToDelete}`, { method: "DELETE" });
+        await fetchInformasi();
+      } catch (error) {
+        alert("Gagal menghapus data");
+      }
     }
   };
 
   const handleSendNotification = (announcement: Announcement) => {
     alert(`Notifikasi push dikirim ke semua user: "${announcement.judul}"`);
-    // Di aplikasi nyata, integrasikan dengan API notifikasi push
   };
 
   const handleCloseModal = () => {
@@ -109,7 +121,7 @@ export default function AdminInformasi() {
       judul: "",
       isi: "",
       tanggal: "",
-      kategori: "Berita Sekolah",
+      kategori: "Pengumuman",
     });
   };
 
@@ -118,7 +130,7 @@ export default function AdminInformasi() {
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto overflow-x-hidden w-full">
+        <main className="flex-1 p-4 sm:p-8 lg:p-12 overflow-y-auto overflow-x-hidden w-full max-w-full">
           {/* Header Section */}
           <div className="mb-8">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 flex items-center gap-3">
@@ -131,61 +143,40 @@ export default function AdminInformasi() {
             </p>
           </div>
 
-          {/* Filter Section */}
+          {/* Action Section */}
           <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Filter className="w-5 h-5 text-indigo-500" />
-              Filter dan Tambah Pengumuman
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 items-end">
-              {/* Filter Kategori */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-700 mb-2">
-                  Pilih Kategori
-                </label>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="px-4 py-3 border border-indigo-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 hover:shadow-md w-full"
-                >
-                  <option>Semua</option>
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {/* Tombol Tambah Pengumuman */}
-              <div className="flex justify-start md:justify-end">
-                <button
-                  onClick={() => setShowAddModal(true)}
-                  className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-linear-to-r from-indigo-600 to-blue-600 text-white rounded-xl shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-blue-700 transition-all duration-200 transform hover:scale-105"
-                >
-                  <Plus className="w-5 h-5" />
-                  Tambah Pengumuman
-                </button>
-              </div>
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <Megaphone className="w-5 h-5 text-indigo-500" />
+                Daftar Pengumuman
+              </h3>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center justify-center gap-2 
+                 px-4 py-2 text-sm 
+                 sm:px-6 sm:py-3 sm:text-base 
+                 bg-linear-to-r from-indigo-600 to-blue-600 
+                 text-white rounded-xl shadow-lg hover:shadow-xl 
+                 hover:from-indigo-700 hover:to-blue-700 
+                 transition-all duration-200 transform hover:scale-105"
+              >
+                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                Tambah Pengumuman
+              </button>
             </div>
           </div>
 
           {/* Card Pengumuman */}
           <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:scale-[1.01]">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                <Megaphone className="w-6 h-6 text-indigo-600 animate-bounce" />
-                Pengumuman Resmi
-              </h3>
-            </div>
-            {filteredPengumuman.length === 0 ? (
+            {pengumuman.length === 0 ? (
               <p className="text-gray-500 italic text-center sm:text-left">
                 Belum ada pengumuman resmi yang ditambahkan.
               </p>
             ) : (
               <div className="space-y-4 sm:space-y-6">
-                {filteredPengumuman.map((p, idx) => (
+                {pengumuman.map((p, idx) => (
                   <div
-                    key={idx}
+                    key={p.id}
                     className="bg-linear-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border-l-4 border-indigo-500 hover:bg-indigo-100 transition-all duration-200"
                   >
                     <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2">
@@ -193,9 +184,6 @@ export default function AdminInformasi() {
                         <h4 className="font-semibold text-gray-900 break-words">
                           {p.judul}
                         </h4>
-                        <span className="inline-block mt-1 text-xs text-indigo-600 bg-indigo-100 px-2 py-1 rounded-full">
-                          {p.kategori}
-                        </span>
                       </div>
                       <div className="flex gap-2 self-end sm:self-start shrink-0">
                         <button
@@ -234,23 +222,13 @@ export default function AdminInformasi() {
           {/* Modal Tambah/Edit Pengumuman */}
           {showAddModal && (
             <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-              {/* Backdrop */}
               <div
                 className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
                 onClick={handleCloseModal}
               />
-              <div
-                className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl p-6 sm:p-10 relative z-10 animate-fade-scale transform-gpu transition duration-300 ease-out flex flex-col max-h-[90vh] overflow-y-auto"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="modal-title"
-              >
-                {/* Header */}
+              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl p-6 sm:p-10 relative z-10 animate-fade-scale transform-gpu transition duration-300 ease-out flex flex-col max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-6 sm:mb-8">
-                  <h3
-                    id="modal-title"
-                    className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3"
-                  >
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
                     <CheckCircle2 className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600 animate-pulse" />
                     {editingAnnouncement !== null
                       ? "Edit Pengumuman"
@@ -259,13 +237,11 @@ export default function AdminInformasi() {
                   <button
                     onClick={handleCloseModal}
                     className="text-gray-500 hover:text-gray-700 transition-colors"
-                    aria-label="Close modal"
                   >
                     <XCircle className="w-6 h-6 sm:w-7 sm:h-7" />
                   </button>
                 </div>
 
-                {/* Form */}
                 <form
                   className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 text-gray-800"
                   onSubmit={(e) => {
@@ -273,18 +249,13 @@ export default function AdminInformasi() {
                     handleAddAnnouncement();
                   }}
                 >
-                  {/* Judul Pengumuman */}
+                  {/* Judul */}
                   <div className="flex flex-col md:col-span-3">
-                    <label
-                      htmlFor="judul"
-                      className="mb-2 font-medium text-gray-700"
-                    >
+                    <label className="mb-2 font-medium text-gray-700">
                       Judul Pengumuman
                     </label>
                     <input
-                      id="judul"
                       type="text"
-                      placeholder="Judul Pengumuman"
                       value={newAnnouncement.judul}
                       onChange={(e) =>
                         setNewAnnouncement({
@@ -297,17 +268,12 @@ export default function AdminInformasi() {
                     />
                   </div>
 
-                  {/* Isi Pengumuman */}
+                  {/* Isi */}
                   <div className="flex flex-col md:col-span-2">
-                    <label
-                      htmlFor="isi"
-                      className="mb-2 font-medium text-gray-700"
-                    >
+                    <label className="mb-2 font-medium text-gray-700">
                       Isi Pengumuman
                     </label>
                     <textarea
-                      id="isi"
-                      placeholder="Isi Pengumuman"
                       value={newAnnouncement.isi}
                       onChange={(e) =>
                         setNewAnnouncement({
@@ -320,17 +286,13 @@ export default function AdminInformasi() {
                     />
                   </div>
 
-                  {/* Tanggal & Kategori */}
+                  {/* Tanggal (Kategori Dihapus dari UI, dihandle state default) */}
                   <div className="flex flex-col gap-6">
                     <div className="flex flex-col">
-                      <label
-                        htmlFor="tanggal"
-                        className="mb-2 font-medium text-gray-700"
-                      >
+                      <label className="mb-2 font-medium text-gray-700">
                         Tanggal
                       </label>
                       <input
-                        id="tanggal"
                         type="date"
                         value={newAnnouncement.tanggal}
                         onChange={(e) =>
@@ -342,33 +304,6 @@ export default function AdminInformasi() {
                         required
                         className="px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition w-full"
                       />
-                    </div>
-
-                    <div className="flex flex-col">
-                      <label
-                        htmlFor="kategori"
-                        className="mb-2 font-medium text-gray-700"
-                      >
-                        Kategori
-                      </label>
-                      <select
-                        id="kategori"
-                        value={newAnnouncement.kategori}
-                        onChange={(e) =>
-                          setNewAnnouncement({
-                            ...newAnnouncement,
-                            kategori: e.target.value,
-                          })
-                        }
-                        required
-                        className="px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition w-full"
-                      >
-                        {categories.map((cat) => (
-                          <option key={cat} value={cat}>
-                            {cat}
-                          </option>
-                        ))}
-                      </select>
                     </div>
                   </div>
 
@@ -384,10 +319,15 @@ export default function AdminInformasi() {
                     </button>
                     <button
                       type="submit"
+                      disabled={isLoading}
                       className="flex items-center justify-center gap-2 px-8 py-3 bg-linear-to-r from-indigo-600 to-blue-600 text-white rounded-xl shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-blue-700 transform transition duration-200"
                     >
                       <CheckCircle className="w-5 h-5" />
-                      {editingAnnouncement !== null ? "Simpan" : "Tambah"}
+                      {isLoading
+                        ? "Menyimpan..."
+                        : editingAnnouncement !== null
+                          ? "Simpan"
+                          : "Tambah"}
                     </button>
                   </div>
                 </form>

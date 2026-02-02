@@ -1,55 +1,43 @@
 "use client";
 import Sidebar from "@/components/layout/SidebarSiswa";
 import TopBar from "@/components/layout/TopBar";
-import { useState } from "react";
-import {
-  Users,
-  CheckCircle,
-  XCircle,
-  TrendingUp,
-  Download,
-  Filter,
-  Bell,
-  Calendar,
-} from "lucide-react";
+import { useState, useEffect } from "react";
+import { CheckCircle, XCircle, TrendingUp, Calendar } from "lucide-react";
 
 export default function SiswaDashboard() {
-  const [selectedPeriod, setSelectedPeriod] = useState("Bulan Ini");
+  const [loading, setLoading] = useState(true);
 
-  const stats = {
-    totalHariBulanIni: 22,
-    hadirBulanIni: 20,
-    tidakHadirBulanIni: 2,
-    persentaseKehadiran: 91,
-  };
+  // State Stats
+  const [stats, setStats] = useState({
+    totalHariBulanIni: 0,
+    hadirBulanIni: 0,
+    tidakHadirBulanIni: 0,
+    persentaseKehadiran: 0,
+  });
 
-  const kehadiranData = [
-    { tanggal: "2023-10-01", status: "Hadir", catatan: "" },
-    { tanggal: "2023-10-02", status: "Hadir", catatan: "" },
-    { tanggal: "2023-10-03", status: "Tidak Hadir", catatan: "Sakit" },
-    { tanggal: "2023-10-04", status: "Hadir", catatan: "" },
-    { tanggal: "2023-10-05", status: "Hadir", catatan: "" },
-    { tanggal: "2023-10-06", status: "Tidak Hadir", catatan: "Izin" },
-  ];
-
-  const notifications = [
-    {
-      pesan: "Anda telah hadir 20 hari bulan ini. Pertahankan!",
-      tingkat: "Positif",
-    },
-    { pesan: "Pengingat: Jangan lupa absen hari ini.", tingkat: "Info" },
-  ];
-
-  const handleExport = () => {
-    alert("Laporan kehadiran pribadi diekspor ke file PDF!");
-  };
+  // Fetch Data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("/api/dashboard");
+        if (res.ok) {
+          const data = await res.json();
+          setStats(data.cards);
+        }
+      } catch (error) {
+        console.error("Gagal mengambil data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
-        {/* PERUBAHAN: Padding diperbesar (p-6 sm:p-8 lg:p-12) */}
         <main className="flex-1 p-6 sm:p-8 lg:p-12 overflow-y-auto overflow-x-hidden">
           <div className="mb-6 sm:mb-8">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">
@@ -71,7 +59,7 @@ export default function SiswaDashboard() {
                 Total Hari Kerja
               </h3>
               <p className="text-3xl font-bold text-blue-600">
-                {stats.totalHariBulanIni}
+                {loading ? "..." : stats.totalHariBulanIni}
               </p>
             </div>
             <div className="bg-gradient-to-br from-green-100 to-green-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-green-200">
@@ -85,7 +73,7 @@ export default function SiswaDashboard() {
                 Hari Hadir
               </h3>
               <p className="text-3xl font-bold text-green-600">
-                {stats.hadirBulanIni}
+                {loading ? "..." : stats.hadirBulanIni}
               </p>
             </div>
             <div className="bg-gradient-to-br from-red-100 to-red-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-red-200">
@@ -97,7 +85,7 @@ export default function SiswaDashboard() {
                 Hari Tidak Hadir
               </h3>
               <p className="text-3xl font-bold text-red-600">
-                {stats.tidakHadirBulanIni}
+                {loading ? "..." : stats.tidakHadirBulanIni}
               </p>
             </div>
             <div className="bg-gradient-to-br from-indigo-100 to-blue-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-indigo-200">
@@ -111,41 +99,12 @@ export default function SiswaDashboard() {
                 Persentase Kehadiran
               </h3>
               <p className="text-3xl font-bold text-indigo-600">
-                {stats.persentaseKehadiran}%
+                {loading ? "..." : stats.persentaseKehadiran}%
               </p>
             </div>
           </div>
 
-          {/* Notifikasi Pribadi */}
-          <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
-            <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
-              <Bell className="w-6 h-6 text-orange-600" />
-              Notifikasi Pribadi
-            </h3>
-            <div className="space-y-4">
-              {notifications.map((notif, index) => (
-                <div
-                  key={index}
-                  className={`p-4 rounded-xl border-l-4 ${
-                    notif.tingkat === "Positif"
-                      ? "border-green-500 bg-green-50"
-                      : "border-blue-500 bg-blue-50"
-                  }`}
-                >
-                  <p className="text-gray-700">{notif.pesan}</p>
-                  <span
-                    className={`text-sm font-medium ${
-                      notif.tingkat === "Positif"
-                        ? "text-green-600"
-                        : "text-blue-600"
-                    }`}
-                  >
-                    {notif.tingkat}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* SECTION NOTIFIKASI SUDAH DIHAPUS TOTAL */}
         </main>
       </div>
     </div>

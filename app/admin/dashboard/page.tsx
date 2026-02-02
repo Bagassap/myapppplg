@@ -1,7 +1,7 @@
 "use client";
 import Sidebar from "@/components/layout/SidebarAdmin";
 import TopBar from "@/components/layout/TopBar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Users,
   CheckCircle,
@@ -13,23 +13,65 @@ import {
 
 export default function AdminDashboard() {
   const [selectedClass, setSelectedClass] = useState("Semua Kelas");
-  const [selectedPeriod, setSelectedPeriod] = useState("Hari Ini");
+  const [selectedPeriod, setSelectedPeriod] = useState("Semua Periode"); // Default diubah agar netral
+  const [loading, setLoading] = useState(true);
 
-  const stats = {
-    totalSiswa: 500,
-    hadirHariIni: 450,
-    tidakHadir: 50,
-    persentaseKehadiran: 90,
-  };
+  // State untuk Data Dashboard
+  const [stats, setStats] = useState({
+    totalSiswa: 0,
+    hadirHariIni: 0,
+    tidakHadir: 0,
+    persentaseKehadiran: 0,
+  });
+  const [classData, setClassData] = useState<any[]>([]);
 
-  const classData = [
-    { kelas: "Kelas XII PG 1", hadir: 25, total: 30 },
-    { kelas: "Kelas XII RPL 1", hadir: 28, total: 30 },
-    { kelas: "Kelas XII RPL 2", hadir: 22, total: 30 },
-  ];
+  // State untuk Filter Options (BARU)
+  const [filters, setFilters] = useState({
+    kelas: [] as { id: string; label: string }[],
+    tanggal: [] as string[],
+  });
+
+  // Fetch Data Dashboard & Filters
+  useEffect(() => {
+    const fetchAllData = async () => {
+      try {
+        // 1. Fetch Filters
+        const filterRes = await fetch("/api/dashboard/filters");
+        if (filterRes.ok) {
+          const filterData = await filterRes.json();
+          setFilters({
+            kelas: filterData.kelas || [],
+            tanggal: filterData.tanggal || [],
+          });
+
+          // Set default periode ke tanggal terbaru jika ada
+          if (filterData.tanggal && filterData.tanggal.length > 0) {
+            setSelectedPeriod(filterData.tanggal[0]);
+          }
+        }
+
+        // 2. Fetch Dashboard Data (Bisa dikirim query params filter disini kedepannya)
+        const dashboardRes = await fetch("/api/dashboard");
+        if (dashboardRes.ok) {
+          const data = await dashboardRes.json();
+          setStats(data.cards);
+          setClassData(data.table);
+        }
+      } catch (error) {
+        console.error("Gagal mengambil data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAllData();
+  }, []);
 
   const handleExport = () => {
-    alert("Data diekspor ke file CSV!");
+    const query = new URLSearchParams({
+      kelas: selectedClass !== "Semua Kelas" ? selectedClass : "",
+      tanggal: selectedPeriod !== "Semua Periode" ? selectedPeriod : "",
+    }).toString();
+    window.location.href = `/api/dashboard/export?${query}`;
   };
 
   return (
@@ -37,7 +79,6 @@ export default function AdminDashboard() {
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
-        {/* PERUBAHAN: Padding diperbesar (p-6 sm:p-8 lg:p-12) */}
         <main className="flex-1 p-6 sm:p-8 lg:p-12 overflow-y-auto overflow-x-hidden">
           {/* Header Section */}
           <div className="mb-6 sm:mb-8">
@@ -56,7 +97,7 @@ export default function AdminDashboard() {
               Filter dan Ekspor Data
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 items-end">
-              {/* Filter Kelas */}
+              {/* Filter Kelas (REAL DATA) */}
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-gray-700 mb-2">
                   Pilih Kelas
@@ -67,13 +108,15 @@ export default function AdminDashboard() {
                   className="px-4 py-3 border border-indigo-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 hover:shadow-md w-full"
                 >
                   <option>Semua Kelas</option>
-                  <option>Kelas 1A</option>
-                  <option>Kelas 1B</option>
-                  <option>Kelas 2A</option>
+                  {filters.kelas.map((k) => (
+                    <option key={k.id} value={k.id}>
+                      {k.label}
+                    </option>
+                  ))}
                 </select>
               </div>
 
-              {/* Filter Periode */}
+              {/* Filter Periode (REAL DATA TANGGAL) */}
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-gray-700 mb-2">
                   Pilih Periode
@@ -83,9 +126,12 @@ export default function AdminDashboard() {
                   onChange={(e) => setSelectedPeriod(e.target.value)}
                   className="px-4 py-3 border border-indigo-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 hover:shadow-md w-full"
                 >
-                  <option>Hari Ini</option>
-                  <option>Bulan Ini</option>
-                  <option>Tahun Ini</option>
+                  <option>Semua Periode</option>
+                  {filters.tanggal.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -113,7 +159,7 @@ export default function AdminDashboard() {
                 Total Siswa
               </h3>
               <p className="text-3xl font-bold text-blue-600">
-                {stats.totalSiswa}
+                {loading ? "..." : stats.totalSiswa}
               </p>
             </div>
 
@@ -128,7 +174,7 @@ export default function AdminDashboard() {
                 Hadir Hari Ini
               </h3>
               <p className="text-3xl font-bold text-green-600">
-                {stats.hadirHariIni}
+                {loading ? "..." : stats.hadirHariIni}
               </p>
             </div>
 
@@ -141,7 +187,7 @@ export default function AdminDashboard() {
                 Tidak Hadir
               </h3>
               <p className="text-3xl font-bold text-red-600">
-                {stats.tidakHadir}
+                {loading ? "..." : stats.tidakHadir}
               </p>
             </div>
 
@@ -156,7 +202,7 @@ export default function AdminDashboard() {
                 Persentase Kehadiran
               </h3>
               <p className="text-3xl font-bold text-indigo-600">
-                {stats.persentaseKehadiran}%
+                {loading ? "..." : stats.persentaseKehadiran}%
               </p>
             </div>
           </div>
@@ -186,21 +232,39 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {classData.map((item, index) => (
-                    <tr
-                      key={index}
-                      className="border-b border-gray-100 hover:bg-indigo-50 transition-colors duration-200"
-                    >
-                      <td className="px-6 py-4 font-medium text-gray-900">
-                        {item.kelas}
-                      </td>
-                      <td className="px-6 py-4 text-gray-700">{item.hadir}</td>
-                      <td className="px-6 py-4 text-gray-700">{item.total}</td>
-                      <td className="px-6 py-4 text-gray-700 font-semibold">
-                        {((item.hadir / item.total) * 100).toFixed(1)}%
+                  {loading ? (
+                    <tr>
+                      <td colSpan={4} className="text-center py-4">
+                        Memuat data...
                       </td>
                     </tr>
-                  ))}
+                  ) : classData.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="text-center py-4">
+                        Tidak ada data.
+                      </td>
+                    </tr>
+                  ) : (
+                    classData.map((item, index) => (
+                      <tr
+                        key={index}
+                        className="border-b border-gray-100 hover:bg-indigo-50 transition-colors duration-200"
+                      >
+                        <td className="px-6 py-4 font-medium text-gray-900">
+                          {item.kelas}
+                        </td>
+                        <td className="px-6 py-4 text-gray-700">
+                          {item.hadir}
+                        </td>
+                        <td className="px-6 py-4 text-gray-700">
+                          {item.total}
+                        </td>
+                        <td className="px-6 py-4 text-gray-700 font-semibold">
+                          {item.persentase}%
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

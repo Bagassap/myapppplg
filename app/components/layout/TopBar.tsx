@@ -1,52 +1,21 @@
-// src/components/layout/TopBar.tsx
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Search, Sun, Moon, User, LogOut, Loader, Menu } from "lucide-react"; // Added Menu
+import { Search, Sun, Moon, Loader, Menu, User } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useRouter } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
-import { useSidebar } from "@/contexts/SidebarContext"; // Import Context
+import { useSession } from "next-auth/react";
+import { useSidebar } from "@/contexts/SidebarContext";
 
 export default function TopBar() {
   const { theme, setTheme } = useTheme();
-  const [showProfile, setShowProfile] = useState(false);
-  const profileRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { data: session, status } = useSession();
-
-  // Use Sidebar Context
   const { toggleMobileSidebar } = useSidebar();
 
   const toggleTheme = () => {
     const newTheme = theme === "Dark" ? "Light" : "Dark";
     setTheme(newTheme);
-    console.log("Theme toggled to:", newTheme);
-    console.log("Current theme state:", theme);
   };
-
-  const handleProfile = () => {
-    setShowProfile(false);
-    router.push("/profile");
-  };
-
-  const handleLogout = async () => {
-    setShowProfile(false);
-    await signOut({ callbackUrl: "/login" });
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        profileRef.current &&
-        !profileRef.current.contains(event.target as Node)
-      ) {
-        setShowProfile(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   if (status === "loading") {
     return (
@@ -86,7 +55,7 @@ export default function TopBar() {
 
       {/* Right: Search & Actions */}
       <div className="flex items-center gap-6">
-        {/* Search box - Hidden on very small screens if needed, otherwise keep */}
+        {/* Search box */}
         <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-lg">
           <Search className="w-5 h-5 text-gray-400" />
           <input
@@ -96,54 +65,38 @@ export default function TopBar() {
           />
         </div>
 
-        {/* Icons */}
-        <div className="flex items-center gap-4 relative">
-          <div className="cursor-pointer" onClick={toggleTheme}>
+        {/* Icons & Profile Info */}
+        <div className="flex items-center gap-4">
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="cursor-pointer p-1 rounded-full hover:bg-gray-100 transition-colors"
+          >
             {theme === "Dark" ? (
               <Sun className="w-5 h-5 text-yellow-500 transition-colors" />
             ) : (
               <Moon className="w-5 h-5 text-blue-500 transition-colors" />
             )}
-          </div>
+          </button>
 
-          {/* Profil Dropdown */}
-          <div className="relative" ref={profileRef}>
-            <div
-              className="flex items-center gap-2 cursor-pointer"
-              onClick={() => setShowProfile(!showProfile)}
-            >
+          {/* User Profile (Static Display) */}
+          <div className="flex items-center gap-2">
+            {/* Logic: Jika ada image tampilkan img, jika tidak tampilkan Icon User */}
+            {session.user?.image ? (
               <img
-                src={session.user?.image || "https://i.pravatar.cc/40"}
+                src={session.user.image}
                 alt="User"
-                className="w-8 h-8 rounded-full"
+                className="w-8 h-8 rounded-full border border-gray-200 object-cover"
               />
-              {/* Hide Name on small mobile screens to save space */}
-              <span className="hidden sm:block text-sm font-medium text-gray-900">
-                {session.user?.name || "User"}
-              </span>
-            </div>
-            {showProfile && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-                <div className="p-4">
-                  <ul className="space-y-2">
-                    <li
-                      className="flex items-center gap-2 text-sm text-gray-600 hover:bg-gray-100 px-2 py-1 rounded cursor-pointer"
-                      onClick={handleProfile}
-                    >
-                      <User className="w-4 h-4" />
-                      Profile
-                    </li>
-                    <li
-                      className="flex items-center gap-2 text-sm text-red-600 hover:bg-gray-100 px-2 py-1 rounded cursor-pointer"
-                      onClick={handleLogout}
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Logout
-                    </li>
-                  </ul>
-                </div>
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
+                <User className="w-5 h-5 text-gray-500" />
               </div>
             )}
+
+            <span className="hidden sm:block text-sm font-medium text-gray-900">
+              {session.user?.name || "User"}
+            </span>
           </div>
         </div>
       </div>
