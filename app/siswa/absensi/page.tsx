@@ -50,7 +50,6 @@ export default function SiswaAbsensi() {
     tandaTangan: null as File | null,
   });
 
-  // Helper tanggal lokal
   const getLocalDateString = (date: Date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -61,14 +60,12 @@ export default function SiswaAbsensi() {
   const fetchPresensiHariIni = async () => {
     try {
       const params = new URLSearchParams();
-      // Menggunakan new Date() untuk memastikan tanggal hari ini sesuai local time browser
       const now = new Date();
       const today = getLocalDateString(now);
 
       params.append("startDate", today);
       params.append("endDate", today);
 
-      // Tambahkan timestamp agar browser tidak cache
       const presensiRes = await fetch(
         `/api/absensi?${params.toString()}&t=${now.getTime()}`,
         {
@@ -110,11 +107,9 @@ export default function SiswaAbsensi() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // 1. Fetch Data Siswa
         const siswaRes = await fetch("/api/data-siswa");
         if (siswaRes.ok) {
           const siswaRaw = await siswaRes.json();
-          // Antisipasi jika return array atau object tunggal
           const siswa =
             Array.isArray(siswaRaw) && siswaRaw.length > 0
               ? siswaRaw[0]
@@ -131,8 +126,6 @@ export default function SiswaAbsensi() {
             });
           }
         }
-
-        // 2. Fetch Data Presensi
         await fetchPresensiHariIni();
       } catch (err: any) {
         console.error("Fetch error:", err);
@@ -145,13 +138,11 @@ export default function SiswaAbsensi() {
     fetchData();
   }, [session, status]);
 
-  // Pagination Logic
   const totalPages = Math.ceil(presensiData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentData = presensiData.slice(startIndex, endIndex);
 
-  // Fungsi GPS
   const getCurrentLocation = () => {
     if (navigator.geolocation) {
       setAbsenForm((prev) => ({
@@ -178,9 +169,7 @@ export default function SiswaAbsensi() {
     }
   };
 
-  // Submit Absen
   const handleAbsenSubmit = async () => {
-    // 1. Validasi Form
     let isValid = true;
     if (
       absenForm.status === "Hadir" &&
@@ -207,7 +196,6 @@ export default function SiswaAbsensi() {
 
     if (!isValid) return;
 
-    // 2. Siapkan FormData
     const formData = new FormData();
     formData.append("tipe", "absen");
     formData.append("status", absenForm.status);
@@ -233,7 +221,6 @@ export default function SiswaAbsensi() {
 
       const newAbsensiRaw = await response.json();
 
-      // 3. UPDATE STATE MANUAL (Agar tabel langsung muncul tanpa refresh)
       const newEntryFormatted = {
         id: newAbsensiRaw.id,
         tanggal: new Date().toLocaleDateString(),
@@ -247,13 +234,11 @@ export default function SiswaAbsensi() {
         tandaTangan: newAbsensiRaw.tandaTangan,
       };
 
-      // Masukkan data baru ke paling atas array
       setPresensiData((prev) => [newEntryFormatted, ...prev]);
 
       alert("Absen berhasil tersimpan!");
       setShowAbsenModal(false);
 
-      // Reset Form
       setAbsenForm({
         status: "Hadir",
         kegiatan: "",
@@ -279,7 +264,6 @@ export default function SiswaAbsensi() {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
   };
 
-  // Helper untuk keterangan otomatis
   const getKeterangan = (status: string, catatan: string) => {
     if (catatan) return catatan;
     switch (status) {
@@ -304,9 +288,9 @@ export default function SiswaAbsensi() {
     return (
       <div className="flex h-screen bg-gray-50">
         <Sidebar />
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0">
           <TopBar />
-          <main className="flex-1 p-8 flex items-center justify-center">
+          <main className="flex-1 flex items-center justify-center p-6 sm:p-8 lg:p-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
           </main>
         </div>
@@ -318,9 +302,9 @@ export default function SiswaAbsensi() {
     return (
       <div className="flex h-screen bg-gray-50">
         <Sidebar />
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0">
           <TopBar />
-          <main className="flex-1 p-8 flex items-center justify-center">
+          <main className="flex-1 flex items-center justify-center p-6 sm:p-8 lg:p-12">
             <div className="text-center text-red-600 font-semibold">
               {error}
             </div>
@@ -333,31 +317,34 @@ export default function SiswaAbsensi() {
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
-        <main className="flex-1 p-18 overflow-auto">
+        {/* Main Wrapper with increased padding (p-6 sm:p-8 lg:p-12) */}
+        <main className="flex-1 p-6 sm:p-8 lg:p-12 overflow-y-auto w-full">
           {/* Header Section */}
           <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-              <Calendar className="w-12 h-12 text-indigo-600 animate-pulse" />
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 flex flex-wrap items-center gap-3">
+              <Calendar className="w-10 h-10 sm:w-12 sm:h-12 text-indigo-600 animate-pulse" />
               Absensi
             </h1>
-            <p className="text-gray-600 text-lg">Lakukan absen setiap hari</p>
+            <p className="text-gray-600 text-sm sm:text-base md:text-lg">
+              Lakukan absen setiap hari
+            </p>
           </div>
 
           {/* Action Section */}
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
+          <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               {/* Indikator Tanggal */}
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-indigo-100 rounded-full">
+              <div className="flex items-center gap-3 w-full md:w-auto">
+                <div className="p-3 bg-indigo-100 rounded-full shrink-0">
                   <Calendar className="w-6 h-6 text-indigo-600" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm text-gray-500 font-medium">
                     Tanggal Absensi
                   </p>
-                  <p className="text-xl font-bold text-gray-900">
+                  <p className="text-lg sm:text-xl font-bold text-gray-900 truncate">
                     {new Date().toLocaleDateString("id-ID", {
                       weekday: "long",
                       day: "numeric",
@@ -370,7 +357,7 @@ export default function SiswaAbsensi() {
 
               <button
                 onClick={() => setShowAbsenModal(true)}
-                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl shadow-lg hover:shadow-xl hover:from-green-700 hover:to-green-800 transition-all duration-200 transform hover:scale-105"
+                className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl shadow-lg hover:shadow-xl hover:from-green-700 hover:to-green-800 transition-all duration-200 transform hover:scale-105 whitespace-nowrap"
               >
                 <CheckSquare className="w-5 h-5" />
                 Absen Harian
@@ -379,37 +366,38 @@ export default function SiswaAbsensi() {
           </div>
 
           {/* Tabel Riwayat Presensi (Hari Ini) */}
-          <div className="bg-white p-6 rounded-2xl shadow-lg mb-8 border border-gray-100">
+          <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg mb-8 border border-gray-100">
             <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
               <CheckSquare className="w-6 h-6 text-green-600" />
               Riwayat Absensi Hari Ini
             </h3>
-            <div className="overflow-x-auto">
-              <table className="w-full table-auto border-collapse">
+
+            <div className="w-full overflow-x-auto">
+              <table className="w-full table-auto border-collapse min-w-[700px]">
                 <thead>
                   <tr className="bg-gradient-to-r from-indigo-100 to-blue-100">
-                    <th className="px-6 py-4 text-left font-semibold text-gray-700 rounded-tl-xl">
+                    <th className="px-6 py-4 text-left font-semibold text-gray-700 rounded-tl-xl whitespace-nowrap">
                       Tanggal
                     </th>
-                    <th className="px-6 py-4 text-left font-semibold text-gray-700">
+                    <th className="px-6 py-4 text-left font-semibold text-gray-700 whitespace-nowrap">
                       Status
                     </th>
-                    <th className="px-6 py-4 text-left font-semibold text-gray-700">
+                    <th className="px-6 py-4 text-left font-semibold text-gray-700 whitespace-nowrap">
                       Waktu
                     </th>
-                    <th className="px-6 py-4 text-left font-semibold text-gray-700">
+                    <th className="px-6 py-4 text-left font-semibold text-gray-700 whitespace-nowrap">
                       Kegiatan
                     </th>
-                    <th className="px-6 py-4 text-left font-semibold text-gray-700">
+                    <th className="px-6 py-4 text-left font-semibold text-gray-700 whitespace-nowrap">
                       Lokasi
                     </th>
-                    <th className="px-6 py-4 text-left font-semibold text-gray-700">
+                    <th className="px-6 py-4 text-left font-semibold text-gray-700 whitespace-nowrap">
                       Foto
                     </th>
-                    <th className="px-6 py-4 text-left font-semibold text-gray-700">
+                    <th className="px-6 py-4 text-left font-semibold text-gray-700 whitespace-nowrap">
                       TTD
                     </th>
-                    <th className="px-6 py-4 text-left font-semibold text-gray-700 rounded-tr-xl">
+                    <th className="px-6 py-4 text-left font-semibold text-gray-700 rounded-tr-xl whitespace-nowrap">
                       Keterangan
                     </th>
                   </tr>
@@ -430,10 +418,10 @@ export default function SiswaAbsensi() {
                         key={item.id}
                         className="border-b border-gray-100 hover:bg-indigo-50 transition-colors duration-200"
                       >
-                        <td className="px-6 py-4 font-medium text-gray-900">
+                        <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
                           {item.tanggal}
                         </td>
-                        <td className="px-6 py-4 text-gray-700 flex items-center gap-2">
+                        <td className="px-6 py-4 text-gray-700 flex items-center gap-2 whitespace-nowrap">
                           {item.status === "Hadir" && (
                             <CheckSquare className="w-4 h-4 text-green-600" />
                           )}
@@ -452,13 +440,13 @@ export default function SiswaAbsensi() {
                           )}
                           {item.status}
                         </td>
-                        <td className="px-6 py-4 text-gray-700">
+                        <td className="px-6 py-4 text-gray-700 whitespace-nowrap">
                           {item.waktu}
                         </td>
-                        <td className="px-6 py-4 text-gray-700">
+                        <td className="px-6 py-4 text-gray-700 min-w-[150px]">
                           {item.kegiatan || "-"}
                         </td>
-                        <td className="px-6 py-4 text-gray-700">
+                        <td className="px-6 py-4 text-gray-700 whitespace-nowrap">
                           {item.lokasi ? (
                             <a
                               href={`http://googleusercontent.com/maps.google.com/?q=${item.lokasi}`}
@@ -504,7 +492,7 @@ export default function SiswaAbsensi() {
                             "-"
                           )}
                         </td>
-                        <td className="px-6 py-4 text-gray-700 text-sm">
+                        <td className="px-6 py-4 text-gray-700 text-sm min-w-[150px]">
                           {getKeterangan(item.status, item.catatan)}
                         </td>
                       </tr>
@@ -515,8 +503,8 @@ export default function SiswaAbsensi() {
             </div>
             {/* Pagination Controls */}
             {presensiData.length > itemsPerPage && (
-              <div className="flex justify-between items-center mt-4">
-                <p className="text-sm text-gray-600">
+              <div className="flex flex-col sm:flex-row justify-between items-center mt-4 gap-4 sm:gap-0">
+                <p className="text-sm text-gray-600 text-center sm:text-left">
                   Menampilkan {startIndex + 1}-
                   {Math.min(endIndex, presensiData.length)} dari{" "}
                   {presensiData.length}
@@ -543,19 +531,19 @@ export default function SiswaAbsensi() {
 
           {/* Modal Absen Harian */}
           {showAbsenModal && (
-            <div className="fixed inset-0 flex items-center justify-center z-50">
+            <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
               <div
                 className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
                 onClick={() => setShowAbsenModal(false)}
               ></div>
 
               <div
-                className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full mx-4 p-8 relative z-10 animate-fade-scale max-h-[90vh] overflow-y-auto"
+                className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl mx-0 sm:mx-4 p-6 sm:p-8 relative z-10 animate-fade-scale max-h-[90vh] overflow-y-auto"
                 role="dialog"
                 aria-modal="true"
               >
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-3">
                     <CheckSquare className="w-8 h-8 text-green-600" />
                     Form Absensi
                   </h3>
@@ -572,7 +560,7 @@ export default function SiswaAbsensi() {
                     e.preventDefault();
                     handleAbsenSubmit();
                   }}
-                  className="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-800"
+                  className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 text-gray-800"
                 >
                   {/* Readonly Fields */}
                   {["nama", "nis", "kelas", "tempatPKL"].map((field, idx) => (
@@ -586,7 +574,7 @@ export default function SiswaAbsensi() {
                         type="text"
                         value={(siswaData as any)[field]}
                         readOnly
-                        className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
                       />
                     </div>
                   ))}
@@ -601,7 +589,7 @@ export default function SiswaAbsensi() {
                       onChange={(e) =>
                         setAbsenForm({ ...absenForm, status: e.target.value })
                       }
-                      className="px-4 py-3 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="px-4 py-3 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
                     >
                       <option value="Hadir">Hadir</option>
                       <option value="Pulang">Pulang</option>
@@ -627,7 +615,7 @@ export default function SiswaAbsensi() {
                               foto: e.target.files?.[0] || null,
                             })
                           }
-                          className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
                           required
                         />
                       </div>
@@ -641,13 +629,13 @@ export default function SiswaAbsensi() {
                             type="text"
                             value={absenForm.lokasi}
                             readOnly
-                            className="flex-1 px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="flex-1 px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-0"
                             required
                           />
                           <button
                             type="button"
                             onClick={getCurrentLocation}
-                            className="px-3 bg-indigo-600 text-white rounded-lg"
+                            className="px-3 bg-indigo-600 text-white rounded-lg shrink-0"
                           >
                             <MapPin className="w-4 h-4" />
                           </button>
@@ -662,7 +650,7 @@ export default function SiswaAbsensi() {
                           type="text"
                           value={absenForm.waktuLokasi}
                           readOnly
-                          className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
                         />
                       </div>
                     </>
@@ -682,7 +670,7 @@ export default function SiswaAbsensi() {
                               kegiatan: e.target.value,
                             })
                           }
-                          className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
                           rows={3}
                           required
                         />
@@ -701,7 +689,7 @@ export default function SiswaAbsensi() {
                               foto: e.target.files?.[0] || null,
                             })
                           }
-                          className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
                           required
                         />
                       </div>
@@ -715,13 +703,13 @@ export default function SiswaAbsensi() {
                             type="text"
                             value={absenForm.lokasi}
                             readOnly
-                            className="flex-1 px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="flex-1 px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-0"
                             required
                           />
                           <button
                             type="button"
                             onClick={getCurrentLocation}
-                            className="px-3 bg-indigo-600 text-white rounded-lg"
+                            className="px-3 bg-indigo-600 text-white rounded-lg shrink-0"
                           >
                             <MapPin className="w-4 h-4" />
                           </button>
@@ -744,7 +732,7 @@ export default function SiswaAbsensi() {
                             catatan: e.target.value,
                           })
                         }
-                        className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
                         rows={3}
                         required
                       />
@@ -784,22 +772,22 @@ export default function SiswaAbsensi() {
                           tandaTangan: e.target.files?.[0] || null,
                         })
                       }
-                      className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
                     />
                   </div>
 
                   {/* Buttons */}
-                  <div className="md:col-span-2 flex justify-end gap-4 mt-4">
+                  <div className="md:col-span-2 flex flex-col-reverse sm:flex-row justify-end gap-4 mt-4">
                     <button
                       type="button"
                       onClick={() => setShowAbsenModal(false)}
-                      className="px-6 py-2 bg-gray-500 text-white rounded-xl hover:bg-gray-600"
+                      className="w-full sm:w-auto px-6 py-2 bg-gray-500 text-white rounded-xl hover:bg-gray-600"
                     >
                       Batal
                     </button>
                     <button
                       type="submit"
-                      className="px-6 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 shadow-lg flex items-center gap-2"
+                      className="w-full sm:w-auto px-6 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 shadow-lg flex items-center justify-center gap-2"
                     >
                       <CheckSquare className="w-5 h-5" /> Kirim Absen
                     </button>

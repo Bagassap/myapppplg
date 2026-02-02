@@ -1,6 +1,6 @@
 "use client";
 
-import Sidebar from "@/components/layout/SidebarGuru";
+import Sidebar from "@/components/layout/SidebarGuru"; // Tetap Sidebar Guru
 import TopBar from "@/components/layout/TopBar";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
@@ -17,10 +17,12 @@ import {
   QrCode,
   UserCheck,
   MapPin,
+  X,
   Clock as ClockIcon,
 } from "lucide-react";
 
 export default function GuruAbsensi() {
+  // --- STATE & LOGIC (TIDAK DIUBAH) ---
   const { data: session, status } = useSession();
   const [selectedPKL, setSelectedPKL] = useState("Semua Tempat PKL");
   const [selectedPeriod, setSelectedPeriod] = useState("Bulan Ini");
@@ -37,7 +39,6 @@ export default function GuruAbsensi() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Helper untuk keterangan otomatis
   const getKeterangan = (status: string, catatan: string) => {
     if (catatan) return catatan;
     switch (status) {
@@ -167,6 +168,7 @@ export default function GuruAbsensi() {
   const handleExport = async () => {
     try {
       const params = new URLSearchParams();
+      // ... (Logic export tetap sama) ...
       if (selectedPeriod === "Hari Ini") {
         const today = new Date().toISOString().split("T")[0];
         params.append("startDate", today);
@@ -226,455 +228,402 @@ export default function GuruAbsensi() {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
   };
 
-  // --- TABEL HEADERS UTAMA (RINGKAS) ---
-  const renderTableHeaders = () => {
-    return (
-      <>
-        <th className="px-8 py-5 text-left font-semibold text-gray-700 rounded-tl-2xl text-lg">
-          Tanggal
-        </th>
-        <th className="px-8 py-5 text-left font-semibold text-gray-700 text-lg">
-          Siswa
-        </th>
-        <th className="px-8 py-5 text-left font-semibold text-gray-700 text-lg">
-          Tempat PKL
-        </th>
-        <th className="px-8 py-5 text-left font-semibold text-gray-700 text-lg">
-          Status
-        </th>
-        <th className="px-8 py-5 text-left font-semibold text-gray-700 text-lg">
-          Waktu
-        </th>
-        <th className="px-8 py-5 text-left font-semibold text-gray-700 rounded-tr-2xl text-lg">
-          Aksi
-        </th>
-      </>
-    );
-  };
+  // --- RENDER VISUAL (DISAMAKAN DENGAN ADMIN) ---
 
-  // --- TABEL ROW UTAMA (RINGKAS + TOMBOL LIHAT) ---
-  const renderTableRow = (item: {
-    id: number;
-    siswa: string;
-    tempatPKL: string;
-    status: string;
-    waktu: string;
-    tanggal: string;
-  }) => {
+  if (loading || error) {
     return (
-      <tr
-        key={item.id}
-        className="border-b border-gray-100 hover:bg-indigo-50 transition-colors duration-200"
-      >
-        <td className="px-8 py-5 font-medium text-gray-900 text-lg">
-          {item.tanggal}
-        </td>
-        <td className="px-8 py-5 text-gray-700 text-lg font-medium">
-          {item.siswa}
-        </td>
-        <td className="px-8 py-5 text-gray-700 text-lg">{item.tempatPKL}</td>
-        <td className="px-8 py-5 text-gray-700 flex items-center gap-3 text-lg">
-          {item.status === "Hadir" && (
-            <CheckSquare className="w-5 h-5 text-green-600" />
-          )}
-          {item.status === "Pulang" && (
-            <Clock className="w-5 h-5 text-blue-500" />
-          )}
-          {item.status === "Terlambat" && (
-            <Clock className="w-5 h-5 text-yellow-500" />
-          )}
-          {(item.status === "Izin" || item.status === "Sakit") && (
-            <AlertCircle className="w-5 h-5 text-red-500" />
-          )}
-          {item.status === "Libur" && (
-            <Calendar className="w-5 h-5 text-purple-500" />
-          )}
-          {item.status}
-        </td>
-        <td className="px-8 py-5 text-gray-700 text-lg">{item.waktu}</td>
-        <td className="px-8 py-5 text-gray-700 text-lg">
-          <button
-            onClick={() => handleViewSiswaPresensi(item.siswa)}
-            className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors duration-200 flex items-center gap-2 text-lg"
-          >
-            <UserCheck className="w-5 h-5" />
-            Lihat Presensi
-          </button>
-        </td>
-      </tr>
-    );
-  };
-
-  if (loading) {
-    return (
-      <div className="flex h-screen bg-gray-50">
+      <div className="flex h-screen bg-gray-50 overflow-hidden">
         <Sidebar />
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0">
           <TopBar />
-          <main className="flex-1 p-8 flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Memuat data absensi...</p>
-            </div>
+          <main className="flex-1 flex items-center justify-center p-6 sm:p-8 lg:p-12">
+            {loading ? (
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
+            ) : (
+              <p className="text-red-600">{error}</p>
+            )}
           </main>
         </div>
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="flex h-screen bg-gray-50">
-        <Sidebar />
-        <div className="flex-1 flex flex-col">
-          <TopBar />
-          <main className="flex-1 p-8 flex items-center justify-center">
-            <div className="text-center">
-              <XCircle className="w-12 h-12 text-red-500 mx-auto" />
-              <p className="mt-4 text-red-600">{error}</p>
-            </div>
-          </main>
-        </div>
-      </div>
-    );
-  }
+  const renderTableHeaders = () => (
+    <>
+      <th className="px-6 py-4 text-left font-semibold text-gray-700 rounded-tl-xl text-base whitespace-nowrap">
+        Tanggal
+      </th>
+      <th className="px-6 py-4 text-left font-semibold text-gray-700 text-base whitespace-nowrap">
+        Siswa
+      </th>
+      <th className="px-6 py-4 text-left font-semibold text-gray-700 text-base whitespace-nowrap">
+        Tempat PKL
+      </th>
+      <th className="px-6 py-4 text-left font-semibold text-gray-700 text-base whitespace-nowrap">
+        Status
+      </th>
+      <th className="px-6 py-4 text-left font-semibold text-gray-700 text-base whitespace-nowrap">
+        Waktu
+      </th>
+      <th className="px-6 py-4 text-left font-semibold text-gray-700 rounded-tr-xl text-base whitespace-nowrap">
+        Aksi
+      </th>
+    </>
+  );
+
+  const renderTableRow = (item: any) => (
+    <tr
+      key={item.id}
+      className="border-b border-gray-100 hover:bg-indigo-50 transition-colors"
+    >
+      <td className="px-6 py-4 font-medium text-gray-900 text-base whitespace-nowrap">
+        {item.tanggal}
+      </td>
+      <td className="px-6 py-4 text-gray-700 text-base font-medium whitespace-nowrap">
+        {item.siswa}
+      </td>
+      <td className="px-6 py-4 text-gray-700 text-base whitespace-nowrap">
+        {item.tempatPKL}
+      </td>
+      <td className="px-6 py-4 text-gray-700 flex items-center gap-2 text-base whitespace-nowrap">
+        {item.status === "Hadir" && (
+          <CheckSquare className="w-4 h-4 text-green-600" />
+        )}
+        {item.status === "Pulang" && (
+          <Clock className="w-4 h-4 text-blue-500" />
+        )}
+        {item.status === "Terlambat" && (
+          <Clock className="w-4 h-4 text-yellow-500" />
+        )}
+        {(item.status === "Izin" || item.status === "Sakit") && (
+          <AlertCircle className="w-4 h-4 text-red-500" />
+        )}
+        {item.status === "Libur" && (
+          <Calendar className="w-4 h-4 text-purple-500" />
+        )}
+        {item.status}
+      </td>
+      <td className="px-6 py-4 text-gray-700 text-base whitespace-nowrap">
+        {item.waktu}
+      </td>
+      <td className="px-6 py-4 text-gray-700 text-base whitespace-nowrap">
+        <button
+          onClick={() => handleViewSiswaPresensi(item.siswa)}
+          className="p-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors duration-200 flex items-center gap-2"
+        >
+          <UserCheck className="w-4 h-4" />
+          <span className="hidden sm:inline">Lihat</span>
+        </button>
+      </td>
+    </tr>
+  );
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar />
-        <main className="flex-1 p-18 overflow-auto">
+        {/* Main Wrapper with increased padding (p-6 sm:p-8 lg:p-12) */}
+        <main className="flex-1 p-6 sm:p-8 lg:p-12 overflow-y-auto overflow-x-hidden w-full max-w-full">
           {/* Header Section */}
-          <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-              <Calendar className="w-12 h-12 text-indigo-600 animate-pulse" />
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-xl sm:text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2 sm:gap-3">
+              <Calendar className="w-8 h-8 sm:w-12 sm:h-12 text-indigo-600 animate-pulse" />
               Absensi
             </h1>
-            <p className="text-gray-600 text-lg">Lihat data absensi siswa</p>
+            <p className="text-gray-600 text-sm sm:text-lg">
+              Lihat presensi siswa untuk tempat PKL yang Anda bimbing.
+            </p>
           </div>
 
-          {/* Filter Section */}
-          <div className="bg-white p-8 rounded-3xl shadow-2xl border border-gray-200 mb-10 hover:shadow-3xl transition-shadow duration-300">
-            <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-              <Filter className="w-7 h-7 text-indigo-600" />
-              Filter dan Ekspor Data
+          {/* Filter Card */}
+          <div className="bg-white p-4 sm:p-8 rounded-2xl sm:rounded-3xl shadow-lg border border-gray-200 mb-6 sm:mb-10 hover:shadow-xl transition-shadow duration-300">
+            <h3 className="text-lg sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center gap-2">
+              <Filter className="w-5 h-5 sm:w-7 sm:h-7 text-indigo-600" />
+              Filter & Ekspor
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-8 items-end">
-              {/* Filter Tempat PKL */}
-              <div className="flex flex-col">
-                <label className="text-lg font-semibold text-gray-700 mb-3">
-                  Pilih Tempat PKL
-                </label>
-                <select
-                  value={selectedPKL}
-                  onChange={(e) => setSelectedPKL(e.target.value)}
-                  className="px-5 py-4 border border-indigo-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 hover:shadow-md text-lg"
-                >
-                  <option>Semua Tempat PKL</option>
-                  {[...new Set(presensiData.map((item) => item.tempatPKL))].map(
-                    (pkl) => (
-                      <option key={pkl} value={pkl}>
-                        {pkl}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              {[
+                {
+                  label: "Tempat PKL",
+                  val: selectedPKL,
+                  set: setSelectedPKL,
+                  opt: [
+                    "Semua Tempat PKL",
+                    ...new Set(presensiData.map((i) => i.tempatPKL)),
+                  ],
+                },
+                {
+                  label: "Periode",
+                  val: selectedPeriod,
+                  set: setSelectedPeriod,
+                  opt: ["Hari Ini", "Bulan Ini", "Tahun Ini"],
+                },
+                {
+                  label: "Siswa",
+                  val: selectedSiswa,
+                  set: setSelectedSiswa,
+                  opt: [
+                    "Semua Siswa",
+                    ...new Set(presensiData.map((i) => i.siswa)),
+                  ],
+                },
+                {
+                  label: "Status",
+                  val: selectedStatus,
+                  set: setSelectedStatus,
+                  opt: ["Semua", "Hadir", "Pulang", "Izin", "Libur"],
+                },
+              ].map((f, idx) => (
+                <div key={idx} className="flex flex-col">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
+                    {f.label}
+                  </label>
+                  <select
+                    value={f.val}
+                    onChange={(e) => f.set(e.target.value)}
+                    className="w-full px-3 py-2 sm:py-3 border border-indigo-200 rounded-xl bg-gray-50 text-sm sm:text-base focus:ring-2 focus:ring-indigo-500 outline-none transition-all duration-200"
+                  >
+                    {f.opt.map((o) => (
+                      <option key={o} value={o === "Semua Siswa" ? "" : o}>
+                        {o}
                       </option>
-                    ),
-                  )}
-                </select>
-              </div>
-              {/* Filter Periode */}
-              <div className="flex flex-col">
-                <label className="text-lg font-semibold text-gray-700 mb-3">
-                  Pilih Periode
-                </label>
-                <select
-                  value={selectedPeriod}
-                  onChange={(e) => setSelectedPeriod(e.target.value)}
-                  className="px-5 py-4 border border-indigo-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 hover:shadow-md text-lg"
-                >
-                  <option>Hari Ini</option>
-                  <option>Bulan Ini</option>
-                  <option>Tahun Ini</option>
-                </select>
-              </div>
-              {/* Filter Siswa */}
-              <div className="flex flex-col">
-                <label className="text-lg font-semibold text-gray-700 mb-3">
-                  Pilih Siswa
-                </label>
-                <select
-                  value={selectedSiswa}
-                  onChange={(e) => setSelectedSiswa(e.target.value)}
-                  className="px-5 py-4 border border-indigo-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 hover:shadow-md text-lg"
-                >
-                  <option value="">Semua Siswa</option>
-                  {[...new Set(presensiData.map((item) => item.siswa))].map(
-                    (siswa) => (
-                      <option key={siswa} value={siswa}>
-                        {siswa}
-                      </option>
-                    ),
-                  )}
-                </select>
-              </div>
-              {/* Filter Status */}
-              <div className="flex flex-col">
-                <label className="text-lg font-semibold text-gray-700 mb-3">
-                  Pilih Status
-                </label>
-                <select
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="px-5 py-4 border border-indigo-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 hover:shadow-md text-lg"
-                >
-                  <option>Semua</option>
-                  <option>Hadir</option>
-                  <option>Pulang</option>
-                  <option>Izin</option>
-                  <option>Libur</option>
-                </select>
-              </div>
-              {/* Tombol Ekspor */}
-              <div className="flex justify-start md:justify-end">
+                    ))}
+                  </select>
+                </div>
+              ))}
+              <div className="flex items-end">
                 <button
                   onClick={handleExport}
-                  className="flex items-center gap-3 px-8 py-4 bg-linear-to-r from-indigo-600 to-blue-600 text-white rounded-xl shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 text-lg"
+                  className="w-full flex items-center justify-center gap-2 py-2 sm:py-3 bg-linear-to-r from-indigo-600 to-blue-600 text-white rounded-xl shadow hover:bg-indigo-700 hover:from-indigo-700 hover:to-blue-700 transition-all text-sm sm:text-base font-medium transform hover:scale-105"
                 >
-                  <Download className="w-6 h-6" />
-                  Ekspor Data
+                  <Download className="w-4 h-4 sm:w-5 sm:h-5" /> Ekspor
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Metode Pencatatan Absensi */}
-          <div className="bg-white p-8 rounded-3xl shadow-2xl mb-10 border border-gray-200 hover:shadow-3xl transition-shadow duration-300">
-            <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-              <UserCheck className="w-7 h-7 text-indigo-600" />
-              Metode Pencatatan Absensi
+          {/* Quick Action Card (Metode Pencatatan) */}
+          <div className="bg-white p-4 sm:p-8 rounded-2xl sm:rounded-3xl shadow-lg border border-gray-200 mb-6 sm:mb-10 hover:shadow-xl transition-shadow duration-300">
+            <h3 className="text-lg sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center gap-2">
+              <UserCheck className="w-5 h-5 sm:w-7 sm:h-7 text-indigo-600" />
+              Metode Pencatatan
             </h3>
-            <div className="flex gap-6">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <button
                 onClick={handleScanQR}
-                className="flex items-center gap-3 px-8 py-4 bg-linear-to-r from-green-600 to-green-700 text-white rounded-xl shadow-lg hover:shadow-xl hover:from-green-700 hover:to-green-800 transition-all duration-300 transform hover:scale-105 text-lg"
+                className="flex-1 flex items-center justify-center gap-2 py-3 bg-linear-to-r from-green-600 to-green-700 text-white rounded-xl font-medium hover:from-green-700 hover:to-green-800 transition-all text-sm sm:text-base shadow-lg hover:shadow-xl transform hover:scale-105"
               >
-                <QrCode className="w-6 h-6" />
-                Scan QR Code
+                <QrCode className="w-5 h-5" /> Scan QR
               </button>
               <button
                 onClick={handleManualInput}
-                className="flex items-center gap-3 px-8 py-4 bg-linear-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 transform hover:scale-105 text-lg"
+                className="flex-1 flex items-center justify-center gap-2 py-3 bg-linear-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 transition-all text-sm sm:text-base shadow-lg hover:shadow-xl transform hover:scale-105"
               >
-                <UserCheck className="w-6 h-6" />
-                Input Manual
+                <UserCheck className="w-5 h-5" /> Input Manual
               </button>
             </div>
           </div>
 
-          {/* Tabel Daftar Presensi */}
-          <div className="bg-white p-8 rounded-3xl shadow-2xl mb-10 border border-gray-200 hover:shadow-3xl transition-shadow duration-300">
-            <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
-              <CheckSquare className="w-7 h-7 text-green-600" />
-              Daftar Presensi Siswa PKL
-            </h3>
-            <div className="overflow-x-auto">
-              <table className="w-full table-auto border-collapse">
+          {/* Table Card */}
+          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-200 overflow-hidden hover:shadow-2xl transition-shadow duration-300">
+            <div className="p-4 sm:p-8 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-lg sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <CheckSquare className="w-5 h-5 sm:w-7 sm:h-7 text-green-600" />
+                Daftar Presensi
+              </h3>
+            </div>
+
+            {/* Table Wrapper with horizontal scroll and no parent meluber */}
+            <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300">
+              <table className="w-full table-auto min-w-[800px] sm:min-w-full">
                 <thead>
-                  <tr className="bg-linear-to-r from-indigo-100 to-blue-100">
+                  <tr className="bg-gray-50 border-b border-gray-100">
                     {renderTableHeaders()}
                   </tr>
                 </thead>
-                <tbody>{currentData.map((item) => renderTableRow(item))}</tbody>
+                <tbody className="divide-y divide-gray-50">
+                  {currentData.map((item) => renderTableRow(item))}
+                </tbody>
               </table>
-              {currentData.length === 0 && (
-                <div className="p-4 text-center text-gray-500">
-                  Tidak ada data untuk periode ini.
-                </div>
-              )}
             </div>
+
+            {currentData.length === 0 && (
+              <div className="py-12 text-center text-gray-500 text-sm sm:text-base">
+                Data tidak ditemukan.
+              </div>
+            )}
+
             {/* Pagination */}
-            <div className="flex justify-between items-center mt-6">
-              <p className="text-lg text-gray-600">
-                Menampilkan {filteredData.length > 0 ? startIndex + 1 : 0}-
+            <div className="p-4 sm:p-8 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-xs sm:text-sm text-gray-600 font-medium">
+                Menampilkan {startIndex + 1}-
                 {Math.min(endIndex, filteredData.length)} dari{" "}
-                {filteredData.length} siswa
+                {filteredData.length}
               </p>
-              <div className="flex gap-3">
+              <div className="flex gap-2 w-full sm:w-auto">
                 <button
-                  onClick={handlePrevious}
                   disabled={currentPage === 1}
-                  className="px-6 py-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2 text-lg"
+                  onClick={handlePrevious}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm disabled:opacity-50 hover:bg-gray-50 transition-colors"
                 >
-                  <ChevronLeft className="w-5 h-5" />
-                  Sebelumnya
+                  <ChevronLeft className="w-4 h-4" /> Prev
                 </button>
-                <span className="px-6 py-3 text-gray-700 text-lg">
-                  Halaman {currentPage} dari {totalPages || 1}
-                </span>
                 <button
-                  onClick={handleNext}
                   disabled={currentPage === totalPages || totalPages === 0}
-                  className="px-6 py-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2 text-lg"
+                  onClick={handleNext}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm disabled:opacity-50 hover:bg-indigo-700 transition-colors"
                 >
-                  Selanjutnya
-                  <ChevronRight className="w-5 h-5" />
+                  Next <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Modal Presensi Siswa */}
+          {/* Modal Riwayat (Mobile Optimized - Sama persis Admin) */}
           {showSiswaPresensi && selectedSiswa && (
-            <div className="fixed inset-0 flex items-center justify-center z-50">
-              {/* Overlay background - DIBUAT IDENTIK DENGAN ABSEN HARIAN SISWA */}
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4">
               <div
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
                 onClick={() => setShowSiswaPresensi(false)}
-              ></div>
-
-              <div
-                className="bg-white rounded-3xl shadow-2xl max-w-6xl w-full mx-4 p-10 animate-fade-scale transform-gpu transition duration-300 ease-out z-10 relative"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="siswa-presensi-title"
-              >
-                <div className="flex justify-between items-center mb-10">
-                  <h3
-                    id="siswa-presensi-title"
-                    className="text-3xl font-bold text-gray-900 flex items-center gap-4"
-                  >
-                    <CheckSquare className="w-10 h-10 text-green-600 animate-pulse" />
-                    Riwayat Presensi {selectedSiswa}
+              />
+              <div className="relative bg-white w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-fade-scale">
+                <div className="p-4 sm:p-6 border-b flex items-center justify-between">
+                  <h3 className="font-bold text-lg sm:text-2xl truncate pr-4 flex items-center gap-2">
+                    <CheckSquare className="w-6 h-6 text-green-600" />
+                    Riwayat {selectedSiswa}
                   </h3>
                   <button
                     onClick={() => setShowSiswaPresensi(false)}
-                    className="text-gray-500 hover:text-gray-700 transition-colors"
-                    aria-label="Close modal"
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                   >
-                    <XCircle className="w-8 h-8" />
+                    <X className="w-6 h-6 text-gray-500" />
                   </button>
                 </div>
-                <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
-                  <table className="w-full table-auto border-collapse">
-                    <thead className="sticky top-0 bg-white">
-                      {/* TABLE HEADERS UNTUK MODAL (LENGKAP) */}
-                      <tr className="bg-linear-to-r from-indigo-100 to-blue-100">
-                        <th className="px-8 py-5 text-left font-semibold text-gray-700 rounded-tl-2xl text-lg">
-                          Tanggal
-                        </th>
-                        <th className="px-8 py-5 text-left font-semibold text-gray-700 text-lg">
-                          Status
-                        </th>
-                        <th className="px-8 py-5 text-left font-semibold text-gray-700 text-lg">
-                          Waktu
-                        </th>
-                        <th className="px-8 py-5 text-left font-semibold text-gray-700 text-lg">
-                          Kegiatan
-                        </th>
-                        <th className="px-8 py-5 text-left font-semibold text-gray-700 text-lg">
-                          Lokasi
-                        </th>
-                        <th className="px-8 py-5 text-left font-semibold text-gray-700 text-lg">
-                          Foto
-                        </th>
-                        <th className="px-8 py-5 text-left font-semibold text-gray-700 text-lg">
-                          TTD
-                        </th>
-                        <th className="px-8 py-5 text-left font-semibold text-gray-700 rounded-tr-2xl text-lg">
-                          Keterangan
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {/* TABLE ROWS UNTUK MODAL (LENGKAP) */}
-                      {(siswaPresensiData[selectedSiswa] || []).map((item) => (
-                        <tr
-                          key={item.id}
-                          className="border-b border-gray-100 hover:bg-indigo-50 transition-colors duration-200"
-                        >
-                          <td className="px-8 py-5 font-medium text-gray-900 text-lg">
-                            {item.tanggal}
-                          </td>
-                          <td className="px-8 py-5 text-gray-700 flex items-center gap-3 text-lg">
-                            {item.status === "Hadir" && (
-                              <CheckSquare className="w-5 h-5 text-green-600" />
-                            )}
-                            {item.status === "Pulang" && (
-                              <Clock className="w-5 h-5 text-blue-500" />
-                            )}
-                            {item.status === "Terlambat" && (
-                              <Clock className="w-5 h-5 text-yellow-500" />
-                            )}
-                            {(item.status === "Izin" ||
-                              item.status === "Sakit") && (
-                              <AlertCircle className="w-5 h-5 text-red-500" />
-                            )}
-                            {item.status === "Libur" && (
-                              <Calendar className="w-5 h-5 text-purple-500" />
-                            )}
-                            {item.status}
-                          </td>
-                          <td className="px-8 py-5 text-gray-700 text-lg">
-                            {item.waktu}
-                          </td>
-                          <td className="px-8 py-5 text-gray-700 text-lg">
-                            {item.kegiatan || "-"}
-                          </td>
-                          <td className="px-8 py-5 text-gray-700 text-lg">
-                            {item.lokasi ? (
-                              <a
-                                href={`https://www.google.com/maps?q=${encodeURIComponent(
-                                  item.lokasi,
-                                )}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 underline flex items-center gap-1"
-                              >
-                                <MapPin className="w-4 h-4" /> Map
-                              </a>
-                            ) : (
-                              "-"
-                            )}
-                          </td>
-                          <td className="px-8 py-5 text-gray-700 text-lg">
-                            {item.status === "Izin" ||
-                            item.status === "Sakit" ? (
-                              item.bukti ? (
-                                <img
-                                  src={item.bukti}
-                                  alt="Bukti"
-                                  className="w-16 h-16 object-cover rounded-md border shadow-sm"
-                                />
-                              ) : (
-                                "-"
-                              )
-                            ) : item.foto ? (
-                              <img
-                                src={item.foto}
-                                alt="Foto"
-                                className="w-16 h-16 object-cover rounded-md border shadow-sm"
-                              />
-                            ) : (
-                              "-"
-                            )}
-                          </td>
-                          <td className="px-8 py-5 text-gray-700 text-lg">
-                            {item.tandaTangan ? (
-                              <img
-                                src={item.tandaTangan}
-                                alt="Tanda Tangan"
-                                className="w-24 h-12 object-contain bg-white rounded border"
-                              />
-                            ) : (
-                              "-"
-                            )}
-                          </td>
-                          <td className="px-8 py-5 text-gray-700 text-lg">
-                            {getKeterangan(item.status, item.catatan)}
-                          </td>
+                <div className="flex-1 overflow-auto p-2 sm:p-6">
+                  <div className="min-w-[800px]">
+                    {/* Inner Modal Table */}
+                    <table className="w-full text-sm sm:text-base border-collapse">
+                      <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
+                        <tr>
+                          <th className="px-4 py-3 text-left font-semibold text-gray-700 rounded-tl-lg">
+                            Tanggal
+                          </th>
+                          <th className="px-4 py-3 text-left font-semibold text-gray-700">
+                            Status
+                          </th>
+                          <th className="px-4 py-3 text-left font-semibold text-gray-700">
+                            Waktu
+                          </th>
+                          <th className="px-4 py-3 text-left font-semibold text-gray-700">
+                            Kegiatan
+                          </th>
+                          <th className="px-4 py-3 text-left font-semibold text-gray-700">
+                            Lokasi
+                          </th>
+                          <th className="px-4 py-3 text-left font-semibold text-gray-700">
+                            Foto/Bukti
+                          </th>
+                          <th className="px-4 py-3 text-left font-semibold text-gray-700">
+                            TTD
+                          </th>
+                          <th className="px-4 py-3 text-left font-semibold text-gray-700 rounded-tr-lg">
+                            Keterangan
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {(siswaPresensiData[selectedSiswa] || []).map(
+                          (item: any) => (
+                            <tr
+                              key={item.id}
+                              className="hover:bg-indigo-50 transition-colors"
+                            >
+                              <td className="px-4 py-3 text-gray-900 font-medium">
+                                {item.tanggal}
+                              </td>
+                              <td className="px-4 py-3 text-gray-700 flex items-center gap-2">
+                                {item.status === "Hadir" && (
+                                  <CheckSquare className="w-4 h-4 text-green-600" />
+                                )}
+                                {item.status === "Pulang" && (
+                                  <Clock className="w-4 h-4 text-blue-500" />
+                                )}
+                                {item.status === "Terlambat" && (
+                                  <Clock className="w-4 h-4 text-yellow-500" />
+                                )}
+                                {(item.status === "Izin" ||
+                                  item.status === "Sakit") && (
+                                  <AlertCircle className="w-4 h-4 text-red-500" />
+                                )}
+                                {item.status === "Libur" && (
+                                  <Calendar className="w-4 h-4 text-purple-500" />
+                                )}
+                                {item.status}
+                              </td>
+                              <td className="px-4 py-3 text-gray-700">
+                                {item.waktu}
+                              </td>
+                              <td className="px-4 py-3 text-gray-700">
+                                {item.kegiatan || "-"}
+                              </td>
+                              <td className="px-4 py-3 text-gray-700">
+                                {item.lokasi ? (
+                                  <a
+                                    href={`http://googleusercontent.com/maps.google.com/?q=${item.lokasi}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 flex items-center gap-1 hover:underline"
+                                  >
+                                    <MapPin className="w-3 h-3" /> Map
+                                  </a>
+                                ) : (
+                                  "-"
+                                )}
+                              </td>
+                              <td className="px-4 py-3">
+                                {item.status === "Izin" ||
+                                item.status === "Sakit" ? (
+                                  item.bukti ? (
+                                    <img
+                                      src={item.bukti}
+                                      alt="Bukti"
+                                      className="w-10 h-10 object-cover rounded border"
+                                    />
+                                  ) : (
+                                    "-"
+                                  )
+                                ) : item.foto ? (
+                                  <img
+                                    src={item.foto}
+                                    alt="Foto"
+                                    className="w-10 h-10 object-cover rounded border"
+                                  />
+                                ) : (
+                                  "-"
+                                )}
+                              </td>
+                              <td className="px-4 py-3">
+                                {item.tandaTangan ? (
+                                  <img
+                                    src={item.tandaTangan}
+                                    alt="TTD"
+                                    className="w-16 h-8 object-contain bg-white rounded border"
+                                  />
+                                ) : (
+                                  "-"
+                                )}
+                              </td>
+                              <td className="px-4 py-3 text-gray-700">
+                                {getKeterangan(item.status, item.catatan)}
+                              </td>
+                            </tr>
+                          ),
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>

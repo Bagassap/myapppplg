@@ -2,48 +2,39 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Search, Sun, Moon, User, LogOut, Loader } from "lucide-react";
-import { useTheme } from "@/contexts/ThemeContext"; // Import context
-import { useRouter } from "next/navigation"; // Import untuk navigasi
-import { useSession, signOut } from "next-auth/react"; // Import untuk session dan signOut
+import { Search, Sun, Moon, User, LogOut, Loader, Menu } from "lucide-react"; // Added Menu
+import { useTheme } from "@/contexts/ThemeContext";
+import { useRouter } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
+import { useSidebar } from "@/contexts/SidebarContext"; // Import Context
 
 export default function TopBar() {
-  // Gunakan theme dari context (bukan state lokal)
   const { theme, setTheme } = useTheme();
-
-  // State untuk dropdown profil
   const [showProfile, setShowProfile] = useState(false);
-
-  // Ref untuk mendeteksi klik di luar dropdown
   const profileRef = useRef<HTMLDivElement>(null);
-
-  // Router untuk navigasi
   const router = useRouter();
-
-  // Session dari NextAuth
   const { data: session, status } = useSession();
 
-  // Fungsi toggle tema (Light ↔ Dark)
+  // Use Sidebar Context
+  const { toggleMobileSidebar } = useSidebar();
+
   const toggleTheme = () => {
     const newTheme = theme === "Dark" ? "Light" : "Dark";
     setTheme(newTheme);
-    console.log("Theme toggled to:", newTheme); // Debug: cek di console
-    console.log("Current theme state:", theme); // Debug tambahan
+    console.log("Theme toggled to:", newTheme);
+    console.log("Current theme state:", theme);
   };
 
-  // Fungsi untuk menu Profile
   const handleProfile = () => {
-    setShowProfile(false); // Tutup dropdown
-    router.push("/profile"); // Navigasi ke halaman profile (sesuaikan path)
+    setShowProfile(false);
+    router.push("/profile");
   };
 
-  // Fungsi untuk menu Logout
   const handleLogout = async () => {
-    setShowProfile(false); // Tutup dropdown
-    await signOut({ callbackUrl: "/login" }); // Logout dengan NextAuth dan redirect ke login
+    setShowProfile(false);
+    await signOut({ callbackUrl: "/login" });
   };
 
-  // Efek untuk menutup dropdown saat klik di luar
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -57,7 +48,6 @@ export default function TopBar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Jika session sedang loading, tampilkan loading
   if (status === "loading") {
     return (
       <header className="flex items-center justify-between px-6 py-6 bg-white border-b border-gray-200">
@@ -69,26 +59,35 @@ export default function TopBar() {
     );
   }
 
-  // Jika tidak ada session, redirect ke login atau tampilkan placeholder
   if (!session) {
-    router.push("/login"); // Redirect jika belum login
-    return null; // Atau tampilkan placeholder
+    router.push("/login");
+    return null;
   }
 
   return (
-    <header className="flex items-center justify-between px-6 py-6 bg-white border-b border-gray-200">
-      {/* Left: Title */}
-      <div>
-        <h2 className="text-2xl font-semibold text-gray-900">
-          Presensi Online PPLG
-        </h2>
-        <p className="text-sm text-gray-600">Welcome back!</p>
+    <header className="flex items-center justify-between px-6 py-6 bg-white border-b border-gray-200 sticky top-0 z-30">
+      {/* Left: Toggle & Title */}
+      <div className="flex items-center gap-4">
+        {/* Toggle Button (Mobile Only) */}
+        <button
+          onClick={toggleMobileSidebar}
+          className="lg:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+
+        <div>
+          <h2 className="text-2xl font-semibold text-gray-900">
+            Presensi Online PPLG
+          </h2>
+          <p className="text-sm text-gray-600">Welcome back!</p>
+        </div>
       </div>
 
       {/* Right: Search & Actions */}
       <div className="flex items-center gap-6">
-        {/* Search box */}
-        <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-lg">
+        {/* Search box - Hidden on very small screens if needed, otherwise keep */}
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-lg">
           <Search className="w-5 h-5 text-gray-400" />
           <input
             type="text"
@@ -99,7 +98,6 @@ export default function TopBar() {
 
         {/* Icons */}
         <div className="flex items-center gap-4 relative">
-          {/* Dark/Light Mode Toggle - Sekarang satu tombol toggle */}
           <div className="cursor-pointer" onClick={toggleTheme}>
             {theme === "Dark" ? (
               <Sun className="w-5 h-5 text-yellow-500 transition-colors" />
@@ -115,12 +113,13 @@ export default function TopBar() {
               onClick={() => setShowProfile(!showProfile)}
             >
               <img
-                src={session.user?.image || "https://i.pravatar.cc/40"} // Foto dari session atau fallback
+                src={session.user?.image || "https://i.pravatar.cc/40"}
                 alt="User"
                 className="w-8 h-8 rounded-full"
               />
-              <span className="text-sm font-medium text-gray-900">
-                {session.user?.name || "User"} {/* Nama dari session */}
+              {/* Hide Name on small mobile screens to save space */}
+              <span className="hidden sm:block text-sm font-medium text-gray-900">
+                {session.user?.name || "User"}
               </span>
             </div>
             {showProfile && (

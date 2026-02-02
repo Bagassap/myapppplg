@@ -34,7 +34,6 @@ export default function GuruDataSiswa() {
 
   const itemsPerPage = 10;
 
-  // Fetch data siswa dari API saat komponen mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -47,15 +46,14 @@ export default function GuruDataSiswa() {
           return;
         }
 
-        // Group data berdasarkan tempatPKL
         const grouped: Record<string, Siswa[]> = {};
         data.forEach((item: any) => {
           const tempatPKL = item.tempatPKL || "Tidak Diketahui";
           if (!grouped[tempatPKL]) grouped[tempatPKL] = [];
           grouped[tempatPKL].push({
             id: item.id,
-            nama: item.name || "Tidak Diketahui", // pastikan backend sudah kirim name di property 'name'
-            nis: item.userId || "Tidak Ada", // userId sebagai nis sesuai backend
+            nama: item.name || "Tidak Diketahui",
+            nis: item.userId || "Tidak Ada",
             kelas: item.kelas || "Tidak Ada",
             tempatPKL,
           });
@@ -121,38 +119,38 @@ export default function GuruDataSiswa() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
-        <main className="flex-1 p-18 overflow-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto overflow-x-hidden w-full">
           {/* Header Section */}
           <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-              <Users className="w-10 h-10 text-indigo-600 animate-pulse" />
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+              <Users className="w-8 h-8 sm:w-10 sm:h-10 text-indigo-600 animate-pulse" />
               Data Siswa PKL
             </h1>
-            <p className="text-gray-600 text-lg">
+            <p className="text-gray-600 text-sm sm:text-base md:text-lg">
               Lihat data siswa di tempat PKL yang Anda bimbing untuk verifikasi
               presensi atau memberikan laporan ke orang tua.
             </p>
           </div>
 
-          {/* Filter Section */}
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
+          {/* Filter Section - TIDAK DIUBAH */}
+          <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <Filter className="w-5 h-5 text-indigo-500" />
               Filter Tempat PKL
             </h3>
             <div className="flex flex-col md:flex-row gap-6 items-end justify-between">
-              <div className="flex flex-col">
+              <div className="flex flex-col w-full md:w-auto">
                 <label className="text-sm font-medium text-gray-700 mb-2">
                   Pilih Tempat PKL
                 </label>
                 <select
                   value={selectedPKL}
                   onChange={(e) => setSelectedPKL(e.target.value)}
-                  className="px-4 py-3 border border-indigo-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 hover:shadow-md"
+                  className="px-4 py-3 border border-indigo-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 hover:shadow-md w-full"
                 >
                   <option>Semua Tempat PKL</option>
                   {pklPlaces.map((pkl) => (
@@ -169,26 +167,28 @@ export default function GuruDataSiswa() {
           {filteredPKLs.map((pkl) => (
             <div
               key={pkl}
-              className="bg-white p-6 rounded-2xl shadow-lg mb-8 border border-gray-100"
+              className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg mb-8 border border-gray-100"
             >
               <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
                 <School className="w-6 h-6 text-indigo-600" />
                 {pkl}
               </h3>
-              <div className="overflow-x-auto">
-                <table className="w-full table-auto border-collapse">
+
+              {/* MODIFIKASI DIMULAI: Table Wrapper & Responsive Classes */}
+              <div className="w-full overflow-x-auto">
+                <table className="w-full table-auto border-collapse min-w-[800px]">
                   <thead>
                     <tr className="bg-linear-to-r from-indigo-100 to-blue-100">
-                      <th className="px-6 py-4 text-left font-semibold text-gray-700 rounded-tl-xl">
+                      <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-left font-semibold text-gray-700 rounded-tl-xl whitespace-nowrap">
                         Nomor
                       </th>
-                      <th className="px-6 py-4 text-left font-semibold text-gray-700">
+                      <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-left font-semibold text-gray-700 whitespace-nowrap">
                         Nama Siswa
                       </th>
-                      <th className="px-6 py-4 text-left font-semibold text-gray-700">
+                      <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-left font-semibold text-gray-700 whitespace-nowrap">
                         NIS
                       </th>
-                      <th className="px-6 py-4 text-left font-semibold text-gray-700 rounded-tr-xl">
+                      <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-left font-semibold text-gray-700 rounded-tr-xl whitespace-nowrap">
                         Kelas
                       </th>
                     </tr>
@@ -200,14 +200,16 @@ export default function GuruDataSiswa() {
                         className="border-b border-gray-100 cursor-pointer hover:bg-indigo-50 transition"
                         onClick={() => openModal(siswa)}
                       >
-                        <td className="px-6 py-4 font-medium text-gray-900">
+                        <td className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base font-medium text-gray-900">
                           {idx + 1}
                         </td>
-                        <td className="px-6 py-4 text-gray-700">
+                        <td className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-gray-700">
                           {siswa.nama}
                         </td>
-                        <td className="px-6 py-4 text-gray-700">{siswa.nis}</td>
-                        <td className="px-6 py-4 text-gray-700">
+                        <td className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-gray-700">
+                          {siswa.nis}
+                        </td>
+                        <td className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4 text-xs sm:text-sm lg:text-base text-gray-700">
                           {siswa.kelas}
                         </td>
                       </tr>
@@ -215,6 +217,8 @@ export default function GuruDataSiswa() {
                   </tbody>
                 </table>
               </div>
+              {/* MODIFIKASI BERAKHIR */}
+
               <p className="text-sm text-gray-600 mt-4">
                 Menampilkan 10 dari {(siswaData[pkl] || []).length} siswa di{" "}
                 {pkl}
@@ -224,13 +228,17 @@ export default function GuruDataSiswa() {
 
           {/* Modal Detail Siswa */}
           {showModal && selectedSiswa && (
-            <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+            <div
+              className="fixed inset-0 flex items-center justify-center z-50 p-4"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="modal-title"
+            >
               <div
-                className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full mx-4 p-10 pointer-events-auto animate-fade-scale transform-gpu transition duration-300 ease-out"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="modal-title"
-              >
+                className="fixed inset-0 bg-black/50 transition-opacity"
+                onClick={closeModal}
+              />
+              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl p-6 sm:p-10 relative z-10 overflow-y-auto max-h-[90vh]">
                 <div className="flex justify-between items-center mb-8">
                   <h3
                     id="modal-title"
@@ -248,50 +256,64 @@ export default function GuruDataSiswa() {
                   </button>
                 </div>
 
-                <table className="w-full table-auto border-collapse text-gray-800">
-                  <tbody>
-                    <tr className="border-b border-gray-200">
-                      <th className="px-6 py-4 text-left font-semibold w-1/4">
-                        Nomor
-                      </th>
-                      <td className="px-6 py-4">{selectedSiswa.id}</td>
-                    </tr>
-                    <tr className="border-b border-gray-200">
-                      <th className="px-6 py-4 text-left font-semibold">
-                        Nama
-                      </th>
-                      <td className="px-6 py-4">{selectedSiswa.nama}</td>
-                    </tr>
-                    <tr className="border-b border-gray-200">
-                      <th className="px-6 py-4 text-left font-semibold">NIS</th>
-                      <td className="px-6 py-4">{selectedSiswa.nis}</td>
-                    </tr>
-                    <tr className="border-b border-gray-200">
-                      <th className="px-6 py-4 text-left font-semibold">
-                        Kelas
-                      </th>
-                      <td className="px-6 py-4">{selectedSiswa.kelas}</td>
-                    </tr>
-                    <tr>
-                      <th className="px-6 py-4 text-left font-semibold">
-                        Tempat PKL
-                      </th>
-                      <td className="px-6 py-4">{selectedSiswa.tempatPKL}</td>
-                    </tr>
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full table-auto border-collapse text-gray-800">
+                    <tbody>
+                      <tr className="border-b border-gray-200">
+                        <th className="px-4 sm:px-6 py-4 text-left font-semibold w-1/3">
+                          Nomor
+                        </th>
+                        <td className="px-4 sm:px-6 py-4">
+                          {selectedSiswa.id}
+                        </td>
+                      </tr>
+                      <tr className="border-b border-gray-200">
+                        <th className="px-4 sm:px-6 py-4 text-left font-semibold">
+                          Nama
+                        </th>
+                        <td className="px-4 sm:px-6 py-4">
+                          {selectedSiswa.nama}
+                        </td>
+                      </tr>
+                      <tr className="border-b border-gray-200">
+                        <th className="px-4 sm:px-6 py-4 text-left font-semibold">
+                          NIS
+                        </th>
+                        <td className="px-4 sm:px-6 py-4">
+                          {selectedSiswa.nis}
+                        </td>
+                      </tr>
+                      <tr className="border-b border-gray-200">
+                        <th className="px-4 sm:px-6 py-4 text-left font-semibold">
+                          Kelas
+                        </th>
+                        <td className="px-4 sm:px-6 py-4">
+                          {selectedSiswa.kelas}
+                        </td>
+                      </tr>
+                      <tr>
+                        <th className="px-4 sm:px-6 py-4 text-left font-semibold">
+                          Tempat PKL
+                        </th>
+                        <td className="px-4 sm:px-6 py-4">
+                          {selectedSiswa.tempatPKL}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
 
-                <div className="flex justify-end gap-4 mt-6">
+                <div className="flex flex-col sm:flex-row justify-end gap-4 mt-6">
                   <button
                     onClick={handleVerifikasiPresensi}
-                    className="flex items-center gap-2 px-6 py-3 bg-green-500 text-white rounded-xl shadow-lg hover:shadow-xl hover:bg-green-600 transition-all duration-200 transform hover:scale-105"
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-green-500 text-white rounded-xl shadow-lg hover:shadow-xl hover:bg-green-600 transition-all duration-200 transform hover:scale-105"
                   >
                     <CheckCircle className="w-5 h-5" />
                     Verifikasi Presensi
                   </button>
                   <button
                     onClick={handleKirimLaporan}
-                    className="flex items-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-xl shadow-lg hover:shadow-xl hover:bg-blue-600 transition-all duration-200 transform hover:scale-105"
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-xl shadow-lg hover:shadow-xl hover:bg-blue-600 transition-all duration-200 transform hover:scale-105"
                   >
                     <Send className="w-5 h-5" />
                     Kirim Laporan ke Orang Tua
@@ -301,6 +323,7 @@ export default function GuruDataSiswa() {
             </div>
           )}
 
+          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-center items-center mt-8">
               <div className="flex gap-2">
