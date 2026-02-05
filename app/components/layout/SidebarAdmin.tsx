@@ -21,7 +21,7 @@ interface MenuItem {
   icon: ReactElement;
 }
 
-export default function SidebarAdmin() {
+export default function SidebarSiswa() {
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(true);
@@ -30,10 +30,10 @@ export default function SidebarAdmin() {
   const { isMobileOpen, closeMobileSidebar } = useSidebar();
 
   const menu: MenuItem[] = [
-    { name: "Dashboard", href: "/admin/dashboard", icon: <LayoutDashboard /> },
-    { name: "Absensi", href: "/admin/absensi", icon: <ClipboardList /> },
-    { name: "Informasi", href: "/admin/informasi", icon: <MessageSquare /> },
-    { name: "Data Siswa", href: "/admin/data-siswa", icon: <Users /> },
+    { name: "Dashboard", href: "/siswa/dashboard", icon: <LayoutDashboard /> },
+    { name: "Absensi", href: "/siswa/absensi", icon: <ClipboardList /> },
+    { name: "Informasi", href: "/siswa/informasi", icon: <MessageSquare /> },
+    { name: "Data Siswa", href: "/siswa/data-siswa", icon: <Users /> },
   ];
 
   const handleLogout = () => {
@@ -47,7 +47,7 @@ export default function SidebarAdmin() {
       {isMobileOpen && (
         <div
           onClick={closeMobileSidebar}
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden glass"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"
         />
       )}
 
@@ -56,8 +56,8 @@ export default function SidebarAdmin() {
           bg-linear-to-b from-indigo-700 via-indigo-600 to-blue-600 text-white flex flex-col justify-between shadow-2xl min-h-screen transition-all duration-300
           ${isOpen ? "w-80" : "w-20"} 
           rounded-r-2xl
-          
-          /* --- RESPONSIVE CLASSES ADDED HERE --- */
+
+          /* --- RESPONSIVE CLASSES --- */
           fixed inset-y-0 left-0 z-50
           lg:static lg:translate-x-0
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
@@ -77,9 +77,11 @@ export default function SidebarAdmin() {
                 />
               </div>
             )}
+
+            {/* Tombol Toggle Desktop (Internal state) */}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="p-2 hover:bg-white/20 rounded-md transition-all duration-300 hover:rotate-180"
+              className="p-2 hover:bg-white/20 rounded-md transition-all duration-300 hover:rotate-180 hidden lg:block"
               aria-label="Toggle sidebar"
             >
               {isOpen ? (
@@ -87,6 +89,15 @@ export default function SidebarAdmin() {
               ) : (
                 <Menu className="text-white w-6 h-6" />
               )}
+            </button>
+
+            {/* Tombol Close Mobile (Hanya muncul di mobile) */}
+            <button
+              onClick={closeMobileSidebar}
+              className="p-2 hover:bg-white/20 rounded-md transition-all duration-300 lg:hidden"
+              aria-label="Close mobile sidebar"
+            >
+              <ChevronLeft className="text-white w-6 h-6" />
             </button>
           </div>
           {/* Garis Pemisah */}
@@ -98,6 +109,7 @@ export default function SidebarAdmin() {
             </div>
           )}
         </div>
+
         {/* Menu Navigasi */}
         <nav className="flex-1 flex flex-col gap-6 px-4 overflow-y-auto">
           {menu.map((item, idx) => {
@@ -131,6 +143,7 @@ export default function SidebarAdmin() {
             );
           })}
         </nav>
+
         {/* Footer */}
         <div className="p-4 border-t border-white/30 flex flex-col gap-4 shrink-0">
           <button
@@ -143,7 +156,7 @@ export default function SidebarAdmin() {
           </button>
           {isOpen && (
             <p className="text-sm text-blue-300 mt-2 text-center animate-fade-in">
-              © 2025 NextsideAPP
+              © 2026 PPLG Nusa
             </p>
           )}
         </div>

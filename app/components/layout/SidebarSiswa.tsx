@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+// 1. Import signOut
+import { signOut } from "next-auth/react";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -12,7 +14,6 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { useState, ReactElement } from "react";
-// Import Context
 import { useSidebar } from "@/contexts/SidebarContext";
 
 interface MenuItem {
@@ -23,10 +24,9 @@ interface MenuItem {
 
 export default function SidebarSiswa() {
   const pathname = usePathname();
-  const router = useRouter();
+  // useRouter dihapus
   const [isOpen, setIsOpen] = useState(true);
 
-  // Gunakan context untuk mobile state
   const { isMobileOpen, closeMobileSidebar } = useSidebar();
 
   const menu: MenuItem[] = [
@@ -36,9 +36,9 @@ export default function SidebarSiswa() {
     { name: "Data Siswa", href: "/siswa/data-siswa", icon: <Users /> },
   ];
 
+  // 2. LOGOUT YANG BENAR
   const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    router.push("/login");
+    signOut({ callbackUrl: "/login" });
   };
 
   return (
@@ -53,7 +53,7 @@ export default function SidebarSiswa() {
 
       <aside
         className={`
-          bg-linear-to-b from-indigo-700 via-indigo-600 to-blue-600 text-white flex flex-col justify-between shadow-2xl min-h-screen transition-all duration-300
+          bg-gradient-to-b from-indigo-700 via-indigo-600 to-blue-600 text-white flex flex-col justify-between shadow-2xl min-h-screen transition-all duration-300
           ${isOpen ? "w-80" : "w-20"} 
           rounded-r-2xl
 
@@ -118,7 +118,7 @@ export default function SidebarSiswa() {
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={closeMobileSidebar} // Tutup sidebar saat link diklik di mobile
+                onClick={closeMobileSidebar}
                 className={`group flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 ease-in-out text-base font-medium tracking-wide hover:bg-white/15 hover:shadow-sm ${
                   active ? "bg-white/20 shadow-md" : ""
                 }`}
@@ -129,7 +129,7 @@ export default function SidebarSiswa() {
                   className={`flex items-center justify-center w-6 h-6 text-white transition-all duration-300 rounded-md ${
                     active
                       ? " text-white"
-                      : "texr-white/50 group-hover:text-white"
+                      : "text-white/50 group-hover:text-white"
                   }`}
                 >
                   {item.icon}
@@ -148,7 +148,7 @@ export default function SidebarSiswa() {
         <div className="p-4 border-t border-white/30 flex flex-col gap-4 shrink-0">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-white/15 transition-all duration-300 hover:shadow-sm text-base font-medium"
+            className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-white/15 transition-all duration-300 hover:shadow-sm text-base font-medium w-full text-left"
             aria-label="Logout"
           >
             <LogOut className="w-6 h-6 text-indigo-300" />
@@ -156,7 +156,7 @@ export default function SidebarSiswa() {
           </button>
           {isOpen && (
             <p className="text-sm text-blue-300 mt-2 text-center animate-fade-in">
-              © 2025 NextsideAPP
+              © 2026 PPLG Nusa
             </p>
           )}
         </div>
