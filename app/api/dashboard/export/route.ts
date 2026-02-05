@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { PrismaClient } from "@prisma/client";
+// ✅ IMPORT DARI LIB (Jangan bikin new PrismaClient lagi)
+import { prisma } from "@/lib/prisma";
 import { authOptions } from "../../auth/[...nextauth]/route";
-
-const prisma = new PrismaClient();
 
 interface UserSession {
     name?: string | null;

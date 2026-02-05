@@ -1,99 +1,31 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
-import { authOptions } from "../../auth/[...nextauth]/route";
 
-interface UserSession {
-    name?: string | null;
-    email?: string | null;
-    image?: string | null;
-    role: string;
-    id: number | string;
-}
-
-export async function GET(request: Request) {
-    const session = await getServerSession(authOptions);
-
-    if (!session || !session.user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as UserSession;
-    const { role, name } = user;
-
-    const { searchParams } = new URL(request.url);
-
-    const kelasParam = searchParams.get('kelas');
-    const tanggalParam = searchParams.get('tanggal');
-    const statusParam = searchParams.get('status');
-
+export async function POST(request: Request) {
     try {
-        let whereClause: any = {};
+        const body = await request.json();
+        const { judul, deskripsi, informasiId } = body;
 
-        if (tanggalParam) {
-            const start = new Date(tanggalParam);
-            start.setHours(0, 0, 0, 0);
-            const end = new Date(tanggalParam);
-            end.setHours(23, 59, 59, 999);
-            whereClause.tanggal = { gte: start, lte: end };
+        if (!judul || !deskripsi || !informasiId) {
+            return NextResponse.json(
+                { error: "Judul, Deskripsi, dan ID Informasi wajib diisi" },
+                { status: 400 }
+            );
         }
 
-        if (statusParam) {
-            whereClause.status = statusParam;
-        }
-
-        let siswaFilter: any = {};
-
-        if (role === "GURU") {
-            siswaFilter.guruPembimbing = name;
-        }
-
-        if (kelasParam) {
-            siswaFilter.kelas = kelasParam;
-        }
-
-        if (Object.keys(siswaFilter).length > 0) {
-            whereClause.dataSiswa = siswaFilter;
-        }
-
-        const data = await prisma.absensi.findMany({
-            where: whereClause,
-            include: {
-                dataSiswa: {
-                    select: {
-                        kelas: true,
-                        guruPembimbing: true
-                    }
-                }
+        const laporan = await prisma.laporanMasalah.create({
+            data: {
+                informasiId: parseInt(informasiId),
+                judul,
+                deskripsi,
             },
-            orderBy: {
-                tanggal: 'desc'
-            }
         });
 
-        const header = "Tanggal,User ID,Kelas,Guru Pembimbing,Status,Waktu\n";
-        const csvRows = data.map(row => {
-            const tgl = row.tanggal.toISOString().split('T')[0];
-            const uid = row.userId;
-            const kls = row.dataSiswa?.kelas || "-";
-            const guru = row.dataSiswa?.guruPembimbing || "-";
-            const sts = row.status;
-            const wkt = row.waktu || "-";
-
-            return `${tgl},${uid},${kls},"${guru}",${sts},${wkt}`;
-        });
-
-        const csvContent = header + csvRows.join("\n");
-
-        return new NextResponse(csvContent, {
-            status: 200,
-            headers: {
-                'Content-Type': 'text/csv',
-                'Content-Disposition': `attachment; filename="laporan_absensi_${role}.csv"`
-            }
-        });
-
+        return NextResponse.json(laporan, { status: 201 });
     } catch (error) {
-        return NextResponse.json({ error: "Export failed" }, { status: 500 });
+        return NextResponse.json(
+            { error: "Gagal mengirim laporan" },
+            { status: 500 }
+        );
     }
 }
