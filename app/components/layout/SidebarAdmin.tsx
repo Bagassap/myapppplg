@@ -30,10 +30,10 @@ export default function SidebarSiswa() {
   const { isMobileOpen, closeMobileSidebar } = useSidebar();
 
   const menu: MenuItem[] = [
-    { name: "Dashboard", href: "/siswa/dashboard", icon: <LayoutDashboard /> },
-    { name: "Absensi", href: "/siswa/absensi", icon: <ClipboardList /> },
-    { name: "Informasi", href: "/siswa/informasi", icon: <MessageSquare /> },
-    { name: "Data Siswa", href: "/siswa/data-siswa", icon: <Users /> },
+    { name: "Dashboard", href: "/admin/dashboard", icon: <LayoutDashboard /> },
+    { name: "Absensi", href: "/admin/absensi", icon: <ClipboardList /> },
+    { name: "Informasi", href: "/admin/informasi", icon: <MessageSquare /> },
+    { name: "Data Siswa", href: "/admin/data-siswa", icon: <Users /> },
   ];
 
   const handleLogout = () => {
