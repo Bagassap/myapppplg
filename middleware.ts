@@ -1,36 +1,47 @@
-import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-export default withAuth(
-    function middleware(req) {
+export async function middleware(req) {
+    const token = await getToken({
+        req,
+        secret: process.env.NEXTAUTH_SECRET,
+        secureCookie: process.env.NEXTAUTH_URL?.startsWith("https") ?? false
+    });
 
-    },
-    {
-        callbacks: {
-            authorized: ({ token, req }) => {
-                const { pathname } = req.nextUrl;
-                if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
-                    return token?.role === "ADMIN";
-                }
+    const url = req.nextUrl.clone();
+    const { pathname } = url;
 
-                if (pathname.startsWith("/guru")) {
-                    return token?.role === "GURU";
-                }
-
-                if (pathname.startsWith("/siswa")) {
-                    return token?.role === "SISWA";
-                }
-
-                return true;
-            },
-        },
+    if (!token) {
+        url.pathname = "/login";
+        url.searchParams.set("callbackUrl", encodeURI(req.url));
+        return NextResponse.redirect(url);
     }
-);
+
+    if ((pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) && token.role !== "ADMIN") {
+        url.pathname = "/dashboard";
+        return NextResponse.redirect(url);
+    }
+
+    if (pathname.startsWith("/guru") && token.role !== "GURU") {
+        url.pathname = "/dashboard";
+        return NextResponse.redirect(url);
+    }
+
+    if (pathname.startsWith("/siswa") && token.role !== "SISWA") {
+        url.pathname = "/dashboard";
+        return NextResponse.redirect(url);
+    }
+
+    return NextResponse.next();
+}
 
 export const config = {
     matcher: [
         "/admin/:path*",
         "/guru/:path*",
         "/siswa/:path*",
-        "/api/admin/:path*"
+        "/api/admin/:path*",
+        "/absensi/:path*",
+        "/dashboard/:path*"
     ],
 };
