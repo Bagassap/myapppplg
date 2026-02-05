@@ -23,17 +23,14 @@ export const authOptions: NextAuthOptions = {
                 });
 
                 if (!user) {
-                    console.log("User tidak ditemukan untuk email:", credentials.email);
                     return null;
                 }
 
                 const isValid = await bcrypt.compare(credentials.password, user.password);
                 if (!isValid) {
-                    console.log("Password tidak valid untuk email:", credentials.email);
                     return null;
                 }
 
-                console.log("Login berhasil untuk email:", credentials.email);
                 return {
                     id: user.id.toString(),
                     name: user.name,
@@ -51,20 +48,27 @@ export const authOptions: NextAuthOptions = {
         signIn: '/login',
         error: '/login',
     },
+    cookies: {
+        sessionToken: {
+            name: `next-auth.session-token`,
+            options: {
+                httpOnly: true,
+                sameSite: 'lax',
+                path: '/',
+                secure: process.env.NODE_ENV === 'production' && process.env.NEXTAUTH_URL?.startsWith("https"),
+            },
+        },
+    },
     callbacks: {
         async jwt({ token, user }: { token: any; user: any }) {
-            console.log("JWT callback - user.role:", user?.role, "token.role sebelum:", token.role);
             if (user) {
                 token.role = user.role;
             }
-            console.log("JWT callback - token.role setelah:", token.role);
             return token;
         },
         async session({ session, token }: { session: any; token: any }) {
-            console.log("Session callback - token.role:", token.role);
             session.user.id = token.sub;
             session.user.role = token.role;
-            console.log("Session callback - session.user.role:", session.user.role);
             return session;
         },
     },
