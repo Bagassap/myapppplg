@@ -1,4 +1,4 @@
-import NextAuth, { NextAuthOptions } from "next-auth";  // Tambahkan import NextAuthOptions
+import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
@@ -47,8 +47,12 @@ export const authOptions: NextAuthOptions = {
         strategy: "jwt",
     },
     secret: process.env.NEXTAUTH_SECRET,
+    pages: {
+        signIn: '/login',
+        error: '/login',
+    },
     callbacks: {
-        async jwt({ token, user }: { token: any; user: any }) {  // Tambahkan type annotations
+        async jwt({ token, user }: { token: any; user: any }) {
             console.log("JWT callback - user.role:", user?.role, "token.role sebelum:", token.role);
             if (user) {
                 token.role = user.role;
@@ -56,9 +60,9 @@ export const authOptions: NextAuthOptions = {
             console.log("JWT callback - token.role setelah:", token.role);
             return token;
         },
-        async session({ session, token }: { session: any; token: any }) {  // Tambahkan type annotations
+        async session({ session, token }: { session: any; token: any }) {
             console.log("Session callback - token.role:", token.role);
-            session.user.id = token.sub; // Set id from token.sub
+            session.user.id = token.sub;
             session.user.role = token.role;
             console.log("Session callback - session.user.role:", session.user.role);
             return session;
