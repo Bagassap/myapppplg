@@ -1,25 +1,21 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function POST(
-    request: Request,
-    { params }: { params: { id: string } }
-) {
+export async function POST(request: Request) {
     try {
-        const informasiId = parseInt(params.id);
         const body = await request.json();
-        const { judul, deskripsi } = body;
+        const { judul, deskripsi, informasiId } = body;
 
-        if (!judul || !deskripsi) {
+        if (!judul || !deskripsi || !informasiId) {
             return NextResponse.json(
-                { error: "Judul dan Deskripsi laporan wajib diisi" },
+                { error: "Judul, Deskripsi, dan ID Informasi wajib diisi" },
                 { status: 400 }
             );
         }
 
         const laporan = await prisma.laporanMasalah.create({
             data: {
-                informasiId,
+                informasiId: parseInt(informasiId),
                 judul,
                 deskripsi,
             },
