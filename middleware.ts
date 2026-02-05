@@ -2,7 +2,7 @@ import { withAuth } from "next-auth/middleware";
 
 export default withAuth(
     function middleware(req) {
-        // Logika kustom jika diperlukan
+
     },
     {
         callbacks: {
@@ -27,7 +27,6 @@ export default withAuth(
 );
 
 export const config = {
-    // TAMBAHKAN "/api/admin/:path*" ke dalam matcher
     matcher: [
         "/admin/:path*",
         "/guru/:path*",
