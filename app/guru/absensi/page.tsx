@@ -485,7 +485,9 @@ export default function GuruAbsensi() {
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-100">
+                      <tbody className="divide-y-0">
+                        {" "}
+                        {/* Perbaikan di sini: Menghilangkan border antar baris */}
                         {(siswaPresensiData[selectedSiswa] || []).map(
                           (item: any) => (
                             <tr

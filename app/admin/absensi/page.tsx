@@ -88,15 +88,15 @@ export default function AdminAbsensi() {
 
         const transformedData = data.map((item: any) => ({
           id: item.id,
-          siswa: item.siswa || "Tidak Diketahui", // Sesuai backend baru
-          tempatPKL: item.tempatPKL || "Tidak Diketahui", // Sesuai backend baru
+          siswa: item.siswa || "Tidak Diketahui",
+          tempatPKL: item.tempatPKL || "Tidak Diketahui",
           status: item.status,
           waktu: item.waktu || "-",
           catatan: item.keterangan || "",
           kegiatan: item.kegiatan || "",
           lokasi: item.lokasi || "",
-          foto: item.foto || "", // Backend kirim null/string
-          tandaTangan: item.tandaTangan || "", // Backend kirim null/string
+          foto: item.foto || "",
+          tandaTangan: item.tandaTangan || "",
           bukti: item.bukti || "",
           tanggal: new Date(item.tanggal).toLocaleDateString("id-ID"),
         }));
@@ -136,7 +136,6 @@ export default function AdminAbsensi() {
   const endIndex = startIndex + itemsPerPage;
   const currentData = filteredData.slice(startIndex, endIndex);
 
-  // Client-side CSV Export
   const handleExport = () => {
     if (filteredData.length === 0) {
       alert("Tidak ada data untuk diekspor.");
@@ -418,7 +417,6 @@ export default function AdminAbsensi() {
             </div>
           </div>
 
-          {/* Modal Riwayat: Disesuaikan dengan pemisahan foto/TTD */}
           {showSiswaPresensi && selectedSiswa && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4">
               <div
@@ -454,11 +452,9 @@ export default function AdminAbsensi() {
                           <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">
                             Lokasi
                           </th>
-                          {/* Kolom Foto Terpisah */}
                           <th className="px-2 py-2 sm:px-4 sm:py-3 text-center w-24">
                             Foto
                           </th>
-                          {/* Kolom TTD Terpisah */}
                           <th className="px-2 py-2 sm:px-4 sm:py-3 text-center w-24">
                             TTD
                           </th>
@@ -467,10 +463,7 @@ export default function AdminAbsensi() {
                       <tbody>
                         {(siswaPresensiData[selectedSiswa] || []).map(
                           (item: any) => (
-                            <tr
-                              key={item.id}
-                              className="border-b hover:bg-gray-50"
-                            >
+                            <tr key={item.id} className="hover:bg-gray-50">
                               <td className="px-2 py-2 sm:px-4 sm:py-3">
                                 {item.tanggal}
                               </td>
@@ -493,7 +486,7 @@ export default function AdminAbsensi() {
                               <td className="px-2 py-2 sm:px-4 sm:py-3">
                                 {item.lokasi ? (
                                   <a
-                                    href={`https://www.google.com/maps/search/?api=1&query=${item.lokasi}`}
+                                    href={`http://googleusercontent.com/maps.google.com/?q=${item.lokasi}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-blue-600 hover:underline flex items-center gap-1"
@@ -505,7 +498,6 @@ export default function AdminAbsensi() {
                                 )}
                               </td>
 
-                              {/* Render Foto */}
                               <td className="px-2 py-2 sm:px-4 sm:py-3 text-center">
                                 {item.foto ? (
                                   <div
@@ -533,7 +525,6 @@ export default function AdminAbsensi() {
                                 )}
                               </td>
 
-                              {/* Render TTD */}
                               <td className="px-2 py-2 sm:px-4 sm:py-3 text-center">
                                 {item.tandaTangan ? (
                                   <div
