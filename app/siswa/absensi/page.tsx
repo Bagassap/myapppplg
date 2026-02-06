@@ -21,6 +21,7 @@ import {
   XCircle,
   Image as ImageIcon,
   PenTool,
+  Loader2, // Import icon Loader
 } from "lucide-react";
 
 export default function SiswaAbsensi() {
@@ -29,6 +30,10 @@ export default function SiswaAbsensi() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [loading, setLoading] = useState(true);
+
+  // STATE BARU: Untuk menangani status loading saat submit
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [error, setError] = useState<string | null>(null);
   const [presensiData, setPresensiData] = useState<any[]>([]);
 
@@ -197,6 +202,9 @@ export default function SiswaAbsensi() {
 
     if (!isValid) return;
 
+    // 1. MULAI LOADING: Matikan tombol segera agar tidak spam
+    setIsSubmitting(true);
+
     const formData = new FormData();
     formData.append("tipe", "absen");
     formData.append("status", absenForm.status);
@@ -239,6 +247,9 @@ export default function SiswaAbsensi() {
     } catch (err: any) {
       console.error(err);
       alert("Terjadi kesalahan: " + err.message);
+    } finally {
+      // 2. SELESAI LOADING: Nyalakan kembali (atau reset) di akhir proses
+      setIsSubmitting(false);
     }
   };
 
@@ -549,7 +560,9 @@ export default function SiswaAbsensi() {
             <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
               <div
                 className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
-                onClick={() => setShowAbsenModal(false)}
+                onClick={() => {
+                  if (!isSubmitting) setShowAbsenModal(false);
+                }}
               ></div>
 
               <div
@@ -564,7 +577,8 @@ export default function SiswaAbsensi() {
                   </h3>
                   <button
                     onClick={() => setShowAbsenModal(false)}
-                    className="text-gray-500 hover:text-gray-700"
+                    className="text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isSubmitting} // Disable tombol close saat loading
                   >
                     <XCircle className="w-8 h-8" />
                   </button>
@@ -599,10 +613,11 @@ export default function SiswaAbsensi() {
                     </label>
                     <select
                       value={absenForm.status}
+                      disabled={isSubmitting} // Disable saat loading
                       onChange={(e) =>
                         setAbsenForm({ ...absenForm, status: e.target.value })
                       }
-                      className="px-4 py-3 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
+                      className="px-4 py-3 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full disabled:bg-gray-200"
                     >
                       <option value="Hadir">Hadir</option>
                       <option value="Pulang">Pulang</option>
@@ -621,13 +636,14 @@ export default function SiswaAbsensi() {
                           type="file"
                           accept="image/*"
                           capture="user"
+                          disabled={isSubmitting} // Disable saat loading
                           onChange={(e) =>
                             setAbsenForm({
                               ...absenForm,
                               foto: e.target.files?.[0] || null,
                             })
                           }
-                          className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
+                          className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full disabled:cursor-not-allowed"
                           required
                         />
                       </div>
@@ -647,7 +663,8 @@ export default function SiswaAbsensi() {
                           <button
                             type="button"
                             onClick={getCurrentLocation}
-                            className="px-3 bg-indigo-600 text-white rounded-lg shrink-0"
+                            disabled={isSubmitting}
+                            className="px-3 bg-indigo-600 text-white rounded-lg shrink-0 disabled:bg-indigo-400"
                           >
                             <MapPin className="w-4 h-4" />
                           </button>
@@ -676,13 +693,14 @@ export default function SiswaAbsensi() {
                         </label>
                         <textarea
                           value={absenForm.kegiatan}
+                          disabled={isSubmitting} // Disable saat loading
                           onChange={(e) =>
                             setAbsenForm({
                               ...absenForm,
                               kegiatan: e.target.value,
                             })
                           }
-                          className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
+                          className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full disabled:bg-gray-200"
                           rows={3}
                           required
                         />
@@ -695,13 +713,14 @@ export default function SiswaAbsensi() {
                         <input
                           type="file"
                           accept="image/*"
+                          disabled={isSubmitting} // Disable saat loading
                           onChange={(e) =>
                             setAbsenForm({
                               ...absenForm,
                               foto: e.target.files?.[0] || null,
                             })
                           }
-                          className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
+                          className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full disabled:cursor-not-allowed"
                           required
                         />
                       </div>
@@ -721,7 +740,8 @@ export default function SiswaAbsensi() {
                           <button
                             type="button"
                             onClick={getCurrentLocation}
-                            className="px-3 bg-indigo-600 text-white rounded-lg shrink-0"
+                            disabled={isSubmitting}
+                            className="px-3 bg-indigo-600 text-white rounded-lg shrink-0 disabled:bg-indigo-400"
                           >
                             <MapPin className="w-4 h-4" />
                           </button>
@@ -738,13 +758,14 @@ export default function SiswaAbsensi() {
                       </label>
                       <textarea
                         value={absenForm.catatan}
+                        disabled={isSubmitting} // Disable saat loading
                         onChange={(e) =>
                           setAbsenForm({
                             ...absenForm,
                             catatan: e.target.value,
                           })
                         }
-                        className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
+                        className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full disabled:bg-gray-200"
                         rows={3}
                         required
                       />
@@ -756,13 +777,14 @@ export default function SiswaAbsensi() {
                           <input
                             type="file"
                             accept="image/*"
+                            disabled={isSubmitting}
                             onChange={(e) =>
                               setAbsenForm({
                                 ...absenForm,
                                 bukti: e.target.files?.[0] || null,
                               })
                             }
-                            className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
+                            className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full disabled:cursor-not-allowed"
                             required
                           />
                         </div>
@@ -777,29 +799,46 @@ export default function SiswaAbsensi() {
                     <input
                       type="file"
                       accept="image/*"
+                      disabled={isSubmitting} // Disable saat loading
                       onChange={(e) =>
                         setAbsenForm({
                           ...absenForm,
                           tandaTangan: e.target.files?.[0] || null,
                         })
                       }
-                      className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
+                      className="px-4 py-2 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full disabled:cursor-not-allowed"
                     />
                   </div>
 
                   <div className="md:col-span-2 flex flex-col-reverse sm:flex-row justify-end gap-4 mt-4">
                     <button
                       type="button"
+                      disabled={isSubmitting}
                       onClick={() => setShowAbsenModal(false)}
-                      className="w-full sm:w-auto px-6 py-2 bg-gray-500 text-white rounded-xl hover:bg-gray-600"
+                      className="w-full sm:w-auto px-6 py-2 bg-gray-500 text-white rounded-xl hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Batal
                     </button>
                     <button
                       type="submit"
-                      className="w-full sm:w-auto px-6 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 shadow-lg flex items-center justify-center gap-2"
+                      disabled={isSubmitting} // Kunci tombol saat loading
+                      className={`w-full sm:w-auto px-6 py-2 rounded-xl text-white shadow-lg flex items-center justify-center gap-2 transition-all
+                        ${
+                          isSubmitting
+                            ? "bg-green-700 opacity-75 cursor-not-allowed"
+                            : "bg-green-600 hover:bg-green-700"
+                        }`}
                     >
-                      <CheckSquare className="w-5 h-5" /> Kirim Absen
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Mengirim...
+                        </>
+                      ) : (
+                        <>
+                          <CheckSquare className="w-5 h-5" /> Kirim Absen
+                        </>
+                      )}
                     </button>
                   </div>
                 </form>

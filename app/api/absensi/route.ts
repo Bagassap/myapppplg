@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma';
 import { uploadFile } from '@/lib/upload';
 import { authOptions } from '../auth/[...nextauth]/route';
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
@@ -13,7 +15,10 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
+
     const userRole = (session.user as any).role;
+    const userEmail = (session.user as any).email;
+    const userName = (session.user as any).name;
 
     let whereClause: any = {};
 
@@ -28,47 +33,59 @@ export async function GET(req: NextRequest) {
     try {
         if (userRole === 'SISWA') {
             const user = await prisma.user.findUnique({
-                where: { email: (session.user as any).email },
+                where: { email: userEmail },
                 select: { username: true },
             });
             if (!user || !user.username) return NextResponse.json([], { status: 200 });
             whereClause.userId = user.username;
 
         } else if (userRole === 'GURU') {
-            const teacherName = (session.user as any).name;
             const myStudents = await prisma.dataSiswa.findMany({
                 where: {
-                    guruPembimbing: { contains: teacherName, mode: 'insensitive' }
+                    guruPembimbing: {
+                        contains: userName,
+                        mode: 'insensitive'
+                    }
                 },
-                select: { userId: true },
+                select: { userId: true }
             });
+
             const studentIds = myStudents.map((s) => s.userId);
+
+            if (studentIds.length === 0) {
+                return NextResponse.json([], { status: 200 });
+            }
+
             whereClause.userId = { in: studentIds };
         }
 
         const absensiList = await prisma.absensi.findMany({
             where: whereClause,
             include: {
-                dataSiswa: {
-                    select: {
-                        kelas: true,
-                        tempatPKL: true
-                    }
-                }
+                dataSiswa: true
             },
             orderBy: { tanggal: 'desc' },
         });
 
-        const formattedData = await Promise.all(absensiList.map(async (item) => {
-            let namaSiswa = 'Siswa Tidak Dikenal';
+        const uniqueUserIds = Array.from(new Set(absensiList.map(item => item.userId)));
 
-            if (item.userId) {
-                const user = await prisma.user.findUnique({
-                    where: { username: item.userId },
-                    select: { name: true }
-                });
-                if (user?.name) namaSiswa = user.name;
+        const users = await prisma.user.findMany({
+            where: {
+                username: { in: uniqueUserIds }
+            },
+            select: {
+                username: true,
+                name: true
             }
+        });
+
+        const userMap = new Map();
+        users.forEach(u => {
+            if (u.username) userMap.set(u.username, u.name);
+        });
+
+        const formattedData = absensiList.map((item) => {
+            const namaSiswa = userMap.get(item.userId) || item.userId || 'Siswa';
 
             return {
                 id: item.id,
@@ -87,7 +104,7 @@ export async function GET(req: NextRequest) {
                 tandaTangan: item.tandaTangan || null,
                 bukti: item.bukti || null
             };
-        }));
+        });
 
         return NextResponse.json(formattedData);
 
