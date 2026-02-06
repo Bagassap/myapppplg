@@ -2,7 +2,7 @@
 
 import Sidebar from "@/components/layout/SidebarGuru";
 import TopBar from "@/components/layout/TopBar";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
   Filter,
@@ -101,7 +101,6 @@ export default function GuruAbsensi() {
         });
 
         if (!response.ok) {
-          // Jika backend mengembalikan 401/403/500
           const errorText = await response.text();
           throw new Error(errorText || "Gagal mengambil data absensi.");
         }
@@ -109,6 +108,7 @@ export default function GuruAbsensi() {
         const data = await response.json();
 
         // Transformasi data agar sesuai dengan struktur UI
+        // Backend mengirim: { siswa: "Nama", tempatPKL: "Nama PKL", ... }
         const transformedData = Array.isArray(data)
           ? data.map((item: any) => ({
               id: item.id,
@@ -116,7 +116,7 @@ export default function GuruAbsensi() {
               tempatPKL: item.tempatPKL || "-",
               status: item.status,
               waktu: item.waktu || "-",
-              catatan: item.keterangan || "",
+              catatan: item.keterangan || "", // Backend sends 'keterangan'
               kegiatan: item.kegiatan || "",
               lokasi: item.lokasi || "",
               foto: item.foto || "",
@@ -288,8 +288,10 @@ export default function GuruAbsensi() {
                   opt: [
                     "Semua Tempat PKL",
                     ...Array.from(
-                      new Set(presensiData.map((i) => i.tempatPKL)),
-                    ).filter(Boolean),
+                      new Set(
+                        presensiData.map((i) => i.tempatPKL).filter(Boolean),
+                      ),
+                    ),
                   ],
                 },
                 {
@@ -305,8 +307,8 @@ export default function GuruAbsensi() {
                   opt: [
                     "Semua Siswa",
                     ...Array.from(
-                      new Set(presensiData.map((i) => i.siswa)),
-                    ).filter(Boolean),
+                      new Set(presensiData.map((i) => i.siswa).filter(Boolean)),
+                    ),
                   ],
                 },
                 {
