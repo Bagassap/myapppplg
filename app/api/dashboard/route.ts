@@ -81,25 +81,17 @@ export async function GET(request: Request) {
 
         if (role === "GURU") {
             const siswaBimbingan = await prisma.dataSiswa.findMany({
-                where: { guruPembimbing: name },
-            });
-
-            const totalSiswaPKL = siswaBimbingan.length;
-            const listUserIdString = siswaBimbingan.map(s => s.userId);
-
-            const listUserIdInt = listUserIdString
-                .map(id => parseInt(id))
-                .filter(id => !isNaN(id));
-
-            const usersSiswa = await prisma.user.findMany({
                 where: {
-                    id: { in: listUserIdInt }
+                    guruPembimbing: {
+                        contains: name || "",
+                        mode: 'insensitive'
+                    }
                 },
-                select: { id: true, name: true }
+                select: { userId: true, kelas: true }
             });
 
-            const userMap = new Map();
-            usersSiswa.forEach(u => userMap.set(String(u.id), u.name));
+            const totalSiswa = siswaBimbingan.length;
+            const listUserIdString = siswaBimbingan.map(s => s.userId);
 
             const absensiHariIni = await prisma.absensi.findMany({
                 where: {
@@ -109,30 +101,32 @@ export async function GET(request: Request) {
             });
 
             const hadirCount = absensiHariIni.filter(a => a.status.toLowerCase() === "hadir").length;
-            const tidakHadirCount = totalSiswaPKL - hadirCount;
-            const persentase = totalSiswaPKL > 0 ? ((hadirCount / totalSiswaPKL) * 100).toFixed(1) : 0;
+            const tidakHadirCount = totalSiswa - hadirCount;
+            const persentase = totalSiswa > 0 ? ((hadirCount / totalSiswa) * 100).toFixed(1) : 0;
 
-            const tableData = await Promise.all(siswaBimbingan.map(async (s) => {
-                const totalHadirSiswa = await prisma.absensi.count({
-                    where: { userId: s.userId, status: 'Hadir' }
-                });
-                const totalHariKerja = await prisma.absensi.count({
-                    where: { userId: s.userId }
-                });
+            const mapKelas = new Map();
 
-                const namaSiswa = userMap.get(s.userId) || "Siswa";
+            siswaBimbingan.forEach(s => {
+                if (!mapKelas.has(s.kelas)) {
+                    mapKelas.set(s.kelas, { kelas: s.kelas, total: 0, hadir: 0 });
+                }
+                const stats = mapKelas.get(s.kelas);
+                stats.total += 1;
 
-                return {
-                    tempatPKL: s.tempatPKL || "-",
-                    siswa: namaSiswa,
-                    hadir: totalHadirSiswa,
-                    totalHari: totalHariKerja
-                };
+                const isHadir = absensiHariIni.some(a => a.userId === s.userId && a.status.toLowerCase() === "hadir");
+                if (isHadir) stats.hadir += 1;
+            });
+
+            const tableData = Array.from(mapKelas.values()).map((item: any) => ({
+                kelas: item.kelas,
+                hadir: item.hadir,
+                total: item.total,
+                persentase: item.total > 0 ? ((item.hadir / item.total) * 100).toFixed(1) : 0
             }));
 
             return NextResponse.json({
                 cards: {
-                    totalSiswaPKL: totalSiswaPKL,
+                    totalSiswa: totalSiswa,
                     hadirHariIni: hadirCount,
                     tidakHadir: tidakHadirCount,
                     persentaseKehadiran: persentase
