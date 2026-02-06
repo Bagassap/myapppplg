@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-// 1. Import signOut
 import { signOut } from "next-auth/react";
 import {
   LayoutDashboard,

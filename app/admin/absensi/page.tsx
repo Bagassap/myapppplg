@@ -8,18 +8,15 @@ import {
   Filter,
   Download,
   CheckSquare,
-  Clock,
   X,
   Edit,
   Calendar,
-  FileText,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
   ChevronLeft,
   ChevronRight,
   UserCheck,
   MapPin,
+  Image as ImageIcon,
+  PenTool,
 } from "lucide-react";
 
 export default function AdminAbsensi() {
@@ -40,10 +37,6 @@ export default function AdminAbsensi() {
   const [newNote, setNewNote] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-
-  const getKeterangan = (status: string, catatan: string) => {
-    return catatan || "-";
-  };
 
   useEffect(() => {
     if (status === "loading") return;
@@ -95,18 +88,17 @@ export default function AdminAbsensi() {
 
         const transformedData = data.map((item: any) => ({
           id: item.id,
-          siswa: item.siswaName || "Tidak Diketahui",
-          tempatPKL: item.dataSiswa?.tempatPKL || "Tidak Diketahui",
+          siswa: item.siswa || "Tidak Diketahui", // Sesuai backend baru
+          tempatPKL: item.tempatPKL || "Tidak Diketahui", // Sesuai backend baru
           status: item.status,
           waktu: item.waktu || "-",
           catatan: item.keterangan || "",
           kegiatan: item.kegiatan || "",
           lokasi: item.lokasi || "",
-          foto: item.foto || "",
+          foto: item.foto || "", // Backend kirim null/string
+          tandaTangan: item.tandaTangan || "", // Backend kirim null/string
           bukti: item.bukti || "",
-          tandaTangan: item.tandaTangan || "",
-          permintaan: item.status === "Izin" || item.status === "Libur",
-          tanggal: new Date(item.tanggal).toLocaleDateString(),
+          tanggal: new Date(item.tanggal).toLocaleDateString("id-ID"),
         }));
 
         setPresensiData(transformedData);
@@ -144,18 +136,49 @@ export default function AdminAbsensi() {
   const endIndex = startIndex + itemsPerPage;
   const currentData = filteredData.slice(startIndex, endIndex);
 
-  const handleEditNote = (id: number) => {
-    setPresensiData(
-      presensiData.map((item) =>
-        item.id === id ? { ...item, catatan: newNote } : item,
-      ),
-    );
-    setEditingNote(null);
-    setNewNote("");
-  };
+  // Client-side CSV Export
+  const handleExport = () => {
+    if (filteredData.length === 0) {
+      alert("Tidak ada data untuk diekspor.");
+      return;
+    }
 
-  const handleExport = async () => {
-    /* Export Logic */
+    const headers = [
+      "Tanggal",
+      "Siswa",
+      "Tempat PKL",
+      "Status",
+      "Waktu",
+      "Catatan",
+      "Kegiatan",
+      "Lokasi",
+    ];
+
+    const rows = filteredData.map((row) =>
+      [
+        `"${row.tanggal}"`,
+        `"${row.siswa}"`,
+        `"${row.tempatPKL}"`,
+        `"${row.status}"`,
+        `"${row.waktu}"`,
+        `"${(row.catatan || "").replace(/"/g, '""')}"`,
+        `"${(row.kegiatan || "").replace(/"/g, '""')}"`,
+        `"${row.lokasi || "-"}"`,
+      ].join(","),
+    );
+
+    const csvContent = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute(
+      "download",
+      `Laporan_Absensi_${new Date().toISOString().split("T")[0]}.csv`,
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleViewSiswaPresensi = (siswa: string) => {
@@ -167,6 +190,10 @@ export default function AdminAbsensi() {
   };
   const handleNext = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+
+  const openImage = (url: string) => {
+    if (url) window.open(url, "_blank");
   };
 
   if (loading || error) {
@@ -187,7 +214,6 @@ export default function AdminAbsensi() {
     );
   }
 
-  // Header Table (Responsive: text-xs on mobile, text-base on PC)
   const renderTableHeaders = () => (
     <>
       <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 rounded-tl-xl text-xs sm:text-base">
@@ -218,7 +244,6 @@ export default function AdminAbsensi() {
     >
       <td className="px-2 py-3 sm:px-6 sm:py-4 font-medium text-gray-900 text-xs sm:text-base break-words">
         {item.siswa}
-        {/* Tampilkan Tempat PKL di bawah nama pada Mobile */}
         <div className="text-[10px] text-gray-500 sm:hidden mt-1">
           {item.tempatPKL}
         </div>
@@ -264,9 +289,7 @@ export default function AdminAbsensi() {
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar />
-        {/* Main Wrapper */}
         <main className="flex-1 p-4 sm:p-8 lg:p-12 overflow-y-auto overflow-x-hidden w-full max-w-full">
-          {/* Header Section */}
           <div className="mb-6 sm:mb-8">
             <h1 className="text-xl sm:text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2 sm:gap-3">
               <Calendar className="w-8 h-8 sm:w-12 sm:h-12 text-indigo-600" />
@@ -277,7 +300,6 @@ export default function AdminAbsensi() {
             </p>
           </div>
 
-          {/* Filter Card */}
           <div className="bg-white p-4 sm:p-8 rounded-2xl sm:rounded-3xl shadow-lg border border-gray-200 mb-6 sm:mb-10">
             <h3 className="text-lg sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center gap-2">
               <Filter className="w-5 h-5 sm:w-7 sm:h-7 text-indigo-600" />
@@ -323,7 +345,7 @@ export default function AdminAbsensi() {
                   <select
                     value={f.val}
                     onChange={(e) => f.set(e.target.value)}
-                    className="w-full px-3 py-2 sm:py-3 border border-indigo-200 rounded-xl bg-gray-50 text-sm sm:text-base focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full px-3 py-2 sm:py-3 border border-indigo-200 rounded-xl bg-gray-50 text-sm sm:text-base focus:ring-2 focus:ring-indigo-50 outline-none"
                   >
                     {f.opt.map((o) => (
                       <option key={o} value={o === "Semua Siswa" ? "" : o}>
@@ -336,18 +358,14 @@ export default function AdminAbsensi() {
               <div className="flex items-end">
                 <button
                   onClick={handleExport}
-                  // Perubahan: Ukuran tombol disesuaikan, label jadi Download
                   className="w-full sm:w-auto px-6 flex items-center justify-center gap-2 py-2 sm:py-3 bg-indigo-600 text-white rounded-xl shadow hover:bg-indigo-700 transition-all text-sm sm:text-base font-medium"
                 >
-                  <Download className="w-4 h-4 sm:w-5 sm:h-5" /> Download
+                  <Download className="w-4 h-4 sm:w-5 sm:h-5" /> CSV
                 </button>
               </div>
             </div>
           </div>
 
-          {/* METODE PENCATATAN DIHAPUS UNTUK ADMIN */}
-
-          {/* Table Card */}
           <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-200 overflow-hidden">
             <div className="p-4 sm:p-8 border-b border-gray-100 flex items-center justify-between">
               <h3 className="text-lg sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -356,7 +374,6 @@ export default function AdminAbsensi() {
               </h3>
             </div>
 
-            {/* Table Wrapper Responsive: Hapus min-w keras di mobile */}
             <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300">
               <table className="w-full table-auto min-w-full">
                 <thead>
@@ -376,7 +393,6 @@ export default function AdminAbsensi() {
               </div>
             )}
 
-            {/* Pagination */}
             <div className="p-4 sm:p-8 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-xs sm:text-sm text-gray-600 font-medium">
                 Menampilkan {startIndex + 1}-
@@ -402,14 +418,14 @@ export default function AdminAbsensi() {
             </div>
           </div>
 
-          {/* Modal Riwayat (Tetap ada untuk lihat detail) */}
+          {/* Modal Riwayat: Disesuaikan dengan pemisahan foto/TTD */}
           {showSiswaPresensi && selectedSiswa && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4">
               <div
                 className="absolute inset-0 bg-black/50 backdrop-blur-sm"
                 onClick={() => setShowSiswaPresensi(false)}
               />
-              <div className="relative bg-white w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+              <div className="relative bg-white w-full max-w-6xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col">
                 <div className="p-4 sm:p-6 border-b flex items-center justify-between">
                   <h3 className="font-bold text-lg sm:text-2xl truncate pr-4">
                     Riwayat {selectedSiswa}
@@ -422,10 +438,9 @@ export default function AdminAbsensi() {
                   </button>
                 </div>
                 <div className="flex-1 overflow-auto p-2 sm:p-6">
-                  {/* Inner Modal Table Responsive */}
                   <div className="w-full overflow-x-auto">
-                    <table className="w-full text-xs sm:text-base min-w-[600px] sm:min-w-full">
-                      <thead className="bg-gray-50 sticky top-0">
+                    <table className="w-full text-xs sm:text-base min-w-[800px] sm:min-w-full">
+                      <thead className="bg-gray-50 sticky top-0 z-10">
                         <tr>
                           <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">
                             Tanggal
@@ -439,42 +454,110 @@ export default function AdminAbsensi() {
                           <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">
                             Lokasi
                           </th>
-                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">
-                            Foto/TTD
+                          {/* Kolom Foto Terpisah */}
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-center w-24">
+                            Foto
+                          </th>
+                          {/* Kolom TTD Terpisah */}
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-center w-24">
+                            TTD
                           </th>
                         </tr>
                       </thead>
                       <tbody>
                         {(siswaPresensiData[selectedSiswa] || []).map(
                           (item: any) => (
-                            <tr key={item.id} className="border-b">
+                            <tr
+                              key={item.id}
+                              className="border-b hover:bg-gray-50"
+                            >
                               <td className="px-2 py-2 sm:px-4 sm:py-3">
                                 {item.tanggal}
                               </td>
                               <td className="px-2 py-2 sm:px-4 sm:py-3">
-                                {item.status}
+                                <span
+                                  className={`px-2 py-1 rounded text-xs font-medium ${
+                                    item.status === "Hadir"
+                                      ? "bg-green-100 text-green-800"
+                                      : item.status === "Izin"
+                                        ? "bg-yellow-100 text-yellow-800"
+                                        : "bg-gray-100 text-gray-800"
+                                  }`}
+                                >
+                                  {item.status}
+                                </span>
                               </td>
                               <td className="px-2 py-2 sm:px-4 sm:py-3">
                                 {item.waktu}
                               </td>
                               <td className="px-2 py-2 sm:px-4 sm:py-3">
-                                {item.lokasi && (
+                                {item.lokasi ? (
                                   <a
-                                    href={`http://googleusercontent.com/maps.google.com/?q=${item.lokasi}`}
+                                    href={`https://www.google.com/maps/search/?api=1&query=${item.lokasi}`}
                                     target="_blank"
-                                    className="text-blue-600 flex items-center gap-1"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:underline flex items-center gap-1"
                                   >
                                     <MapPin className="w-3 h-3" /> Map
                                   </a>
+                                ) : (
+                                  "-"
                                 )}
                               </td>
-                              <td className="px-2 py-2 sm:px-4 sm:py-3">
-                                {item.foto && (
-                                  <img
-                                    src={item.foto}
-                                    className="w-8 h-8 sm:w-10 sm:h-10 rounded border"
-                                    alt="bukti"
-                                  />
+
+                              {/* Render Foto */}
+                              <td className="px-2 py-2 sm:px-4 sm:py-3 text-center">
+                                {item.foto ? (
+                                  <div
+                                    className="flex justify-center cursor-pointer group"
+                                    onClick={() => openImage(item.foto)}
+                                    title="Klik untuk memperbesar"
+                                  >
+                                    <div className="relative w-10 h-10 sm:w-12 sm:h-12 border rounded overflow-hidden shadow-sm hover:shadow-md transition-all">
+                                      <img
+                                        src={item.foto}
+                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                                        alt="Foto"
+                                        onError={(e) => {
+                                          (
+                                            e.target as HTMLImageElement
+                                          ).style.display = "none";
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex justify-center text-gray-300">
+                                    <ImageIcon className="w-5 h-5" />
+                                  </div>
+                                )}
+                              </td>
+
+                              {/* Render TTD */}
+                              <td className="px-2 py-2 sm:px-4 sm:py-3 text-center">
+                                {item.tandaTangan ? (
+                                  <div
+                                    className="flex justify-center cursor-pointer group"
+                                    onClick={() => openImage(item.tandaTangan)}
+                                    title="Klik untuk memperbesar"
+                                  >
+                                    <div className="relative w-10 h-10 sm:w-12 sm:h-12 border rounded bg-white overflow-hidden shadow-sm hover:shadow-md transition-all">
+                                      <img
+                                        src={item.tandaTangan}
+                                        className="w-full h-full object-contain group-hover:scale-110 transition-transform p-1"
+                                        alt="TTD"
+                                        onError={(e) => {
+                                          (
+                                            e.target as HTMLImageElement
+                                          ).style.display = "none";
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex justify-center text-gray-300">
+                                    <PenTool className="w-5 h-5" />
+                                  </div>
                                 )}
                               </td>
                             </tr>

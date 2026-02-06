@@ -12,7 +12,6 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { useState, ReactElement } from "react";
-// Import Context
 import { useSidebar } from "@/contexts/SidebarContext";
 
 interface MenuItem {
