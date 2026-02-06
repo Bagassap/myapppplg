@@ -25,32 +25,23 @@ export default function LoginPage() {
       });
 
       if (res?.ok) {
-        console.log("SignIn berhasil, fetching session...");
         const sessionRes = await fetch("/api/auth/session");
         const session = await sessionRes.json();
-        console.log("Session data lengkap:", session);
-
         const role = session?.user?.role;
-        console.log("Role dari session:", role);
 
         if (role === "ADMIN") {
-          console.log("Redirect ke admin");
           router.push("/admin/dashboard");
         } else if (role === "GURU") {
-          console.log("Redirect ke guru");
           router.push("/guru/dashboard");
         } else if (role === "SISWA") {
-          console.log("Redirect ke siswa");
           router.push("/siswa/dashboard");
         } else {
-          console.log("Role tidak dikenali, redirect default");
-          router.push("/dashboard");
+          alert("Role tidak dikenali");
         }
       } else {
         alert(`Login gagal: ${res?.error || "Periksa email dan password"}`);
       }
     } catch (err) {
-      console.error("Login error:", err);
       alert("Terjadi kesalahan. Silakan coba lagi.");
     }
 

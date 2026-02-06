@@ -6,6 +6,7 @@ export async function middleware(req: NextRequest) {
     const token = await getToken({
         req,
         secret: process.env.NEXTAUTH_SECRET,
+        cookieName: "next-auth.session-token",
         secureCookie: process.env.NEXTAUTH_URL?.startsWith("https") ?? false
     });
 
@@ -14,22 +15,21 @@ export async function middleware(req: NextRequest) {
 
     if (!token) {
         url.pathname = "/login";
-        url.searchParams.set("callbackUrl", encodeURI(req.url));
         return NextResponse.redirect(url);
     }
 
     if ((pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) && token.role !== "ADMIN") {
-        url.pathname = "/dashboard";
+        url.pathname = "/login";
         return NextResponse.redirect(url);
     }
 
     if (pathname.startsWith("/guru") && token.role !== "GURU") {
-        url.pathname = "/dashboard";
+        url.pathname = "/login";
         return NextResponse.redirect(url);
     }
 
     if (pathname.startsWith("/siswa") && token.role !== "SISWA") {
-        url.pathname = "/dashboard";
+        url.pathname = "/login";
         return NextResponse.redirect(url);
     }
 
@@ -41,8 +41,6 @@ export const config = {
         "/admin/:path*",
         "/guru/:path*",
         "/siswa/:path*",
-        "/api/admin/:path*",
-        "/absensi/:path*",
-        "/dashboard/:path*"
+        "/api/admin/:path*"
     ],
 };
