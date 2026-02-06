@@ -516,7 +516,7 @@ export default function GuruAbsensi() {
                               <td className="px-2 py-2 sm:px-4 sm:py-3 text-gray-700">
                                 {item.lokasi ? (
                                   <a
-                                    href={`http://googleusercontent.com/maps.google.com/?q=${item.lokasi}`}
+                                    href={`https://www.google.com/maps?q=${item.lokasi}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-blue-600 flex items-center gap-1 hover:underline"

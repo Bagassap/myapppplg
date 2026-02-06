@@ -419,7 +419,7 @@ export default function SiswaAbsensi() {
                         <td className="px-6 py-4 text-gray-700 whitespace-nowrap">
                           {item.lokasi ? (
                             <a
-                              href={`http://googleusercontent.com/maps.google.com/?q=${item.lokasi}`}
+                              href={`https://www.google.com/maps?q=${item.lokasi}`}
                               target="_blank"
                               rel="noreferrer"
                               className="text-blue-600 underline flex items-center gap-1 text-sm"
