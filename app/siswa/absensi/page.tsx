@@ -5,9 +5,11 @@ import TopBar from "@/components/layout/TopBar";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import {
+  Filter,
   CheckSquare,
   Clock,
   X,
+  Edit,
   Calendar,
   AlertCircle,
   ChevronLeft,

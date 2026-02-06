@@ -17,6 +17,8 @@ import {
   UserCheck,
   MapPin,
   X,
+  Image as ImageIcon,
+  PenTool,
 } from "lucide-react";
 
 export default function GuruAbsensi() {
@@ -98,18 +100,17 @@ export default function GuruAbsensi() {
 
         const transformedData = data.map((item: any) => ({
           id: item.id,
-          siswa: item.siswaName || "Tidak Diketahui",
-          tempatPKL: item.dataSiswa?.tempatPKL || "Tidak Diketahui",
+          siswa: item.siswa || "Tidak Diketahui",
+          tempatPKL: item.tempatPKL || "Tidak Diketahui",
           status: item.status,
           waktu: item.waktu || "-",
           catatan: item.keterangan || "",
           kegiatan: item.kegiatan || "",
           lokasi: item.lokasi || "",
           foto: item.foto || "",
-          bukti: item.bukti || "",
           tandaTangan: item.tandaTangan || "",
-          permintaan: item.status === "Izin" || item.status === "Libur",
-          tanggal: new Date(item.tanggal).toLocaleDateString(),
+          bukti: item.bukti || "",
+          tanggal: new Date(item.tanggal).toLocaleDateString("id-ID"),
         }));
 
         setPresensiData(transformedData);
@@ -147,8 +148,49 @@ export default function GuruAbsensi() {
   const endIndex = startIndex + itemsPerPage;
   const currentData = filteredData.slice(startIndex, endIndex);
 
-  const handleExport = async () => {
-    /* Export Logic Same as before */
+  const handleExport = () => {
+    if (filteredData.length === 0) {
+      alert("Tidak ada data untuk diekspor.");
+      return;
+    }
+
+    const headers = [
+      "Tanggal",
+      "Siswa",
+      "Tempat PKL",
+      "Status",
+      "Waktu",
+      "Catatan",
+      "Kegiatan",
+      "Lokasi",
+    ];
+
+    const rows = filteredData.map((row) =>
+      [
+        `"${row.tanggal}"`,
+        `"${row.siswa}"`,
+        `"${row.tempatPKL}"`,
+        `"${row.status}"`,
+        `"${row.waktu}"`,
+        `"${(row.catatan || "").replace(/"/g, '""')}"`,
+        `"${(row.kegiatan || "").replace(/"/g, '""')}"`,
+        `"${row.lokasi || "-"}"`,
+      ].join(","),
+    );
+
+    const csvContent = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute(
+      "download",
+      `Laporan_Absensi_Siswa_${new Date().toISOString().split("T")[0]}.csv`,
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleViewSiswaPresensi = (siswa: string) => {
@@ -162,6 +204,10 @@ export default function GuruAbsensi() {
 
   const handleNext = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+
+  const openImage = (url: string) => {
+    if (url) window.open(url, "_blank");
   };
 
   if (loading || error) {
@@ -182,7 +228,6 @@ export default function GuruAbsensi() {
     );
   }
 
-  // Header Table (Responsive: text-xs on mobile)
   const renderTableHeaders = () => (
     <>
       <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 rounded-tl-xl text-xs sm:text-base whitespace-nowrap">
@@ -216,7 +261,6 @@ export default function GuruAbsensi() {
       </td>
       <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base font-medium break-words">
         {item.siswa}
-        {/* Mobile View for Tempat PKL & Waktu */}
         <div className="sm:hidden text-[10px] text-gray-500 mt-1">
           {item.tempatPKL}
           <br />
@@ -264,9 +308,7 @@ export default function GuruAbsensi() {
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar />
-        {/* Main Wrapper */}
         <main className="flex-1 p-4 sm:p-8 lg:p-12 overflow-y-auto overflow-x-hidden w-full max-w-full">
-          {/* Header Section */}
           <div className="mb-6 sm:mb-8">
             <h1 className="text-xl sm:text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2 sm:gap-3">
               <Calendar className="w-8 h-8 sm:w-12 sm:h-12 text-indigo-600 animate-pulse" />
@@ -277,7 +319,6 @@ export default function GuruAbsensi() {
             </p>
           </div>
 
-          {/* Filter Card */}
           <div className="bg-white p-4 sm:p-8 rounded-2xl sm:rounded-3xl shadow-lg border border-gray-200 mb-6 sm:mb-10 hover:shadow-xl transition-shadow duration-300">
             <h3 className="text-lg sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center gap-2">
               <Filter className="w-5 h-5 sm:w-7 sm:h-7 text-indigo-600" />
@@ -337,18 +378,14 @@ export default function GuruAbsensi() {
               <div className="flex items-end">
                 <button
                   onClick={handleExport}
-                  // Perubahan: Label "Download", Ukuran menyesuaikan
-                  className="w-full sm:w-auto px-6 flex items-center justify-center gap-2 py-2 sm:py-3 bg-linear-to-r from-indigo-600 to-blue-600 text-white rounded-xl shadow hover:bg-indigo-700 hover:from-indigo-700 hover:to-blue-700 transition-all text-sm sm:text-base font-medium transform hover:scale-105"
+                  className="w-full sm:w-auto px-6 flex items-center justify-center gap-2 py-2 sm:py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-xl shadow hover:bg-indigo-700 transition-all text-sm sm:text-base font-medium transform hover:scale-105"
                 >
-                  <Download className="w-4 h-4 sm:w-5 sm:h-5" /> Download
+                  <Download className="w-4 h-4 sm:w-5 sm:h-5" /> CSV
                 </button>
               </div>
             </div>
           </div>
 
-          {/* METODE PENCATATAN DIHAPUS UNTUK GURU */}
-
-          {/* Table Card */}
           <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-200 overflow-hidden hover:shadow-2xl transition-shadow duration-300">
             <div className="p-4 sm:p-8 border-b border-gray-100 flex items-center justify-between">
               <h3 className="text-lg sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -357,7 +394,6 @@ export default function GuruAbsensi() {
               </h3>
             </div>
 
-            {/* Table Wrapper Responsive */}
             <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300">
               <table className="w-full table-auto min-w-full">
                 <thead>
@@ -377,7 +413,6 @@ export default function GuruAbsensi() {
               </div>
             )}
 
-            {/* Pagination */}
             <div className="p-4 sm:p-8 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-xs sm:text-sm text-gray-600 font-medium">
                 Menampilkan {startIndex + 1}-
@@ -403,14 +438,13 @@ export default function GuruAbsensi() {
             </div>
           </div>
 
-          {/* Modal Riwayat (Tetap Sama dengan Admin) */}
           {showSiswaPresensi && selectedSiswa && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4">
               <div
                 className="absolute inset-0 bg-black/50 backdrop-blur-sm"
                 onClick={() => setShowSiswaPresensi(false)}
               />
-              <div className="relative bg-white w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-fade-scale">
+              <div className="relative bg-white w-full max-w-6xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-fade-scale">
                 <div className="p-4 sm:p-6 border-b flex items-center justify-between">
                   <h3 className="font-bold text-lg sm:text-2xl truncate pr-4 flex items-center gap-2">
                     <CheckSquare className="w-6 h-6 text-green-600" />
@@ -425,7 +459,7 @@ export default function GuruAbsensi() {
                 </div>
                 <div className="flex-1 overflow-auto p-2 sm:p-6">
                   <div className="w-full overflow-x-auto">
-                    <table className="w-full text-xs sm:text-base border-collapse min-w-[600px] sm:min-w-full">
+                    <table className="w-full text-xs sm:text-base border-collapse min-w-[800px] sm:min-w-full">
                       <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
                         <tr>
                           <th className="px-2 py-2 sm:px-4 sm:py-3 text-left font-semibold text-gray-700 rounded-tl-lg">
@@ -438,13 +472,13 @@ export default function GuruAbsensi() {
                             Waktu
                           </th>
                           <th className="px-2 py-2 sm:px-4 sm:py-3 text-left font-semibold text-gray-700">
-                            Kegiatan
-                          </th>
-                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left font-semibold text-gray-700">
                             Lokasi
                           </th>
-                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left font-semibold text-gray-700">
-                            Foto/Bukti
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-center w-24 font-semibold text-gray-700">
+                            Foto
+                          </th>
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-center w-24 font-semibold text-gray-700">
+                            TTD
                           </th>
                           <th className="px-2 py-2 sm:px-4 sm:py-3 text-left font-semibold text-gray-700 rounded-tr-lg">
                             Keterangan
@@ -462,13 +496,20 @@ export default function GuruAbsensi() {
                                 {item.tanggal}
                               </td>
                               <td className="px-2 py-2 sm:px-4 sm:py-3 text-gray-700">
-                                {item.status}
+                                <span
+                                  className={`px-2 py-1 rounded text-xs font-medium ${
+                                    item.status === "Hadir"
+                                      ? "bg-green-100 text-green-800"
+                                      : item.status === "Izin"
+                                        ? "bg-yellow-100 text-yellow-800"
+                                        : "bg-gray-100 text-gray-800"
+                                  }`}
+                                >
+                                  {item.status}
+                                </span>
                               </td>
                               <td className="px-2 py-2 sm:px-4 sm:py-3 text-gray-700">
                                 {item.waktu}
-                              </td>
-                              <td className="px-2 py-2 sm:px-4 sm:py-3 text-gray-700">
-                                {item.kegiatan || "-"}
                               </td>
                               <td className="px-2 py-2 sm:px-4 sm:py-3 text-gray-700">
                                 {item.lokasi ? (
@@ -484,16 +525,59 @@ export default function GuruAbsensi() {
                                   "-"
                                 )}
                               </td>
-                              <td className="px-2 py-2 sm:px-4 sm:py-3">
-                                {item.foto && (
-                                  <img
-                                    src={item.foto}
-                                    alt="Foto"
-                                    className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded border"
-                                  />
+                              <td className="px-2 py-2 sm:px-4 sm:py-3 text-center">
+                                {item.foto ? (
+                                  <div
+                                    className="flex justify-center cursor-pointer group"
+                                    onClick={() => openImage(item.foto)}
+                                    title="Klik untuk memperbesar"
+                                  >
+                                    <div className="relative w-10 h-10 sm:w-12 sm:h-12 border rounded overflow-hidden shadow-sm hover:shadow-md transition-all">
+                                      <img
+                                        src={item.foto}
+                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                                        alt="Foto"
+                                        onError={(e) => {
+                                          (
+                                            e.target as HTMLImageElement
+                                          ).style.display = "none";
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex justify-center text-gray-300">
+                                    <ImageIcon className="w-5 h-5" />
+                                  </div>
                                 )}
                               </td>
-                              <td className="px-2 py-2 sm:px-4 sm:py-3 text-gray-700">
+                              <td className="px-2 py-2 sm:px-4 sm:py-3 text-center">
+                                {item.tandaTangan ? (
+                                  <div
+                                    className="flex justify-center cursor-pointer group"
+                                    onClick={() => openImage(item.tandaTangan)}
+                                    title="Klik untuk memperbesar"
+                                  >
+                                    <div className="relative w-10 h-10 sm:w-12 sm:h-12 border rounded bg-white overflow-hidden shadow-sm hover:shadow-md transition-all">
+                                      <img
+                                        src={item.tandaTangan}
+                                        className="w-full h-full object-contain group-hover:scale-110 transition-transform p-1"
+                                        alt="TTD"
+                                        onError={(e) => {
+                                          (
+                                            e.target as HTMLImageElement
+                                          ).style.display = "none";
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex justify-center text-gray-300">
+                                    <PenTool className="w-5 h-5" />
+                                  </div>
+                                )}
+                              </td>
+                              <td className="px-2 py-2 sm:px-4 sm:py-3 text-gray-700 text-sm min-w-[150px]">
                                 {getKeterangan(item.status, item.catatan)}
                               </td>
                             </tr>
