@@ -19,46 +19,64 @@ export async function GET(request: Request) {
     const { role, email } = user;
     const userRole = role ? role.toUpperCase() : "";
 
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
+    const { searchParams } = new URL(request.url);
+    const filterKelas = searchParams.get("kelas");
+    const filterTempatPKL = searchParams.get("tempatPKL");
+    const filterTanggal = searchParams.get("tanggal");
 
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-    const endOfMonth = new Date(
-        startOfMonth.getFullYear(),
-        startOfMonth.getMonth() + 1,
-        0
-    );
+    let startFilterDate = new Date();
+    let endFilterDate = new Date();
+
+    if (filterTanggal && filterTanggal !== "Semua Periode") {
+        const targetDate = new Date(filterTanggal);
+        if (!isNaN(targetDate.getTime())) {
+            startFilterDate = new Date(targetDate);
+            startFilterDate.setHours(0, 0, 0, 0);
+
+            endFilterDate = new Date(targetDate);
+            endFilterDate.setHours(23, 59, 59, 999);
+        }
+    } else {
+        startFilterDate.setHours(0, 0, 0, 0);
+        endFilterDate.setHours(23, 59, 59, 999);
+    }
 
     try {
         if (userRole === "ADMIN") {
-            const totalSiswa = await prisma.dataSiswa.count();
+            const whereSiswa: any = {};
+            if (filterKelas && filterKelas !== "Semua Kelas") {
+                whereSiswa.kelas = filterKelas;
+            }
 
-            const absensiHariIni = await prisma.absensi.findMany({
-                where: { tanggal: { gte: startOfDay, lte: endOfDay } },
+            const filteredSiswa = await prisma.dataSiswa.findMany({
+                where: whereSiswa,
+                select: { userId: true, kelas: true }
             });
 
-            const hadirCount = absensiHariIni.filter((a) => a.status.toLowerCase() === "hadir").length;
+            const totalSiswa = filteredSiswa.length;
+            const listUserId = filteredSiswa.map(s => s.userId);
+
+            const absensiFiltered = await prisma.absensi.findMany({
+                where: {
+                    userId: { in: listUserId },
+                    tanggal: { gte: startFilterDate, lte: endFilterDate }
+                }
+            });
+
+            const hadirCount = absensiFiltered.filter((a) => a.status.toLowerCase() === "hadir").length;
             const tidakHadirCount = totalSiswa - hadirCount;
             const persentase = totalSiswa > 0 ? ((hadirCount / totalSiswa) * 100).toFixed(1) : 0;
 
-            const dataSiswaAll = await prisma.dataSiswa.findMany({
-                select: { kelas: true, userId: true }
-            });
-
             const mapKelas = new Map();
 
-            dataSiswaAll.forEach((s) => {
+            filteredSiswa.forEach((s) => {
                 if (!mapKelas.has(s.kelas)) {
                     mapKelas.set(s.kelas, { kelas: s.kelas, total: 0, hadir: 0 });
                 }
                 const stats = mapKelas.get(s.kelas);
                 stats.total += 1;
 
-                const isHadir = absensiHariIni.some((a) => a.userId === s.userId && a.status.toLowerCase() === "hadir");
+                const isHadir = absensiFiltered.some((a) => a.userId === s.userId && a.status.toLowerCase() === "hadir");
                 if (isHadir) stats.hadir += 1;
             });
 
@@ -68,6 +86,8 @@ export async function GET(request: Request) {
                 total: item.total,
                 persentase: item.total > 0 ? ((item.hadir / item.total) * 100).toFixed(1) : 0,
             }));
+
+            tableData.sort((a, b) => a.kelas.localeCompare(b.kelas));
 
             return NextResponse.json({
                 cards: {
@@ -98,29 +118,30 @@ export async function GET(request: Request) {
                 searchConditions.push({ guruPembimbing: { contains: guruUser.username, mode: "insensitive" } });
             }
 
+            const whereSiswa: any = { OR: searchConditions };
+
+            if (filterTempatPKL && filterTempatPKL !== "Semua Tempat PKL") {
+                whereSiswa.tempatPKL = filterTempatPKL;
+            }
+
             const siswaBimbingan = await prisma.dataSiswa.findMany({
-                where: { OR: searchConditions },
+                where: whereSiswa,
                 select: { userId: true, tempatPKL: true },
             });
 
             const totalSiswa = siswaBimbingan.length;
             const listUserIdString = siswaBimbingan.map((s) => s.userId);
 
-            const absensiHariIni = await prisma.absensi.findMany({
+            const absensiFiltered = await prisma.absensi.findMany({
                 where: {
                     userId: { in: listUserIdString },
-                    tanggal: { gte: startOfDay, lte: endOfDay }
+                    tanggal: { gte: startFilterDate, lte: endFilterDate }
                 },
             });
 
-            const hadirCount = absensiHariIni.filter((a) => a.status.toLowerCase() === "hadir").length;
+            const hadirCount = absensiFiltered.filter((a) => a.status.toLowerCase() === "hadir").length;
             const tidakHadirCount = totalSiswa - hadirCount;
             const persentase = totalSiswa > 0 ? ((hadirCount / totalSiswa) * 100).toFixed(1) : 0;
-
-            const absensiTotal = await prisma.absensi.findMany({
-                where: { userId: { in: listUserIdString } },
-                select: { userId: true, status: true }
-            });
 
             const usersSiswa = await prisma.user.findMany({
                 where: { username: { in: listUserIdString } },
@@ -129,7 +150,7 @@ export async function GET(request: Request) {
             const mapNama = new Map(usersSiswa.map(u => [u.username, u.name]));
 
             const tableData = siswaBimbingan.map(siswa => {
-                const absenSiswa = absensiTotal.filter(a => a.userId === siswa.userId);
+                const absenSiswa = absensiFiltered.filter(a => a.userId === siswa.userId);
 
                 return {
                     tempatPKL: siswa.tempatPKL || "Belum ditentukan",
@@ -151,6 +172,11 @@ export async function GET(request: Request) {
         }
 
         if (userRole === "SISWA") {
+            const startOfMonth = new Date();
+            startOfMonth.setDate(1);
+            startOfMonth.setHours(0, 0, 0, 0);
+            const endOfMonth = new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 0);
+
             const userData = await prisma.user.findUnique({
                 where: { email: email || "" },
                 select: { username: true }
