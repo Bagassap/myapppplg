@@ -3,10 +3,7 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "../../auth/[...nextauth]/route";
 
-interface UserSession {
-    role: string;
-    name?: string | null;
-}
+export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
     const session = await getServerSession(authOptions);
@@ -15,20 +12,16 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = session.user as UserSession;
-    const { role, name } = user;
+    const user = session.user as any;
+    const { role, email } = user;
+    const userRole = role ? role.toUpperCase() : "";
 
     try {
         let kelasOption: any[] = [];
         let tempatPKLOption: any[] = [];
         let tanggalOption: string[] = [];
 
-        const statusOption = [
-            { value: "Hadir", label: "Hadir" },
-            { value: "Tidak Hadir", label: "Tidak Hadir" },
-        ];
-
-        if (role === "ADMIN") {
+        if (userRole === "ADMIN") {
             const distinctKelas = await prisma.dataSiswa.findMany({
                 distinct: ['kelas'],
                 select: { kelas: true },
@@ -49,53 +42,62 @@ export async function GET(request: Request) {
             const uniqueDates = new Set(
                 rawTanggal.map(t => t.tanggal.toISOString().split('T')[0])
             );
-
             tanggalOption = Array.from(uniqueDates);
         }
-        else if (role === "GURU") {
-            const distinctPKL = await prisma.dataSiswa.findMany({
-                where: { guruPembimbing: name },
-                distinct: ['tempatPKL'],
-                select: { tempatPKL: true },
-                orderBy: { tempatPKL: 'asc' }
+        else if (userRole === "GURU") {
+            const guruUser = await prisma.user.findUnique({
+                where: { email: email || "" },
+                select: { name: true, username: true }
             });
 
-            tempatPKLOption = distinctPKL
-                .filter(p => p.tempatPKL !== null)
-                .map(p => ({
-                    id: p.tempatPKL,
-                    label: p.tempatPKL
+            if (guruUser && guruUser.name) {
+                const searchConditions: any[] = [
+                    { guruPembimbing: { contains: guruUser.name, mode: "insensitive" } }
+                ];
+                if (guruUser.username) {
+                    searchConditions.push({ guruPembimbing: { contains: guruUser.username, mode: "insensitive" } });
+                }
+
+                const siswaBimbingan = await prisma.dataSiswa.findMany({
+                    where: { OR: searchConditions },
+                    select: { userId: true, tempatPKL: true }
+                });
+
+                const distinctPKL = [...new Set(siswaBimbingan.map(s => s.tempatPKL).filter(Boolean))];
+                tempatPKLOption = distinctPKL.sort().map(pkl => ({
+                    id: pkl,
+                    label: pkl
                 }));
 
-            const siswaBimbingan = await prisma.dataSiswa.findMany({
-                where: { guruPembimbing: name },
-                select: { userId: true }
-            });
+                const siswaIds = siswaBimbingan.map(s => s.userId);
 
-            const siswaIds = siswaBimbingan.map(s => s.userId);
+                if (siswaIds.length > 0) {
+                    const rawTanggalGuru = await prisma.absensi.findMany({
+                        where: { userId: { in: siswaIds } },
+                        select: { tanggal: true },
+                        orderBy: { tanggal: 'desc' },
+                        take: 100
+                    });
 
-            const rawTanggalGuru = await prisma.absensi.findMany({
-                where: { userId: { in: siswaIds } },
-                select: { tanggal: true },
-                orderBy: { tanggal: 'desc' },
-                take: 100
-            });
-
-            const uniqueDatesGuru = new Set(
-                rawTanggalGuru.map(t => t.tanggal.toISOString().split('T')[0])
-            );
-
-            tanggalOption = Array.from(uniqueDatesGuru);
+                    const uniqueDatesGuru = new Set(
+                        rawTanggalGuru.map(t => t.tanggal.toISOString().split('T')[0])
+                    );
+                    tanggalOption = Array.from(uniqueDatesGuru);
+                }
+            }
         }
 
         return NextResponse.json({
             kelas: kelasOption,
             tempatPKL: tempatPKLOption,
-            tanggal: tanggalOption,
-            status: statusOption
+            tanggal: tanggalOption
         });
 
     } catch (error) {
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        return NextResponse.json({
+            kelas: [],
+            tempatPKL: [],
+            tanggal: []
+        });
     }
 }
