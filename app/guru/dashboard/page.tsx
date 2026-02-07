@@ -31,43 +31,43 @@ export default function GuruDashboard() {
     tanggal: [] as string[],
   });
 
-  // Fetch Data
   useEffect(() => {
-    const fetchAllData = async () => {
+    const loadData = async () => {
+      setLoading(true);
       try {
         // 1. Fetch Filters
         const filterRes = await fetch("/api/dashboard/filters");
         if (filterRes.ok) {
           const filterData = await filterRes.json();
           setFilters({
-            tempatPKL: filterData.tempatPKL || [], // Menggunakan key tempatPKL dari API
+            tempatPKL: filterData.tempatPKL || [],
             tanggal: filterData.tanggal || [],
           });
-
-          // Set default periode
           if (filterData.tanggal && filterData.tanggal.length > 0) {
             setSelectedPeriod(filterData.tanggal[0]);
           }
         }
 
         // 2. Fetch Dashboard
-        const dashboardRes = await fetch("/api/dashboard");
+        const dashboardRes = await fetch(
+          "/api/dashboard?t=" + new Date().getTime(),
+        );
         if (dashboardRes.ok) {
           const data = await dashboardRes.json();
-          setStats(data.cards);
-          setPklData(data.table);
+          if (data.cards) setStats(data.cards);
+          if (data.table) setPklData(data.table);
         }
       } catch (error) {
-        console.error("Gagal mengambil data", error);
+        // Silent error
       } finally {
         setLoading(false);
       }
     };
-    fetchAllData();
+
+    loadData();
   }, []);
 
   const handleExport = () => {
-    // Menambahkan filter ke export
     const query = new URLSearchParams({
       tempatPKL: selectedPKL !== "Semua Tempat PKL" ? selectedPKL : "",
       tanggal: selectedPeriod !== "Semua Periode" ? selectedPeriod : "",
@@ -97,7 +97,6 @@ export default function GuruDashboard() {
               Filter dan Ekspor Data
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 items-end">
-              {/* Filter Tempat PKL (REAL DATA) */}
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-gray-700 mb-2">
                   Pilih Tempat PKL
@@ -116,7 +115,6 @@ export default function GuruDashboard() {
                 </select>
               </div>
 
-              {/* Filter Periode (REAL DATA TANGGAL) */}
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-gray-700 mb-2">
                   Pilih Periode
@@ -158,7 +156,7 @@ export default function GuruDashboard() {
                 Total Siswa PKL
               </h3>
               <p className="text-3xl font-bold text-blue-600">
-                {loading ? "..." : stats.totalSiswaPKL}
+                {stats.totalSiswaPKL}
               </p>
             </div>
             <div className="bg-gradient-to-br from-green-100 to-green-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-green-200">
@@ -172,7 +170,7 @@ export default function GuruDashboard() {
                 Hadir Hari Ini
               </h3>
               <p className="text-3xl font-bold text-green-600">
-                {loading ? "..." : stats.hadirHariIni}
+                {stats.hadirHariIni}
               </p>
             </div>
             <div className="bg-gradient-to-br from-red-100 to-red-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-red-200">
@@ -184,7 +182,7 @@ export default function GuruDashboard() {
                 Tidak Hadir
               </h3>
               <p className="text-3xl font-bold text-red-600">
-                {loading ? "..." : stats.tidakHadir}
+                {stats.tidakHadir}
               </p>
             </div>
             <div className="bg-gradient-to-br from-indigo-100 to-blue-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-indigo-200">
@@ -198,7 +196,7 @@ export default function GuruDashboard() {
                 Persentase Kehadiran
               </h3>
               <p className="text-3xl font-bold text-indigo-600">
-                {loading ? "..." : stats.persentaseKehadiran}%
+                {stats.persentaseKehadiran}%
               </p>
             </div>
           </div>
@@ -228,16 +226,15 @@ export default function GuruDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {loading ? (
+                  {pklData.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="text-center py-4">
-                        Memuat data...
-                      </td>
-                    </tr>
-                  ) : pklData.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="text-center py-4">
-                        Tidak ada data siswa bimbingan.
+                      <td
+                        colSpan={4}
+                        className="text-center py-4 text-gray-500"
+                      >
+                        {loading
+                          ? "Memuat data..."
+                          : "Tidak ada data siswa bimbingan."}
                       </td>
                     </tr>
                   ) : (
