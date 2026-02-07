@@ -81,7 +81,7 @@ export default function LoginPage() {
           </h1>
 
           <p className="text-center text-gray-600 text-sm sm:text-base mb-1 md:mb-2 font-medium">
-            PEngembangan Perangkat Lunak dan GIM
+            Pengembangan Perangkat Lunak dan GIM
           </p>
 
           <p className="text-center text-gray-500 text-xs sm:text-sm mb-6 md:mb-8 leading-relaxed px-2">
