@@ -42,66 +42,40 @@ export async function GET(req: NextRequest) {
             whereClause.userId = userData.username;
 
         }
-        // === LOGIC GURU (DEBUG MODE) ===
+        // === LOGIC GURU (CLEAN VERSION) ===
         else if (userRole === "GURU") {
-            console.log("\n========== DEBUG API ABSENSI (ROLE: GURU) ==========");
-            console.log("1. Email Login:", userEmail);
-
-            // Ambil data user guru lengkap
             const guruUser = await prisma.user.findUnique({
                 where: { email: userEmail },
-                select: { name: true, username: true } // Ambil username juga untuk jaga-jaga
+                select: { name: true, username: true }
             });
 
-            console.log("2. Data User Guru:", guruUser);
-
             if (!guruUser?.name) {
-                console.log("!!! ERROR: Akun Guru tidak memiliki Nama (name is null) !!!");
                 return NextResponse.json([], { status: 200 });
             }
 
-            const namaGuru = guruUser.name;
-
-            // Logika Pencarian:
-            // Kita cari siswa yang kolom 'guruPembimbing'-nya mengandung Nama Guru
-            // ATAU mengandung Username Guru (fallback jika relasi pakai NIP)
+            // Logic: Cari siswa berdasarkan Nama Guru ATAU Username Guru
             const searchConditions: any[] = [
-                { guruPembimbing: { contains: namaGuru, mode: "insensitive" } }
+                { guruPembimbing: { contains: guruUser.name, mode: "insensitive" } }
             ];
 
-            // Jika username ada, tambahkan ke pencarian (siapa tahu relasi pakai NIP/ID)
             if (guruUser.username) {
                 searchConditions.push({ guruPembimbing: { contains: guruUser.username, mode: "insensitive" } });
             }
 
-            // Query Siswa
             const myStudents = await prisma.dataSiswa.findMany({
                 where: {
                     OR: searchConditions
                 },
-                select: { userId: true, guruPembimbing: true, id: true },
+                select: { userId: true },
             });
-
-            console.log(`3. Hasil Query Siswa (Mencari '${namaGuru}'):`);
-            console.log(`   -> Ditemukan ${myStudents.length} siswa binaan.`);
-            if (myStudents.length > 0) {
-                console.log("   -> Sample Siswa 1:", myStudents[0]);
-            } else {
-                // DEBUG LANJUTAN JIKA KOSONG:
-                // Cek 5 data siswa acak untuk melihat format guruPembimbing mereka
-                const checkRandom = await prisma.dataSiswa.findMany({ take: 3, select: { guruPembimbing: true } });
-                console.log("   -> (DEBUG) Contoh data 'guruPembimbing' di database siswa lain:", checkRandom);
-            }
 
             const studentIds = myStudents.map((s) => s.userId);
 
             if (studentIds.length === 0) {
-                console.log("!!! STOP: Tidak ada siswa yang cocok, return kosong.");
                 return NextResponse.json([], { status: 200 });
             }
 
             whereClause.userId = { in: studentIds };
-            console.log("4. Filter userId Absensi:", studentIds);
         }
 
         // === EXECUTE QUERY ===
@@ -112,8 +86,6 @@ export async function GET(req: NextRequest) {
             },
             orderBy: { tanggal: "desc" },
         });
-
-        console.log(`5. Total Absensi Ditemukan: ${absensiList.length}`);
 
         const uniqueUserIds = Array.from(
             new Set(absensiList.map((item) => item.userId))
@@ -158,7 +130,6 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json(formattedData);
     } catch (error) {
-        console.error("Absensi API Error:", error);
         return NextResponse.json(
             { error: "Internal Server Error" },
             { status: 500 }
