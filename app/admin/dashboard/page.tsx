@@ -13,10 +13,10 @@ import {
 
 export default function AdminDashboard() {
   const [selectedClass, setSelectedClass] = useState("Semua Kelas");
-  const [selectedPeriod, setSelectedPeriod] = useState("Semua Periode"); // Default diubah agar netral
+  const [selectedPeriod, setSelectedPeriod] = useState("Semua Periode");
   const [loading, setLoading] = useState(true);
 
-  // State untuk Data Dashboard
+  // State Stats dengan default 0
   const [stats, setStats] = useState({
     totalSiswa: 0,
     hadirHariIni: 0,
@@ -25,44 +25,62 @@ export default function AdminDashboard() {
   });
   const [classData, setClassData] = useState<any[]>([]);
 
-  // State untuk Filter Options (BARU)
   const [filters, setFilters] = useState({
     kelas: [] as { id: string; label: string }[],
     tanggal: [] as string[],
   });
 
-  // Fetch Data Dashboard & Filters
   useEffect(() => {
     const fetchAllData = async () => {
+      console.log("🚀 MEMULAI FETCH DASHBOARD ADMIN...");
       try {
         // 1. Fetch Filters
         const filterRes = await fetch("/api/dashboard/filters");
         if (filterRes.ok) {
           const filterData = await filterRes.json();
+          console.log("✅ Data Filter Diterima:", filterData);
           setFilters({
             kelas: filterData.kelas || [],
             tanggal: filterData.tanggal || [],
           });
 
-          // Set default periode ke tanggal terbaru jika ada
           if (filterData.tanggal && filterData.tanggal.length > 0) {
             setSelectedPeriod(filterData.tanggal[0]);
           }
+        } else {
+          console.error("❌ Gagal ambil filter:", filterRes.status);
         }
 
-        // 2. Fetch Dashboard Data (Bisa dikirim query params filter disini kedepannya)
-        const dashboardRes = await fetch("/api/dashboard");
+        // 2. Fetch Dashboard Data
+        const dashboardRes = await fetch("/api/dashboard", {
+          cache: "no-store",
+        }); // Anti-cache
+
         if (dashboardRes.ok) {
           const data = await dashboardRes.json();
-          setStats(data.cards);
-          setClassData(data.table);
+          console.log("✅ DATA DASHBOARD DITERIMA DARI API:", data);
+
+          if (data.cards) {
+            console.log("📊 Mengupdate Stats UI dengan:", data.cards);
+            setStats(data.cards);
+          } else {
+            console.error("⚠️ Data 'cards' tidak ditemukan di response API");
+          }
+
+          if (data.table) {
+            console.log("📋 Mengupdate Tabel UI dengan:", data.table);
+            setClassData(data.table);
+          }
+        } else {
+          console.error("❌ Gagal ambil dashboard:", dashboardRes.status);
         }
       } catch (error) {
-        console.error("Gagal mengambil data", error);
+        console.error("🔥 ERROR FATAL di Frontend:", error);
       } finally {
         setLoading(false);
       }
     };
+
     fetchAllData();
   }, []);
 
@@ -80,13 +98,12 @@ export default function AdminDashboard() {
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
         <main className="flex-1 p-6 sm:p-8 lg:p-12 overflow-y-auto overflow-x-hidden">
-          {/* Header Section */}
           <div className="mb-6 sm:mb-8">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">
               Admin Dashboard
             </h1>
-            <p className="text-gray-600 text-sm sm:text-base md:text-lg">
-              Pantau statistik kehadiran siswa secara keseluruhan dengan mudah.
+            <p className="text-gray-600">
+              Debug Mode: Cek Console (F12) untuk melihat aliran data.
             </p>
           </div>
 
@@ -94,10 +111,9 @@ export default function AdminDashboard() {
           <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <Filter className="w-5 h-5 text-indigo-500" />
-              Filter dan Ekspor Data
+              Filter Data
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 items-end">
-              {/* Filter Kelas (REAL DATA) */}
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-gray-700 mb-2">
                   Pilih Kelas
@@ -105,7 +121,7 @@ export default function AdminDashboard() {
                 <select
                   value={selectedClass}
                   onChange={(e) => setSelectedClass(e.target.value)}
-                  className="px-4 py-3 border border-indigo-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 hover:shadow-md w-full"
+                  className="px-4 py-3 border border-indigo-300 rounded-xl w-full"
                 >
                   <option>Semua Kelas</option>
                   {filters.kelas.map((k) => (
@@ -116,7 +132,6 @@ export default function AdminDashboard() {
                 </select>
               </div>
 
-              {/* Filter Periode (REAL DATA TANGGAL) */}
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-gray-700 mb-2">
                   Pilih Periode
@@ -124,7 +139,7 @@ export default function AdminDashboard() {
                 <select
                   value={selectedPeriod}
                   onChange={(e) => setSelectedPeriod(e.target.value)}
-                  className="px-4 py-3 border border-indigo-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 hover:shadow-md w-full"
+                  className="px-4 py-3 border border-indigo-300 rounded-xl w-full"
                 >
                   <option>Semua Periode</option>
                   {filters.tanggal.map((t) => (
@@ -135,14 +150,12 @@ export default function AdminDashboard() {
                 </select>
               </div>
 
-              {/* Tombol Ekspor */}
               <div className="flex justify-start md:justify-end">
                 <button
                   onClick={handleExport}
-                  className="flex items-center justify-center w-full md:w-auto gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-xl shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-blue-700 transition-all duration-200 transform hover:scale-105"
+                  className="flex items-center justify-center w-full md:w-auto gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl"
                 >
-                  <Download className="w-5 h-5" />
-                  Ekspor Data
+                  <Download className="w-5 h-5" /> Ekspor
                 </button>
               </div>
             </div>
@@ -150,7 +163,7 @@ export default function AdminDashboard() {
 
           {/* Statistik Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-            <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-blue-200">
+            <div className="bg-blue-100 p-6 rounded-2xl shadow-lg border border-blue-200">
               <div className="flex items-center justify-between mb-4">
                 <Users className="w-8 h-8 text-blue-600" />
                 <span className="text-sm font-medium text-blue-700">Total</span>
@@ -163,7 +176,7 @@ export default function AdminDashboard() {
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-green-100 to-green-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-green-200">
+            <div className="bg-green-100 p-6 rounded-2xl shadow-lg border border-green-200">
               <div className="flex items-center justify-between mb-4">
                 <CheckCircle className="w-8 h-8 text-green-600" />
                 <span className="text-sm font-medium text-green-700">
@@ -178,7 +191,7 @@ export default function AdminDashboard() {
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-red-100 to-red-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-red-200">
+            <div className="bg-red-100 p-6 rounded-2xl shadow-lg border border-red-200">
               <div className="flex items-center justify-between mb-4">
                 <XCircle className="w-8 h-8 text-red-600" />
                 <span className="text-sm font-medium text-red-700">Absen</span>
@@ -191,7 +204,7 @@ export default function AdminDashboard() {
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-indigo-100 to-blue-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-indigo-200">
+            <div className="bg-indigo-100 p-6 rounded-2xl shadow-lg border border-indigo-200">
               <div className="flex items-center justify-between mb-4">
                 <TrendingUp className="w-8 h-8 text-indigo-600" />
                 <span className="text-sm font-medium text-indigo-700">
@@ -199,7 +212,7 @@ export default function AdminDashboard() {
                 </span>
               </div>
               <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                Persentase Kehadiran
+                Persentase
               </h3>
               <p className="text-3xl font-bold text-indigo-600">
                 {loading ? "..." : stats.persentaseKehadiran}%
@@ -207,17 +220,17 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Tabel Laporan Cepat */}
+          {/* Tabel */}
           <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
             <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
               <CheckCircle className="w-6 h-6 text-green-600" />
               Laporan Kehadiran per Kelas
             </h3>
             <div className="w-full overflow-x-auto">
-              <table className="w-full table-auto border-collapse min-w-[600px]">
+              <table className="w-full table-auto border-collapse">
                 <thead>
-                  <tr className="bg-gradient-to-r from-indigo-100 to-blue-100">
-                    <th className="px-6 py-4 text-left font-semibold text-gray-700 rounded-tl-xl">
+                  <tr className="bg-indigo-50">
+                    <th className="px-6 py-4 text-left font-semibold text-gray-700">
                       Kelas
                     </th>
                     <th className="px-6 py-4 text-left font-semibold text-gray-700">
@@ -226,7 +239,7 @@ export default function AdminDashboard() {
                     <th className="px-6 py-4 text-left font-semibold text-gray-700">
                       Total Siswa
                     </th>
-                    <th className="px-6 py-4 text-left font-semibold text-gray-700 rounded-tr-xl">
+                    <th className="px-6 py-4 text-left font-semibold text-gray-700">
                       Persentase
                     </th>
                   </tr>
@@ -246,22 +259,11 @@ export default function AdminDashboard() {
                     </tr>
                   ) : (
                     classData.map((item, index) => (
-                      <tr
-                        key={index}
-                        className="border-b border-gray-100 hover:bg-indigo-50 transition-colors duration-200"
-                      >
-                        <td className="px-6 py-4 font-medium text-gray-900">
-                          {item.kelas}
-                        </td>
-                        <td className="px-6 py-4 text-gray-700">
-                          {item.hadir}
-                        </td>
-                        <td className="px-6 py-4 text-gray-700">
-                          {item.total}
-                        </td>
-                        <td className="px-6 py-4 text-gray-700 font-semibold">
-                          {item.persentase}%
-                        </td>
+                      <tr key={index} className="border-b border-gray-100">
+                        <td className="px-6 py-4">{item.kelas}</td>
+                        <td className="px-6 py-4">{item.hadir}</td>
+                        <td className="px-6 py-4">{item.total}</td>
+                        <td className="px-6 py-4">{item.persentase}%</td>
                       </tr>
                     ))
                   )}
