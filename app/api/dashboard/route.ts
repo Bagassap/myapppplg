@@ -10,7 +10,7 @@ export async function GET(request: Request) {
 
     if (!session || !session.user) {
         return NextResponse.json({
-            cards: { totalSiswa: 0, hadirHariIni: 0, tidakHadir: 0, persentaseKehadiran: 0 },
+            cards: { totalSiswa: 0, totalSiswaPKL: 0, hadirHariIni: 0, tidakHadir: 0, persentaseKehadiran: 0 },
             table: []
         });
     }
@@ -19,13 +19,11 @@ export async function GET(request: Request) {
     const { role, email } = user;
     const userRole = role ? role.toUpperCase() : "";
 
-    // SETUP TANGGAL (HARI INI)
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date();
     endOfDay.setHours(23, 59, 59, 999);
 
-    // SETUP BULAN (BULAN INI)
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
@@ -36,9 +34,9 @@ export async function GET(request: Request) {
     );
 
     try {
-        // ================== ADMIN ==================
         if (userRole === "ADMIN") {
             const totalSiswa = await prisma.dataSiswa.count();
+
             const absensiHariIni = await prisma.absensi.findMany({
                 where: { tanggal: { gte: startOfDay, lte: endOfDay } },
             });
@@ -47,16 +45,21 @@ export async function GET(request: Request) {
             const tidakHadirCount = totalSiswa - hadirCount;
             const persentase = totalSiswa > 0 ? ((hadirCount / totalSiswa) * 100).toFixed(1) : 0;
 
-            const dataSiswaAll = await prisma.dataSiswa.findMany({ select: { kelas: true, userId: true } });
+            const dataSiswaAll = await prisma.dataSiswa.findMany({
+                select: { kelas: true, userId: true }
+            });
+
             const mapKelas = new Map();
 
             dataSiswaAll.forEach((s) => {
-                if (!mapKelas.has(s.kelas)) mapKelas.set(s.kelas, { kelas: s.kelas, total: 0, hadir: 0 });
+                if (!mapKelas.has(s.kelas)) {
+                    mapKelas.set(s.kelas, { kelas: s.kelas, total: 0, hadir: 0 });
+                }
                 const stats = mapKelas.get(s.kelas);
                 stats.total += 1;
-                if (absensiHariIni.some((a) => a.userId === s.userId && a.status.toLowerCase() === "hadir")) {
-                    stats.hadir += 1;
-                }
+
+                const isHadir = absensiHariIni.some((a) => a.userId === s.userId && a.status.toLowerCase() === "hadir");
+                if (isHadir) stats.hadir += 1;
             });
 
             const tableData = Array.from(mapKelas.values()).map((item: any) => ({
@@ -77,7 +80,6 @@ export async function GET(request: Request) {
             });
         }
 
-        // ================== GURU ==================
         if (userRole === "GURU") {
             const guruUser = await prisma.user.findUnique({
                 where: { email: email || "" },
@@ -85,11 +87,16 @@ export async function GET(request: Request) {
             });
 
             if (!guruUser?.name) {
-                return NextResponse.json({ cards: { totalSiswaPKL: 0, hadirHariIni: 0, tidakHadir: 0, persentaseKehadiran: 0 }, table: [] });
+                return NextResponse.json({
+                    cards: { totalSiswaPKL: 0, hadirHariIni: 0, tidakHadir: 0, persentaseKehadiran: 0 },
+                    table: []
+                });
             }
 
             const searchConditions: any[] = [{ guruPembimbing: { contains: guruUser.name, mode: "insensitive" } }];
-            if (guruUser.username) searchConditions.push({ guruPembimbing: { contains: guruUser.username, mode: "insensitive" } });
+            if (guruUser.username) {
+                searchConditions.push({ guruPembimbing: { contains: guruUser.username, mode: "insensitive" } });
+            }
 
             const siswaBimbingan = await prisma.dataSiswa.findMany({
                 where: { OR: searchConditions },
@@ -99,17 +106,20 @@ export async function GET(request: Request) {
             const totalSiswa = siswaBimbingan.length;
             const listUserIdString = siswaBimbingan.map((s) => s.userId);
 
-            // Cards Stats (Harian)
             const absensiHariIni = await prisma.absensi.findMany({
-                where: { userId: { in: listUserIdString }, tanggal: { gte: startOfDay, lte: endOfDay } },
+                where: {
+                    userId: { in: listUserIdString },
+                    tanggal: { gte: startOfDay, lte: endOfDay }
+                },
             });
+
             const hadirCount = absensiHariIni.filter((a) => a.status.toLowerCase() === "hadir").length;
             const tidakHadirCount = totalSiswa - hadirCount;
             const persentase = totalSiswa > 0 ? ((hadirCount / totalSiswa) * 100).toFixed(1) : 0;
 
-            // Table Data (Bulanan)
-            const absensiBulanIni = await prisma.absensi.findMany({
-                where: { userId: { in: listUserIdString }, tanggal: { gte: startOfMonth, lte: endOfMonth } },
+            const absensiTotal = await prisma.absensi.findMany({
+                where: { userId: { in: listUserIdString } },
+                select: { userId: true, status: true }
             });
 
             const usersSiswa = await prisma.user.findMany({
@@ -119,7 +129,8 @@ export async function GET(request: Request) {
             const mapNama = new Map(usersSiswa.map(u => [u.username, u.name]));
 
             const tableData = siswaBimbingan.map(siswa => {
-                const absenSiswa = absensiBulanIni.filter(a => a.userId === siswa.userId);
+                const absenSiswa = absensiTotal.filter(a => a.userId === siswa.userId);
+
                 return {
                     tempatPKL: siswa.tempatPKL || "Belum ditentukan",
                     siswa: mapNama.get(siswa.userId) || siswa.userId,
@@ -139,14 +150,15 @@ export async function GET(request: Request) {
             });
         }
 
-        // ================== SISWA ==================
         if (userRole === "SISWA") {
             const userData = await prisma.user.findUnique({
                 where: { email: email || "" },
                 select: { username: true }
             });
 
-            if (!userData?.username) return NextResponse.json({ cards: { totalHariBulanIni: 0 } });
+            if (!userData?.username) {
+                return NextResponse.json({ cards: { totalHariBulanIni: 0, hadirBulanIni: 0, tidakHadirBulanIni: 0, persentaseKehadiran: 0 } });
+            }
 
             const absensiBulanIni = await prisma.absensi.findMany({
                 where: { userId: userData.username, tanggal: { gte: startOfMonth, lte: endOfMonth } },
