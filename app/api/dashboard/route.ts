@@ -11,7 +11,7 @@ interface UserSession {
     id: number | string;
 }
 
-export const dynamic = "force-dynamic"; // Pastikan tidak di-cache statis
+export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
     const session = await getServerSession(authOptions);
@@ -21,16 +21,13 @@ export async function GET(request: Request) {
     }
 
     const user = session.user as UserSession;
-    const { role, name, id: sessionUserId } = user;
-    const userIdString = String(sessionUserId);
+    const { role, email } = user;
 
-    // Setup Date Range (Start & End of Day)
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date();
     endOfDay.setHours(23, 59, 59, 999);
 
-    // Setup Month Range
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
@@ -40,10 +37,9 @@ export async function GET(request: Request) {
         0
     );
 
-    const userRole = role.toUpperCase();
+    const userRole = role ? role.toUpperCase() : "";
 
     try {
-        // === LOGIC ADMIN ===
         if (userRole === "ADMIN") {
             const totalSiswa = await prisma.dataSiswa.count();
 
@@ -54,7 +50,9 @@ export async function GET(request: Request) {
             const hadirCount = absensiHariIni.filter(
                 (a) => a.status.toLowerCase() === "hadir"
             ).length;
+
             const tidakHadirCount = totalSiswa - hadirCount;
+
             const persentase =
                 totalSiswa > 0 ? ((hadirCount / totalSiswa) * 100).toFixed(1) : 0;
 
@@ -72,8 +70,7 @@ export async function GET(request: Request) {
                 stats.total += 1;
 
                 const isHadir = absensiHariIni.some(
-                    (a) =>
-                        a.userId === s.userId && a.status.toLowerCase() === "hadir"
+                    (a) => a.userId === s.userId && a.status.toLowerCase() === "hadir"
                 );
                 if (isHadir) stats.hadir += 1;
             });
@@ -99,30 +96,33 @@ export async function GET(request: Request) {
             });
         }
 
-        // === LOGIC GURU (PERBAIKAN) ===
         if (userRole === "GURU") {
-            // Pastikan nama guru ada
-            if (!name) {
+            const guruUser = await prisma.user.findUnique({
+                where: { email: email || "" },
+                select: { name: true, username: true }
+            });
+
+            if (!guruUser || !guruUser.name) {
                 return NextResponse.json({
                     cards: { totalSiswa: 0, hadirHariIni: 0, tidakHadir: 0, persentaseKehadiran: 0 },
                     table: []
                 });
             }
 
-            // Cari siswa yang dibimbing oleh guru ini
+            const searchConditions: any[] = [
+                { guruPembimbing: { contains: guruUser.name, mode: "insensitive" } }
+            ];
+            if (guruUser.username) {
+                searchConditions.push({ guruPembimbing: { contains: guruUser.username, mode: "insensitive" } });
+            }
+
             const siswaBimbingan = await prisma.dataSiswa.findMany({
-                where: {
-                    guruPembimbing: {
-                        contains: name,
-                        mode: "insensitive",
-                    },
-                },
+                where: { OR: searchConditions },
                 select: { userId: true, kelas: true },
             });
 
             const totalSiswa = siswaBimbingan.length;
 
-            // Jika tidak ada siswa bimbingan, return data kosong
             if (totalSiswa === 0) {
                 return NextResponse.json({
                     cards: { totalSiswa: 0, hadirHariIni: 0, tidakHadir: 0, persentaseKehadiran: 0 },
@@ -132,7 +132,6 @@ export async function GET(request: Request) {
 
             const listUserIdString = siswaBimbingan.map((s) => s.userId);
 
-            // Ambil absensi HANYA untuk siswa bimbingan
             const absensiHariIni = await prisma.absensi.findMany({
                 where: {
                     userId: { in: listUserIdString },
@@ -144,13 +143,11 @@ export async function GET(request: Request) {
                 (a) => a.status.toLowerCase() === "hadir"
             ).length;
 
-            // Hitung tidak hadir (Total Siswa Bimbingan - Yang Hadir)
             const tidakHadirCount = totalSiswa - hadirCount;
             const persentase =
                 totalSiswa > 0 ? ((hadirCount / totalSiswa) * 100).toFixed(1) : 0;
 
             const mapKelas = new Map();
-
             siswaBimbingan.forEach((s) => {
                 if (!mapKelas.has(s.kelas)) {
                     mapKelas.set(s.kelas, { kelas: s.kelas, total: 0, hadir: 0 });
@@ -159,8 +156,7 @@ export async function GET(request: Request) {
                 stats.total += 1;
 
                 const isHadir = absensiHariIni.some(
-                    (a) =>
-                        a.userId === s.userId && a.status.toLowerCase() === "hadir"
+                    (a) => a.userId === s.userId && a.status.toLowerCase() === "hadir"
                 );
                 if (isHadir) stats.hadir += 1;
             });
@@ -186,20 +182,33 @@ export async function GET(request: Request) {
             });
         }
 
-        // === LOGIC SISWA ===
         if (userRole === "SISWA") {
+            const userData = await prisma.user.findUnique({
+                where: { email: email || "" },
+                select: { username: true }
+            });
+
+            if (!userData || !userData.username) {
+                return NextResponse.json({
+                    cards: { totalHariBulanIni: 0, hadirBulanIni: 0, tidakHadirBulanIni: 0, persentaseKehadiran: 0 },
+                });
+            }
+
             const absensiBulanIni = await prisma.absensi.findMany({
                 where: {
-                    userId: userIdString,
+                    userId: userData.username,
                     tanggal: { gte: startOfMonth, lte: endOfMonth },
                 },
             });
 
             const totalHariBulanIni = absensiBulanIni.length;
+
             const hadirBulanIni = absensiBulanIni.filter(
                 (a) => a.status.toLowerCase() === "hadir"
             ).length;
+
             const tidakHadirBulanIni = totalHariBulanIni - hadirBulanIni;
+
             const persentase =
                 totalHariBulanIni > 0
                     ? ((hadirBulanIni / totalHariBulanIni) * 100).toFixed(1)
@@ -216,8 +225,8 @@ export async function GET(request: Request) {
         }
 
         return NextResponse.json({ error: "Role unknown" }, { status: 403 });
+
     } catch (error) {
-        console.error("Dashboard API Error:", error);
         return NextResponse.json(
             { error: "Internal Server Error" },
             { status: 500 }
