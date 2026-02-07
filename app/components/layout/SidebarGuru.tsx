@@ -24,7 +24,6 @@ interface MenuItem {
 
 export default function SidebarGuru() {
   const pathname = usePathname();
-  // useRouter dihapus karena signOut sudah otomatis redirect
   const [isOpen, setIsOpen] = useState(true);
 
   const { isMobileOpen, closeMobileSidebar } = useSidebar();

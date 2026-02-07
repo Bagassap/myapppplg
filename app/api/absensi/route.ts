@@ -1,24 +1,25 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { prisma } from '@/lib/prisma';
-import { uploadFile } from '@/lib/upload';
-import { authOptions } from '../auth/[...nextauth]/route';
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { prisma } from "@/lib/prisma";
+import { uploadFile } from "@/lib/upload";
+import { authOptions } from "../auth/[...nextauth]/route";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(req.url);
-    const startDate = searchParams.get('startDate');
-    const endDate = searchParams.get('endDate');
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
 
-    const userRole = (session.user as any).role;
-    const userEmail = (session.user as any).email;
-    const userName = (session.user as any).name;
+    const user = session.user as any;
+    const userRole = user.role ? user.role.toUpperCase() : "";
+    const userEmail = user.email;
+    const userName = user.name || "";
 
     let whereClause: any = {};
 
@@ -31,23 +32,28 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        if (userRole === 'SISWA') {
-            const user = await prisma.user.findUnique({
+        if (userRole === "SISWA") {
+            const userData = await prisma.user.findUnique({
                 where: { email: userEmail },
                 select: { username: true },
             });
-            if (!user || !user.username) return NextResponse.json([], { status: 200 });
-            whereClause.userId = user.username;
+            if (!userData || !userData.username)
+                return NextResponse.json([], { status: 200 });
+            whereClause.userId = userData.username;
 
-        } else if (userRole === 'GURU') {
+        } else if (userRole === "GURU") {
+            if (!userName) {
+                return NextResponse.json([], { status: 200 });
+            }
+
             const myStudents = await prisma.dataSiswa.findMany({
                 where: {
                     guruPembimbing: {
                         contains: userName,
-                        mode: 'insensitive'
-                    }
+                        mode: "insensitive",
+                    },
                 },
-                select: { userId: true }
+                select: { userId: true },
             });
 
             const studentIds = myStudents.map((s) => s.userId);
@@ -62,64 +68,74 @@ export async function GET(req: NextRequest) {
         const absensiList = await prisma.absensi.findMany({
             where: whereClause,
             include: {
-                dataSiswa: true
+                dataSiswa: true,
             },
-            orderBy: { tanggal: 'desc' },
+            orderBy: { tanggal: "desc" },
         });
 
-        const uniqueUserIds = Array.from(new Set(absensiList.map(item => item.userId)));
+        const uniqueUserIds = Array.from(
+            new Set(absensiList.map((item) => item.userId))
+        );
 
         const users = await prisma.user.findMany({
             where: {
-                username: { in: uniqueUserIds }
+                username: { in: uniqueUserIds },
             },
             select: {
                 username: true,
-                name: true
-            }
+                name: true,
+            },
         });
 
         const userMap = new Map();
-        users.forEach(u => {
+        users.forEach((u) => {
             if (u.username) userMap.set(u.username, u.name);
         });
 
         const formattedData = absensiList.map((item) => {
-            const namaSiswa = userMap.get(item.userId) || item.userId || 'Siswa';
+
+            const namaSiswa = userMap.get(item.userId) || item.userId || "Siswa";
 
             return {
                 id: item.id,
                 userId: item.userId,
                 siswa: namaSiswa,
-                kelas: item.dataSiswa?.kelas || '-',
-                tempatPKL: item.dataSiswa?.tempatPKL || '-',
+                kelas: item.dataSiswa?.kelas || "-",
+                tempatPKL: item.dataSiswa?.tempatPKL || "-",
                 tanggal: item.tanggal,
-                waktu: item.waktu || '-',
+                waktu: item.waktu || "-",
                 status: item.status,
                 tipe: item.tipe,
-                kegiatan: item.kegiatan || '-',
-                keterangan: item.keterangan || '-',
+                kegiatan: item.kegiatan || "-",
+                keterangan: item.keterangan || "-",
                 lokasi: item.lokasi || null,
                 foto: item.foto || null,
                 tandaTangan: item.tandaTangan || null,
-                bukti: item.bukti || null
+                bukti: item.bukti || null,
             };
         });
 
         return NextResponse.json(formattedData);
-
     } catch (error) {
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        console.error("Absensi API Error:", error);
+        return NextResponse.json(
+            { error: "Internal Server Error" },
+            { status: 500 }
+        );
     }
 }
 
 export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session || !session.user)
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const userRole = (session.user as any).role;
-    if (userRole !== 'SISWA') {
-        return NextResponse.json({ error: 'Hanya siswa yang bisa absen' }, { status: 403 });
+    if (userRole !== "SISWA") {
+        return NextResponse.json(
+            { error: "Hanya siswa yang bisa absen" },
+            { status: 403 }
+        );
     }
 
     try {
@@ -127,43 +143,50 @@ export async function POST(req: NextRequest) {
 
         const user = await prisma.user.findUnique({
             where: { email: (session.user as any).email },
-            select: { username: true }
+            select: { username: true },
         });
-        if (!user || !user.username) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        if (!user || !user.username)
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-        const fotoFile = formData.get('foto') as File | null;
-        const ttdFile = formData.get('tandaTangan') as File | null;
-        const buktiFile = formData.get('bukti') as File | null;
+        const fotoFile = formData.get("foto") as File | null;
+        const ttdFile = formData.get("tandaTangan") as File | null;
+        const buktiFile = formData.get("bukti") as File | null;
 
         let fotoUrl = null;
         let ttdUrl = null;
         let buktiUrl = null;
 
-        if (fotoFile && typeof fotoFile !== 'string') fotoUrl = await uploadFile(fotoFile);
-        if (ttdFile && typeof ttdFile !== 'string') ttdUrl = await uploadFile(ttdFile);
-        if (buktiFile && typeof buktiFile !== 'string') buktiUrl = await uploadFile(buktiFile);
+        if (fotoFile && typeof fotoFile !== "string")
+            fotoUrl = await uploadFile(fotoFile);
+        if (ttdFile && typeof ttdFile !== "string")
+            ttdUrl = await uploadFile(ttdFile);
+        if (buktiFile && typeof buktiFile !== "string")
+            buktiUrl = await uploadFile(buktiFile);
 
-        const status = formData.get('status') as string;
+        const status = formData.get("status") as string;
 
         const newAbsensi = await prisma.absensi.create({
             data: {
                 userId: user.username,
                 tanggal: new Date(),
-                waktu: formData.get('waktu') as string || new Date().toLocaleTimeString(),
+                waktu:
+                    (formData.get("waktu") as string) || new Date().toLocaleTimeString(),
                 status: status,
-                tipe: status === 'Pulang' ? 'keluar' : 'masuk',
-                kegiatan: formData.get('kegiatan') as string || '',
-                keterangan: formData.get('keterangan') as string || '',
-                lokasi: formData.get('lokasi') as string || '',
+                tipe: status === "Pulang" ? "keluar" : "masuk",
+                kegiatan: (formData.get("kegiatan") as string) || "",
+                keterangan: (formData.get("keterangan") as string) || "",
+                lokasi: (formData.get("lokasi") as string) || "",
                 foto: fotoUrl,
                 tandaTangan: ttdUrl,
-                bukti: buktiUrl
-            }
+                bukti: buktiUrl,
+            },
         });
 
         return NextResponse.json(newAbsensi, { status: 201 });
-
     } catch (error) {
-        return NextResponse.json({ error: 'Gagal menyimpan absensi' }, { status: 500 });
+        return NextResponse.json(
+            { error: "Gagal menyimpan absensi" },
+            { status: 500 }
+        );
     }
 }
