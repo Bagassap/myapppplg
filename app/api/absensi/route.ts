@@ -17,11 +17,12 @@ export async function GET(req: NextRequest) {
     const endDate = searchParams.get("endDate");
 
     const user = session.user as any;
+
     const userRole = user.role ? user.role.toUpperCase() : "";
     const userEmail = user.email;
-    const userName = user.name || "";
 
     let whereClause: any = {};
+
 
     if (startDate && endDate) {
         const start = new Date(startDate);
@@ -32,6 +33,7 @@ export async function GET(req: NextRequest) {
     }
 
     try {
+        // === LOGIC SISWA ===
         if (userRole === "SISWA") {
             const userData = await prisma.user.findUnique({
                 where: { email: userEmail },
@@ -41,15 +43,27 @@ export async function GET(req: NextRequest) {
                 return NextResponse.json([], { status: 200 });
             whereClause.userId = userData.username;
 
-        } else if (userRole === "GURU") {
-            if (!userName) {
+        }
+        // === LOGIC GURU  ===
+        else if (userRole === "GURU") {
+
+            const guruUser = await prisma.user.findUnique({
+                where: { email: userEmail },
+                select: { name: true }
+            });
+
+            const namaGuru = guruUser?.name;
+
+
+            if (!namaGuru) {
                 return NextResponse.json([], { status: 200 });
             }
+
 
             const myStudents = await prisma.dataSiswa.findMany({
                 where: {
                     guruPembimbing: {
-                        contains: userName,
+                        contains: namaGuru,
                         mode: "insensitive",
                     },
                 },
@@ -58,13 +72,15 @@ export async function GET(req: NextRequest) {
 
             const studentIds = myStudents.map((s) => s.userId);
 
+
             if (studentIds.length === 0) {
                 return NextResponse.json([], { status: 200 });
             }
 
+
             whereClause.userId = { in: studentIds };
         }
-
+        // === LOGIC ADMIN ===
         const absensiList = await prisma.absensi.findMany({
             where: whereClause,
             include: {
@@ -87,10 +103,12 @@ export async function GET(req: NextRequest) {
             },
         });
 
+
         const userMap = new Map();
         users.forEach((u) => {
             if (u.username) userMap.set(u.username, u.name);
         });
+
 
         const formattedData = absensiList.map((item) => {
 
