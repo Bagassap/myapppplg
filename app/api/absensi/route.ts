@@ -6,6 +6,7 @@ import { authOptions } from "../auth/[...nextauth]/route";
 
 export const dynamic = "force-dynamic";
 
+// GET METHOD (Tetap Sama - Tidak Berubah)
 export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
@@ -87,6 +88,7 @@ export async function GET(req: NextRequest) {
     }
 }
 
+// POST METHOD (Handling Base64 Signature)
 export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session || !session.user)
@@ -108,24 +110,29 @@ export async function POST(req: NextRequest) {
 
         const fotoFile = formData.get("foto") as File | null;
         const buktiFile = formData.get("bukti") as File | null;
-
-        // Data Tanda Tangan (Bisa File dari form lama, atau String Base64 dari form baru)
         const ttdRaw = formData.get("tandaTangan");
 
         let fotoUrl = null;
         let buktiUrl = null;
         let ttdUrl = null;
 
+        // Upload Foto dan Bukti (File Biasa)
         if (fotoFile && typeof fotoFile !== "string") fotoUrl = await uploadFile(fotoFile);
         if (buktiFile && typeof buktiFile !== "string") buktiUrl = await uploadFile(buktiFile);
 
-        // LOGIKA PENYIMPANAN TTD (Support Base64 Canvas)
+        // Upload Tanda Tangan (Bisa Base64 atau File Legacy)
         if (ttdRaw) {
-            // Jika string base64, simpan langsung ke DB
             if (typeof ttdRaw === 'string' && ttdRaw.startsWith('data:image')) {
+                // Backend Anda harus support menyimpan string base64 langsung ke DB
+                // ATAU upload base64 tersebut ke storage (Supabase/S3) lalu ambil URL-nya.
+                // Jika DB field tipe String dan cukup panjang, simpan Base64 aman.
+                // TAPI, jika function uploadFile Anda pintar, Anda bisa convert base64 -> Buffer -> Upload di sini.
+                // Untuk amannya, kita asumsikan disimpan sebagai string Base64 di database (URL field)
+                // atau Anda punya utilitas upload base64. 
+
+                // *Solusi Simpel:* Simpan Base64 string langsung (jika kolom DB TEXT/VARCHAR panjang)
                 ttdUrl = ttdRaw;
             }
-            // Fallback (jika masih ada yang pakai upload file legacy)
             else if (typeof ttdRaw !== "string") {
                 ttdUrl = await uploadFile(ttdRaw as File);
             }

@@ -4,7 +4,18 @@ import Sidebar from "@/components/layout/SidebarSiswa";
 import TopBar from "@/components/layout/TopBar";
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
-import SignatureCanvas from "react-signature-canvas";
+import dynamic from "next/dynamic";
+
+// --- PERBAIKAN 1: Menambahkan type casting 'as any' agar Ref terbaca ---
+const SignatureCanvas = dynamic(() => import("react-signature-canvas"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-40 w-full bg-gray-100 rounded-xl animate-pulse flex items-center justify-center text-gray-400 text-sm">
+      Memuat area tanda tangan...
+    </div>
+  ),
+}) as React.ComponentType<any>;
+
 import {
   Calendar,
   CheckSquare,
@@ -164,21 +175,9 @@ export default function SiswaAbsensi() {
   const isStatusIzinOrSakit = ["Izin", "Sakit"].includes(absenForm.status);
   const isStatusPulang = absenForm.status === "Pulang";
 
-  const getFileLabel = () => {
-    if (isStatusIzinOrSakit) return "Bukti Surat / Dokter";
-    if (isStatusPulang) return "Foto Kegiatan Akhir";
-    if (absenForm.status === "Libur") return "Bukti (Opsional)";
-    return "Foto Selfie / Lokasi";
-  };
-
-  const getTextLabel = () => {
-    if (isStatusPulang) return "Laporan Kegiatan";
-    return "Catatan / Keterangan";
-  };
-
   // --- Handle Submit ---
   const handleAbsenSubmit = async () => {
-    // 1. VALIDASI TANDA TANGAN (WAJIB)
+    // 1. VALIDASI TANDA TANGAN
     if (sigCanvas.current?.isEmpty()) {
       alert("⚠️ Tanda Tangan wajib digambar!");
       return;
@@ -190,21 +189,20 @@ export default function SiswaAbsensi() {
       return;
     }
 
-    const hasFoto = !!absenForm.foto;
-    const hasBukti = !!absenForm.bukti;
-
-    if (["Hadir", "Pulang"].includes(absenForm.status) && !hasFoto) {
-      alert("Foto wajib diupload!");
+    if (!absenForm.foto) {
+      alert("Foto Selfie/Lokasi wajib diupload untuk verifikasi.");
       return;
     }
-    if (["Izin", "Sakit"].includes(absenForm.status) && !hasBukti) {
-      alert("Bukti surat wajib diupload!");
-      return;
+
+    if (isStatusIzinOrSakit && !absenForm.bukti) {
+      // Optional: Uncomment jika ingin mewajibkan upload surat
+      // alert("Mohon upload bukti surat keterangan (Izin/Sakit).");
+      // return;
     }
 
     const textContent = isStatusPulang ? absenForm.kegiatan : absenForm.catatan;
     if (!textContent && absenForm.status !== "Hadir") {
-      alert(`${getTextLabel()} wajib diisi!`);
+      alert(`Mohon isi keterangan/kegiatan.`);
       return;
     }
 
@@ -223,7 +221,6 @@ export default function SiswaAbsensi() {
     if (absenForm.bukti) formData.append("bukti", absenForm.bukti);
 
     // --- CONVERT CANVAS TO BASE64 ---
-    // Mengambil gambar dari canvas dalam format PNG Base64
     const signatureDataURL = sigCanvas.current
       .getTrimmedCanvas()
       .toDataURL("image/png");
@@ -237,7 +234,7 @@ export default function SiswaAbsensi() {
       if (!response.ok) throw new Error(await response.text());
 
       await fetchPresensiHariIni();
-      alert("✅ Data berhasil tersimpan!");
+      alert("✅ Absensi Berhasil Disimpan!");
       setShowAbsenModal(false);
       clearSignature();
 
@@ -352,7 +349,19 @@ export default function SiswaAbsensi() {
                   ) : (
                     currentData.map((item) => (
                       <tr key={item.id} className="border-b hover:bg-gray-50">
-                        <td className="px-4 py-3 font-medium">{item.status}</td>
+                        <td className="px-4 py-3 font-medium">
+                          <span
+                            className={`px-2 py-1 rounded text-xs font-bold ${
+                              item.status === "Hadir"
+                                ? "bg-green-100 text-green-700"
+                                : item.status === "Pulang"
+                                  ? "bg-blue-100 text-blue-700"
+                                  : "bg-yellow-100 text-yellow-700"
+                            }`}
+                          >
+                            {item.status}
+                          </span>
+                        </td>
                         <td className="px-4 py-3">{item.waktu}</td>
                         <td className="px-4 py-3 truncate max-w-[150px]">
                           {item.lokasi || "-"}
@@ -446,7 +455,8 @@ export default function SiswaAbsensi() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                        {/* PERBAIKAN 2: Menghapus 'block' karena sudah ada 'flex' */}
+                        <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
                           <ClockIcon className="w-4 h-4" /> Waktu
                         </label>
                         <input
@@ -457,8 +467,10 @@ export default function SiswaAbsensi() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                          <MapPin className="w-4 h-4" /> Lokasi (GPS)
+                        {/* PERBAIKAN 2: Menghapus 'block' */}
+                        <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                          <MapPin className="w-4 h-4" /> Lokasi (GPS){" "}
+                          <span className="text-red-500">*</span>
                         </label>
                         <div className="flex gap-2">
                           <input
@@ -480,43 +492,55 @@ export default function SiswaAbsensi() {
                       </div>
                     </div>
 
+                    {/* FOTO SELFIE */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                        {isStatusIzinOrSakit ? (
-                          <UploadCloud className="w-4 h-4" />
-                        ) : (
-                          <Camera className="w-4 h-4" />
-                        )}
-                        {getFileLabel()} <span className="text-red-500">*</span>
+                      {/* PERBAIKAN 2: Menghapus 'block' */}
+                      <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                        <Camera className="w-4 h-4" /> Foto Selfie / Lokasi{" "}
+                        <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="file"
                         accept="image/*"
-                        capture={!isStatusIzinOrSakit ? "user" : undefined}
+                        capture="user"
                         disabled={isSubmitting}
                         onChange={(e) => {
                           const file = e.target.files?.[0] || null;
-                          if (isStatusIzinOrSakit) {
-                            setAbsenForm((prev) => ({
-                              ...prev,
-                              bukti: file,
-                              foto: null,
-                            }));
-                          } else {
-                            setAbsenForm((prev) => ({
-                              ...prev,
-                              foto: file,
-                              bukti: null,
-                            }));
-                          }
+                          setAbsenForm((prev) => ({ ...prev, foto: file }));
                         }}
                         className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                       />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Wajib ambil foto selfie terbaru.
+                      </p>
                     </div>
 
+                    {/* INPUT KHUSUS IZIN/SAKIT */}
+                    {isStatusIzinOrSakit && (
+                      <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-100">
+                        {/* PERBAIKAN 2: Menghapus 'block' */}
+                        <label className="text-sm font-semibold text-yellow-800 mb-2 flex items-center gap-1">
+                          <UploadCloud className="w-4 h-4" /> Upload Surat Bukti
+                          (Dokter/Ortu)
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          disabled={isSubmitting}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null;
+                            setAbsenForm((prev) => ({ ...prev, bukti: file }));
+                          }}
+                          className="w-full text-sm text-yellow-700"
+                        />
+                      </div>
+                    )}
+
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                        <FileText className="w-4 h-4" /> {getTextLabel()}
+                      {/* PERBAIKAN 2: Menghapus 'block' */}
+                      <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                        <FileText className="w-4 h-4" />{" "}
+                        {isStatusPulang ? "Laporan Kegiatan" : "Keterangan"}
                       </label>
                       <textarea
                         rows={3}
@@ -524,7 +548,7 @@ export default function SiswaAbsensi() {
                         placeholder={
                           isStatusPulang
                             ? "Apa yang Anda kerjakan hari ini?"
-                            : "Tambahkan keterangan..."
+                            : "Tambahkan catatan..."
                         }
                         value={
                           isStatusPulang
@@ -566,18 +590,19 @@ export default function SiswaAbsensi() {
                           <Trash2 className="w-3 h-3" /> Hapus / Ulangi
                         </button>
                       </div>
-                      <div className="border-2 border-dashed border-gray-300 rounded-xl overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors cursor-crosshair">
+                      <div className="border-2 border-dashed border-gray-300 rounded-xl overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors cursor-crosshair touch-none">
                         <SignatureCanvas
                           ref={sigCanvas}
                           penColor="black"
-                          velocityFilterWeight={0.7} // Membuat garis lebih halus
+                          velocityFilterWeight={0.7}
                           canvasProps={{
-                            className: "w-full h-40 block", // Tinggi canvas responsif
+                            className: "w-full h-40 block", // Tinggi canvas
+                            style: { width: "100%", height: "160px" },
                           }}
                         />
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
-                        *Silakan gambar tanda tangan Anda di kotak di atas.
+                        *Gambar tanda tangan Anda pada kotak di atas.
                       </p>
                     </div>
 
