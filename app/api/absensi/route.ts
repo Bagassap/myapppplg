@@ -6,7 +6,6 @@ import { authOptions } from "../auth/[...nextauth]/route";
 
 export const dynamic = "force-dynamic";
 
-// GET handler tetap sama (mengambil data sesuai role)
 export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
@@ -64,12 +63,10 @@ export async function GET(req: NextRequest) {
             orderBy: { tanggal: "desc" },
         });
 
-        // Format data response...
-        // (Bagian format data sama seperti sebelumnya, dipersingkat untuk brevity)
         const formattedData = absensiList.map((item) => ({
             id: item.id,
             userId: item.userId,
-            siswa: item.userId, // Simplify mapping
+            siswa: item.userId,
             kelas: item.dataSiswa?.kelas || "-",
             tempatPKL: item.dataSiswa?.tempatPKL || "-",
             tanggal: item.tanggal,
@@ -90,7 +87,6 @@ export async function GET(req: NextRequest) {
     }
 }
 
-// POST handler menerima semua field secara fleksibel
 export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session || !session.user)
@@ -110,24 +106,27 @@ export async function POST(req: NextRequest) {
         if (!user || !user.username)
             return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-        // Ambil semua kemungkinan file
         const fotoFile = formData.get("foto") as File | null;
         const buktiFile = formData.get("bukti") as File | null;
+
+        // Data Tanda Tangan (Bisa File dari form lama, atau String Base64 dari form baru)
         const ttdRaw = formData.get("tandaTangan");
 
         let fotoUrl = null;
         let buktiUrl = null;
         let ttdUrl = null;
 
-        // Upload jika ada
         if (fotoFile && typeof fotoFile !== "string") fotoUrl = await uploadFile(fotoFile);
         if (buktiFile && typeof buktiFile !== "string") buktiUrl = await uploadFile(buktiFile);
 
-        // Handle Tanda Tangan (Base64 atau File)
+        // LOGIKA PENYIMPANAN TTD (Support Base64 Canvas)
         if (ttdRaw) {
+            // Jika string base64, simpan langsung ke DB
             if (typeof ttdRaw === 'string' && ttdRaw.startsWith('data:image')) {
                 ttdUrl = ttdRaw;
-            } else if (typeof ttdRaw !== "string") {
+            }
+            // Fallback (jika masih ada yang pakai upload file legacy)
+            else if (typeof ttdRaw !== "string") {
                 ttdUrl = await uploadFile(ttdRaw as File);
             }
         }
@@ -141,7 +140,6 @@ export async function POST(req: NextRequest) {
                 waktu: (formData.get("waktu") as string) || new Date().toLocaleTimeString(),
                 status: status,
                 tipe: status === "Pulang" ? "keluar" : "masuk",
-                // Ambil field text jika ada, default kosong
                 kegiatan: (formData.get("kegiatan") as string) || "",
                 keterangan: (formData.get("keterangan") as string) || "",
                 lokasi: (formData.get("lokasi") as string) || "",

@@ -29,6 +29,8 @@ export default function SiswaAbsensi() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [presensiData, setPresensiData] = useState<any[]>([]);
+
+  // Ref untuk Canvas
   const sigCanvas = useRef<any>(null);
 
   const [siswaData, setSiswaData] = useState({
@@ -40,16 +42,16 @@ export default function SiswaAbsensi() {
 
   const [absenForm, setAbsenForm] = useState({
     status: "Hadir",
-    kegiatan: "", // Untuk Pulang
-    foto: null as File | null, // Untuk Hadir/Pulang
+    kegiatan: "",
+    foto: null as File | null,
     lokasi: "",
     waktuLokasi: new Date().toLocaleTimeString(),
-    catatan: "", // Untuk Izin/Sakit/Libur/Hadir
-    bukti: null as File | null, // Untuk Izin/Sakit
+    catatan: "",
+    bukti: null as File | null,
     tandaTangan: null as string | null,
   });
 
-  // --- Helpers & Fetching Data (Tidak Berubah) ---
+  // --- Helpers & Fetching Data ---
   const getLocalDateString = (date: Date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -155,13 +157,13 @@ export default function SiswaAbsensi() {
     }
   };
 
+  // Logic Clear Canvas
   const clearSignature = () => sigCanvas.current?.clear();
 
-  // --- Logic UI Dinamis ---
+  // Logic UI Dinamis
   const isStatusIzinOrSakit = ["Izin", "Sakit"].includes(absenForm.status);
   const isStatusPulang = absenForm.status === "Pulang";
 
-  // Label Dinamis
   const getFileLabel = () => {
     if (isStatusIzinOrSakit) return "Bukti Surat / Dokter";
     if (isStatusPulang) return "Foto Kegiatan Akhir";
@@ -176,37 +178,32 @@ export default function SiswaAbsensi() {
 
   // --- Handle Submit ---
   const handleAbsenSubmit = async () => {
-    // 1. Validasi Tanda Tangan
+    // 1. VALIDASI TANDA TANGAN (WAJIB)
     if (sigCanvas.current?.isEmpty()) {
-      alert("Tanda Tangan wajib diisi untuk semua status!");
+      alert("⚠️ Tanda Tangan wajib digambar!");
       return;
     }
 
-    // 2. Validasi Field Wajib (Semua Status Wajib Isi Field Ini)
+    // 2. Validasi Field Wajib
     if (!absenForm.lokasi) {
-      alert("Lokasi/GPS wajib diambil untuk validasi data.");
+      alert("Lokasi/GPS wajib diambil.");
       return;
     }
 
-    // 3. Validasi File (Foto atau Bukti)
     const hasFoto = !!absenForm.foto;
     const hasBukti = !!absenForm.bukti;
 
-    // Hadir & Pulang butuh Foto
     if (["Hadir", "Pulang"].includes(absenForm.status) && !hasFoto) {
       alert("Foto wajib diupload!");
       return;
     }
-    // Izin & Sakit butuh Bukti
     if (["Izin", "Sakit"].includes(absenForm.status) && !hasBukti) {
       alert("Bukti surat wajib diupload!");
       return;
     }
 
-    // 4. Validasi Text
     const textContent = isStatusPulang ? absenForm.kegiatan : absenForm.catatan;
     if (!textContent && absenForm.status !== "Hadir") {
-      // Hadir boleh kosong catatannya, yang lain wajib
       alert(`${getTextLabel()} wajib diisi!`);
       return;
     }
@@ -219,15 +216,14 @@ export default function SiswaAbsensi() {
     formData.append("waktu", absenForm.waktuLokasi);
     formData.append("lokasi", absenForm.lokasi);
 
-    // Mapping Text Area
     formData.append("keterangan", absenForm.catatan || "");
     formData.append("kegiatan", absenForm.kegiatan || "");
 
-    // Mapping Files
     if (absenForm.foto) formData.append("foto", absenForm.foto);
     if (absenForm.bukti) formData.append("bukti", absenForm.bukti);
 
-    // Signature
+    // --- CONVERT CANVAS TO BASE64 ---
+    // Mengambil gambar dari canvas dalam format PNG Base64
     const signatureDataURL = sigCanvas.current
       .getTrimmedCanvas()
       .toDataURL("image/png");
@@ -241,11 +237,10 @@ export default function SiswaAbsensi() {
       if (!response.ok) throw new Error(await response.text());
 
       await fetchPresensiHariIni();
-      alert("Data berhasil tersimpan!");
+      alert("✅ Data berhasil tersimpan!");
       setShowAbsenModal(false);
       clearSignature();
 
-      // Reset Form
       setAbsenForm({
         status: "Hadir",
         kegiatan: "",
@@ -264,7 +259,6 @@ export default function SiswaAbsensi() {
     }
   };
 
-  // --- Rendering UI Helpers (Pagination, etc) ---
   const handlePrevious = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
@@ -307,7 +301,6 @@ export default function SiswaAbsensi() {
             </p>
           </div>
 
-          {/* Tombol Absen Harian */}
           <div className="bg-white p-6 rounded-2xl shadow border border-gray-100 mb-8 flex justify-between items-center">
             <div>
               <p className="text-sm text-gray-500 font-medium">
@@ -330,7 +323,6 @@ export default function SiswaAbsensi() {
             </button>
           </div>
 
-          {/* Tabel Riwayat (Sama seperti sebelumnya) */}
           <div className="bg-white p-6 rounded-2xl shadow mb-8 border border-gray-100">
             <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
               <ClockIcon className="w-6 h-6 text-indigo-600" /> Riwayat Hari Ini
@@ -400,16 +392,14 @@ export default function SiswaAbsensi() {
             </div>
           </div>
 
-          {/* --- UNIFIED FORM MODAL --- */}
+          {/* FORM MODAL */}
           {showAbsenModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
               <div
                 className="fixed inset-0 bg-black/60 backdrop-blur-sm"
                 onClick={() => !isSubmitting && setShowAbsenModal(false)}
               ></div>
-
               <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl relative z-10 animate-fade-scale overflow-hidden flex flex-col max-h-[90vh]">
-                {/* Header Modal */}
                 <div className="p-6 border-b flex justify-between items-center bg-gray-50">
                   <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                     <Edit className="w-5 h-5 text-indigo-600" /> Form Absensi
@@ -423,7 +413,6 @@ export default function SiswaAbsensi() {
                   </button>
                 </div>
 
-                {/* Scrollable Form Area */}
                 <div className="p-6 overflow-y-auto">
                   <form
                     onSubmit={(e) => {
@@ -432,7 +421,6 @@ export default function SiswaAbsensi() {
                     }}
                     className="space-y-5"
                   >
-                    {/* 1. Status Kehadiran */}
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Status Kehadiran
@@ -456,7 +444,6 @@ export default function SiswaAbsensi() {
                       </select>
                     </div>
 
-                    {/* 2. Waktu & Lokasi (Grid) */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
@@ -493,7 +480,6 @@ export default function SiswaAbsensi() {
                       </div>
                     </div>
 
-                    {/* 3. Upload File (Dinamis: Foto Selfie / Bukti Surat) */}
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
                         {isStatusIzinOrSakit ? (
@@ -506,11 +492,10 @@ export default function SiswaAbsensi() {
                       <input
                         type="file"
                         accept="image/*"
-                        capture={!isStatusIzinOrSakit ? "user" : undefined} // Hanya aktifkan kamera depan jika bukan izin/sakit
+                        capture={!isStatusIzinOrSakit ? "user" : undefined}
                         disabled={isSubmitting}
                         onChange={(e) => {
                           const file = e.target.files?.[0] || null;
-                          // Logic Mapping: Jika Izin/Sakit masuk ke 'bukti', selain itu 'foto'
                           if (isStatusIzinOrSakit) {
                             setAbsenForm((prev) => ({
                               ...prev,
@@ -529,7 +514,6 @@ export default function SiswaAbsensi() {
                       />
                     </div>
 
-                    {/* 4. Text Area (Dinamis: Kegiatan / Catatan) */}
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
                         <FileText className="w-4 h-4" /> {getTextLabel()}
@@ -567,30 +551,36 @@ export default function SiswaAbsensi() {
                       />
                     </div>
 
-                    {/* 5. Tanda Tangan (Canvas) */}
+                    {/* --- AREA TANDA TANGAN (CANVAS) --- */}
                     <div>
                       <div className="flex justify-between items-center mb-2">
                         <label className="text-sm font-semibold text-gray-700 flex items-center gap-1">
-                          <PenTool className="w-4 h-4" /> Tanda Tangan
+                          <PenTool className="w-4 h-4" /> Tanda Tangan{" "}
+                          <span className="text-red-500">*</span>
                         </label>
                         <button
                           type="button"
                           onClick={clearSignature}
-                          className="text-xs text-red-500 flex items-center gap-1 hover:text-red-700"
+                          className="text-xs text-red-500 flex items-center gap-1 hover:text-red-700 font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors"
                         >
-                          <Trash2 className="w-3 h-3" /> Hapus
+                          <Trash2 className="w-3 h-3" /> Hapus / Ulangi
                         </button>
                       </div>
-                      <div className="border-2 border-dashed border-gray-300 rounded-xl overflow-hidden bg-gray-50">
+                      <div className="border-2 border-dashed border-gray-300 rounded-xl overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors cursor-crosshair">
                         <SignatureCanvas
                           ref={sigCanvas}
                           penColor="black"
-                          canvasProps={{ className: "w-full h-32 block" }}
+                          velocityFilterWeight={0.7} // Membuat garis lebih halus
+                          canvasProps={{
+                            className: "w-full h-40 block", // Tinggi canvas responsif
+                          }}
                         />
                       </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        *Silakan gambar tanda tangan Anda di kotak di atas.
+                      </p>
                     </div>
 
-                    {/* Footer Buttons */}
                     <div className="pt-4 flex gap-3">
                       <button
                         type="button"
