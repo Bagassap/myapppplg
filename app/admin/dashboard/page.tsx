@@ -1,280 +1,205 @@
 "use client";
+
 import Sidebar from "@/components/layout/SidebarAdmin";
 import TopBar from "@/components/layout/TopBar";
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import {
-  Users,
-  CheckCircle,
-  XCircle,
-  TrendingUp,
-  Download,
+  Calendar,
   Filter,
+  Download,
+  Search,
+  MapPin,
+  ImageIcon,
+  PenTool,
+  X,
+  Loader2,
+  CheckSquare,
+  Clock,
+  AlertCircle,
 } from "lucide-react";
 
-export default function AdminDashboard() {
-  const [selectedClass, setSelectedClass] = useState("Semua Kelas");
-  const [selectedPeriod, setSelectedPeriod] = useState("Semua Periode");
+export default function AdminAbsensiPage() {
+  const { data: session } = useSession();
+
+  // State Data
+  const [presensiData, setPresensiData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Initial State
-  const [stats, setStats] = useState({
-    totalSiswa: 0,
-    hadirHariIni: 0,
-    tidakHadir: 0,
-    persentaseKehadiran: 0,
-  });
-  const [classData, setClassData] = useState<any[]>([]);
+  // State Filter
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split("T")[0],
+  );
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Filter Options
-  const [filters, setFilters] = useState({
-    kelas: [] as { id: string; label: string }[],
-    tanggal: [] as string[],
-  });
+  // State Modal Preview Gambar
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  // 1. Fetch Filters (Hanya Sekali saat Load)
   useEffect(() => {
-    const fetchFilters = async () => {
-      try {
-        const res = await fetch("/api/dashboard/filters");
-        if (res.ok) {
-          const data = await res.json();
-          setFilters({
-            kelas: data.kelas || [],
-            tanggal: data.tanggal || [],
-          });
-          // Set default periode jika ada data
-          if (data.tanggal && data.tanggal.length > 0) {
-            setSelectedPeriod(data.tanggal[0]);
-          }
-        }
-      } catch (error) {
-        console.error("Gagal load filter", error);
-      }
-    };
-    fetchFilters();
-  }, []);
-
-  // 2. Fetch Dashboard Data (Setiap kali Filter Berubah)
-  useEffect(() => {
-    const fetchDashboard = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        // PERBAIKAN: Kirim parameter filter ke API
+        // Fetch data harian defaultnya
         const params = new URLSearchParams();
-        if (selectedClass !== "Semua Kelas")
-          params.append("kelas", selectedClass);
-        if (selectedPeriod !== "Semua Periode")
-          params.append("tanggal", selectedPeriod);
+        params.append("startDate", selectedDate);
+        params.append("endDate", selectedDate);
 
-        // Tambahkan timestamp agar tidak dicache browser
-        params.append("t", new Date().getTime().toString());
-
-        const res = await fetch(`/api/dashboard?${params.toString()}`);
+        const res = await fetch(`/api/absensi?${params.toString()}`);
         if (res.ok) {
           const data = await res.json();
-          if (data.cards) setStats(data.cards);
-          if (data.table) setClassData(data.table);
+          setPresensiData(data);
         }
       } catch (error) {
-        console.error("Gagal load dashboard", error);
+        console.error("Error fetching absensi:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDashboard();
-  }, [selectedClass, selectedPeriod]); // Trigger ulang saat filter berubah
+    if (session) fetchData();
+  }, [session, selectedDate]);
 
-  const handleExport = () => {
-    const query = new URLSearchParams({
-      kelas: selectedClass !== "Semua Kelas" ? selectedClass : "",
-      tanggal: selectedPeriod !== "Semua Periode" ? selectedPeriod : "",
-    }).toString();
-    window.location.href = `/api/dashboard/export?${query}`;
-  };
+  // Filter Client Side (Search Nama/Kelas)
+  const filteredData = presensiData.filter(
+    (item) =>
+      item.siswa.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.kelas || "").toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
-        <main className="flex-1 p-6 sm:p-8 lg:p-12 overflow-y-auto overflow-x-hidden">
-          <div className="mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-              Admin Dashboard
+        <main className="flex-1 p-6 overflow-y-auto">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Data Absensi Siswa
             </h1>
-            <p className="text-gray-600 text-sm sm:text-base md:text-lg">
-              Pantau statistik kehadiran siswa secara keseluruhan.
+            <p className="text-gray-600">
+              Pantau kehadiran, foto bukti, dan tanda tangan siswa.
             </p>
           </div>
 
-          {/* Filter Section */}
-          <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Filter className="w-5 h-5 text-indigo-500" />
-              Filter Data
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 items-end">
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-700 mb-2">
-                  Pilih Kelas
-                </label>
-                <select
-                  value={selectedClass}
-                  onChange={(e) => setSelectedClass(e.target.value)}
-                  className="px-4 py-3 border border-indigo-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
-                >
-                  <option>Semua Kelas</option>
-                  {filters.kelas.map((k) => (
-                    <option key={k.id} value={k.id}>
-                      {k.label}
-                    </option>
-                  ))}
-                </select>
+          {/* Controls */}
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
+            <div className="flex items-center gap-4 w-full md:w-auto">
+              <div className="flex items-center gap-2 border rounded-lg px-3 py-2 bg-gray-50">
+                <Calendar className="w-4 h-4 text-gray-500" />
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="bg-transparent outline-none text-sm"
+                />
               </div>
-
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-700 mb-2">
-                  Pilih Periode
-                </label>
-                <select
-                  value={selectedPeriod}
-                  onChange={(e) => setSelectedPeriod(e.target.value)}
-                  className="px-4 py-3 border border-indigo-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
-                >
-                  <option>Semua Periode</option>
-                  {filters.tanggal.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex justify-start md:justify-end">
-                <button
-                  onClick={handleExport}
-                  className="flex items-center justify-center w-full md:w-auto gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105"
-                >
-                  <Download className="w-5 h-5" />
-                  Ekspor Data
-                </button>
+              <div className="flex items-center gap-2 border rounded-lg px-3 py-2 bg-gray-50 flex-1">
+                <Search className="w-4 h-4 text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="Cari Siswa / Kelas..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bg-transparent outline-none text-sm w-full"
+                />
               </div>
             </div>
           </div>
 
-          {/* Statistik Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-            <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-6 rounded-2xl shadow-lg border border-blue-200">
-              <div className="flex items-center justify-between mb-4">
-                <Users className="w-8 h-8 text-blue-600" />
-                <span className="text-sm font-medium text-blue-700">Total</span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                Total Siswa
-              </h3>
-              <p className="text-3xl font-bold text-blue-600">
-                {stats.totalSiswa}
-              </p>
-            </div>
-
-            <div className="bg-gradient-to-br from-green-100 to-green-200 p-6 rounded-2xl shadow-lg border border-green-200">
-              <div className="flex items-center justify-between mb-4">
-                <CheckCircle className="w-8 h-8 text-green-600" />
-                <span className="text-sm font-medium text-green-700">
-                  Hadir
-                </span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                Hadir
-              </h3>
-              <p className="text-3xl font-bold text-green-600">
-                {stats.hadirHariIni}
-              </p>
-            </div>
-
-            <div className="bg-gradient-to-br from-red-100 to-red-200 p-6 rounded-2xl shadow-lg border border-red-200">
-              <div className="flex items-center justify-between mb-4">
-                <XCircle className="w-8 h-8 text-red-600" />
-                <span className="text-sm font-medium text-red-700">Absen</span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                Tidak Hadir
-              </h3>
-              <p className="text-3xl font-bold text-red-600">
-                {stats.tidakHadir}
-              </p>
-            </div>
-
-            <div className="bg-gradient-to-br from-indigo-100 to-blue-200 p-6 rounded-2xl shadow-lg border border-indigo-200">
-              <div className="flex items-center justify-between mb-4">
-                <TrendingUp className="w-8 h-8 text-indigo-600" />
-                <span className="text-sm font-medium text-indigo-700">
-                  Persentase
-                </span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                Kehadiran
-              </h3>
-              <p className="text-3xl font-bold text-indigo-600">
-                {stats.persentaseKehadiran}%
-              </p>
-            </div>
-          </div>
-
-          {/* Tabel Laporan */}
-          <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
-            <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
-              <CheckCircle className="w-6 h-6 text-green-600" />
-              Laporan per Kelas
-            </h3>
-            <div className="w-full overflow-x-auto">
-              <table className="w-full table-auto border-collapse min-w-[600px]">
-                <thead>
-                  <tr className="bg-gradient-to-r from-indigo-100 to-blue-100">
-                    <th className="px-6 py-4 text-left font-semibold text-gray-700 rounded-tl-xl">
-                      Kelas
-                    </th>
-                    <th className="px-6 py-4 text-left font-semibold text-gray-700">
-                      Hadir
-                    </th>
-                    <th className="px-6 py-4 text-left font-semibold text-gray-700">
-                      Total Siswa
-                    </th>
-                    <th className="px-6 py-4 text-left font-semibold text-gray-700 rounded-tr-xl">
-                      Persentase
-                    </th>
+          {/* Table */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left text-gray-500">
+                <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3">Waktu</th>
+                    <th className="px-6 py-3">Siswa</th>
+                    <th className="px-6 py-3">Kelas</th>
+                    <th className="px-6 py-3">Status</th>
+                    <th className="px-6 py-3 text-center">Foto</th>
+                    <th className="px-6 py-3 text-center">TTD</th>
+                    <th className="px-6 py-3">Lokasi</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {classData.length === 0 ? (
+                  {loading ? (
                     <tr>
-                      <td
-                        colSpan={4}
-                        className="text-center py-4 text-gray-500"
-                      >
-                        {loading
-                          ? "Memuat data..."
-                          : "Tidak ada data sesuai filter."}
+                      <td colSpan={7} className="px-6 py-8 text-center">
+                        <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                      </td>
+                    </tr>
+                  ) : filteredData.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-8 text-center">
+                        Tidak ada data absensi pada tanggal ini.
                       </td>
                     </tr>
                   ) : (
-                    classData.map((item, index) => (
+                    filteredData.map((item) => (
                       <tr
-                        key={index}
-                        className="border-b border-gray-100 hover:bg-indigo-50 transition-colors"
+                        key={item.id}
+                        className="bg-white border-b hover:bg-gray-50"
                       >
-                        <td className="px-6 py-4 font-medium text-gray-900">
-                          {item.kelas}
+                        <td className="px-6 py-4 font-medium">{item.waktu}</td>
+                        <td className="px-6 py-4 font-bold text-gray-900">
+                          {item.siswa}
                         </td>
-                        <td className="px-6 py-4 text-green-600 font-bold">
-                          {item.hadir}
+                        <td className="px-6 py-4">{item.kelas}</td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`px-2 py-1 rounded text-xs font-semibold
+                            ${
+                              item.status === "Hadir"
+                                ? "bg-green-100 text-green-800"
+                                : item.status === "Pulang"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {item.status}
+                          </span>
                         </td>
-                        <td className="px-6 py-4 text-gray-700">
-                          {item.total}
+
+                        {/* Kolom Foto Preview */}
+                        <td className="px-6 py-4 text-center">
+                          {item.foto ? (
+                            <button
+                              onClick={() => setPreviewImage(item.foto)}
+                              className="bg-indigo-50 text-indigo-600 p-2 rounded-lg hover:bg-indigo-100 transition-colors flex items-center justify-center mx-auto gap-1 text-xs font-medium"
+                            >
+                              <ImageIcon className="w-4 h-4" /> Lihat
+                            </button>
+                          ) : (
+                            <span className="text-gray-300">-</span>
+                          )}
                         </td>
-                        <td className="px-6 py-4 text-gray-700 font-semibold">
-                          {item.persentase}%
+
+                        {/* Kolom Tanda Tangan Preview */}
+                        <td className="px-6 py-4 text-center">
+                          {item.tandaTangan ? (
+                            <button
+                              onClick={() => setPreviewImage(item.tandaTangan)}
+                              className="bg-purple-50 text-purple-600 p-2 rounded-lg hover:bg-purple-100 transition-colors flex items-center justify-center mx-auto gap-1 text-xs font-medium"
+                            >
+                              <PenTool className="w-4 h-4" /> Cek TTD
+                            </button>
+                          ) : (
+                            <span className="text-gray-300">-</span>
+                          )}
+                        </td>
+
+                        <td className="px-6 py-4 truncate max-w-[150px]">
+                          {item.lokasi ? (
+                            <a
+                              href={`https://www.google.com/maps?q=${item.lokasi}`}
+                              target="_blank"
+                              className="text-blue-500 hover:underline flex items-center gap-1"
+                            >
+                              <MapPin className="w-3 h-3" /> Maps
+                            </a>
+                          ) : (
+                            "-"
+                          )}
                         </td>
                       </tr>
                     ))
@@ -285,6 +210,45 @@ export default function AdminDashboard() {
           </div>
         </main>
       </div>
+
+      {/* MODAL PREVIEW IMAGE / TTD */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div
+            className="relative bg-white p-2 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="font-bold text-gray-700">Preview Gambar</h3>
+              <button
+                onClick={() => setPreviewImage(null)}
+                className="p-1 hover:bg-gray-100 rounded-full"
+              >
+                <X className="w-6 h-6 text-gray-500" />
+              </button>
+            </div>
+            <div className="flex-1 p-4 bg-gray-100 flex items-center justify-center overflow-auto">
+              <img
+                src={previewImage}
+                alt="Preview"
+                className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-md"
+              />
+            </div>
+            <div className="p-4 border-t bg-gray-50 text-center">
+              <a
+                href={previewImage}
+                download="bukti_absensi.png"
+                className="text-indigo-600 text-sm font-medium hover:underline"
+              >
+                Download Gambar Original
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

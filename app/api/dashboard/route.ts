@@ -1,212 +1,216 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
 import { prisma } from "@/lib/prisma";
+import { uploadFile } from "@/lib/upload";
 import { authOptions } from "../auth/[...nextauth]/route";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: Request) {
+export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
-
     if (!session || !session.user) {
-        return NextResponse.json({
-            cards: { totalSiswa: 0, totalSiswaPKL: 0, hadirHariIni: 0, tidakHadir: 0, persentaseKehadiran: 0 },
-            table: []
-        });
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { searchParams } = new URL(req.url);
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
+
     const user = session.user as any;
-    const { role, email } = user;
-    const userRole = role ? role.toUpperCase() : "";
+    const userRole = user.role ? user.role.toUpperCase() : "";
+    const userEmail = user.email;
 
-    const { searchParams } = new URL(request.url);
-    const filterKelas = searchParams.get("kelas");
-    const filterTempatPKL = searchParams.get("tempatPKL");
-    const filterTanggal = searchParams.get("tanggal");
+    let whereClause: any = {};
 
-    let startFilterDate = new Date();
-    let endFilterDate = new Date();
-
-    if (filterTanggal && filterTanggal !== "Semua Periode") {
-        const targetDate = new Date(filterTanggal);
-        if (!isNaN(targetDate.getTime())) {
-            startFilterDate = new Date(targetDate);
-            startFilterDate.setHours(0, 0, 0, 0);
-
-            endFilterDate = new Date(targetDate);
-            endFilterDate.setHours(23, 59, 59, 999);
-        }
-    } else {
-        startFilterDate.setHours(0, 0, 0, 0);
-        endFilterDate.setHours(23, 59, 59, 999);
+    if (startDate && endDate) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        whereClause.tanggal = { gte: start, lte: end };
     }
 
     try {
-        if (userRole === "ADMIN") {
-            const whereSiswa: any = {};
-            if (filterKelas && filterKelas !== "Semua Kelas") {
-                whereSiswa.kelas = filterKelas;
-            }
-
-            const filteredSiswa = await prisma.dataSiswa.findMany({
-                where: whereSiswa,
-                select: { userId: true, kelas: true }
+        // === LOGIC SISWA ===
+        if (userRole === "SISWA") {
+            const userData = await prisma.user.findUnique({
+                where: { email: userEmail },
+                select: { username: true },
             });
+            if (!userData || !userData.username)
+                return NextResponse.json([], { status: 200 });
+            whereClause.userId = userData.username;
 
-            const totalSiswa = filteredSiswa.length;
-            const listUserId = filteredSiswa.map(s => s.userId);
-
-            const absensiFiltered = await prisma.absensi.findMany({
-                where: {
-                    userId: { in: listUserId },
-                    tanggal: { gte: startFilterDate, lte: endFilterDate }
-                }
-            });
-
-            const hadirCount = absensiFiltered.filter((a) => a.status.toLowerCase() === "hadir").length;
-            const tidakHadirCount = totalSiswa - hadirCount;
-            const persentase = totalSiswa > 0 ? ((hadirCount / totalSiswa) * 100).toFixed(1) : 0;
-
-            const mapKelas = new Map();
-
-            filteredSiswa.forEach((s) => {
-                if (!mapKelas.has(s.kelas)) {
-                    mapKelas.set(s.kelas, { kelas: s.kelas, total: 0, hadir: 0 });
-                }
-                const stats = mapKelas.get(s.kelas);
-                stats.total += 1;
-
-                const isHadir = absensiFiltered.some((a) => a.userId === s.userId && a.status.toLowerCase() === "hadir");
-                if (isHadir) stats.hadir += 1;
-            });
-
-            const tableData = Array.from(mapKelas.values()).map((item: any) => ({
-                kelas: item.kelas,
-                hadir: item.hadir,
-                total: item.total,
-                persentase: item.total > 0 ? ((item.hadir / item.total) * 100).toFixed(1) : 0,
-            }));
-
-            tableData.sort((a, b) => a.kelas.localeCompare(b.kelas));
-
-            return NextResponse.json({
-                cards: {
-                    totalSiswa: totalSiswa,
-                    hadirHariIni: hadirCount,
-                    tidakHadir: tidakHadirCount,
-                    persentaseKehadiran: persentase,
-                },
-                table: tableData,
-            });
         }
-
-        if (userRole === "GURU") {
+        // === LOGIC GURU (CLEAN VERSION) ===
+        else if (userRole === "GURU") {
             const guruUser = await prisma.user.findUnique({
-                where: { email: email || "" },
+                where: { email: userEmail },
                 select: { name: true, username: true }
             });
 
             if (!guruUser?.name) {
-                return NextResponse.json({
-                    cards: { totalSiswaPKL: 0, hadirHariIni: 0, tidakHadir: 0, persentaseKehadiran: 0 },
-                    table: []
-                });
+                return NextResponse.json([], { status: 200 });
             }
 
-            const searchConditions: any[] = [{ guruPembimbing: { contains: guruUser.name, mode: "insensitive" } }];
+            const searchConditions: any[] = [
+                { guruPembimbing: { contains: guruUser.name, mode: "insensitive" } }
+            ];
+
             if (guruUser.username) {
                 searchConditions.push({ guruPembimbing: { contains: guruUser.username, mode: "insensitive" } });
             }
 
-            const whereSiswa: any = { OR: searchConditions };
-
-            if (filterTempatPKL && filterTempatPKL !== "Semua Tempat PKL") {
-                whereSiswa.tempatPKL = filterTempatPKL;
-            }
-
-            const siswaBimbingan = await prisma.dataSiswa.findMany({
-                where: whereSiswa,
-                select: { userId: true, tempatPKL: true },
-            });
-
-            const totalSiswa = siswaBimbingan.length;
-            const listUserIdString = siswaBimbingan.map((s) => s.userId);
-
-            const absensiFiltered = await prisma.absensi.findMany({
+            const myStudents = await prisma.dataSiswa.findMany({
                 where: {
-                    userId: { in: listUserIdString },
-                    tanggal: { gte: startFilterDate, lte: endFilterDate }
+                    OR: searchConditions
                 },
+                select: { userId: true },
             });
 
-            const hadirCount = absensiFiltered.filter((a) => a.status.toLowerCase() === "hadir").length;
-            const tidakHadirCount = totalSiswa - hadirCount;
-            const persentase = totalSiswa > 0 ? ((hadirCount / totalSiswa) * 100).toFixed(1) : 0;
+            const studentIds = myStudents.map((s) => s.userId);
 
-            const usersSiswa = await prisma.user.findMany({
-                where: { username: { in: listUserIdString } },
-                select: { username: true, name: true }
-            });
-            const mapNama = new Map(usersSiswa.map(u => [u.username, u.name]));
-
-            const tableData = siswaBimbingan.map(siswa => {
-                const absenSiswa = absensiFiltered.filter(a => a.userId === siswa.userId);
-
-                return {
-                    tempatPKL: siswa.tempatPKL || "Belum ditentukan",
-                    siswa: mapNama.get(siswa.userId) || siswa.userId,
-                    hadir: absenSiswa.filter(a => a.status.toLowerCase() === 'hadir').length,
-                    totalHari: absenSiswa.length
-                };
-            });
-
-            return NextResponse.json({
-                cards: {
-                    totalSiswaPKL: totalSiswa,
-                    hadirHariIni: hadirCount,
-                    tidakHadir: tidakHadirCount,
-                    persentaseKehadiran: persentase,
-                },
-                table: tableData,
-            });
-        }
-
-        if (userRole === "SISWA") {
-            const startOfMonth = new Date();
-            startOfMonth.setDate(1);
-            startOfMonth.setHours(0, 0, 0, 0);
-            const endOfMonth = new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 0);
-
-            const userData = await prisma.user.findUnique({
-                where: { email: email || "" },
-                select: { username: true }
-            });
-
-            if (!userData?.username) {
-                return NextResponse.json({ cards: { totalHariBulanIni: 0, hadirBulanIni: 0, tidakHadirBulanIni: 0, persentaseKehadiran: 0 } });
+            if (studentIds.length === 0) {
+                return NextResponse.json([], { status: 200 });
             }
 
-            const absensiBulanIni = await prisma.absensi.findMany({
-                where: { userId: userData.username, tanggal: { gte: startOfMonth, lte: endOfMonth } },
-            });
-
-            const totalHariBulanIni = absensiBulanIni.length;
-            const hadirBulanIni = absensiBulanIni.filter((a) => a.status.toLowerCase() === "hadir").length;
-            const tidakHadirBulanIni = totalHariBulanIni - hadirBulanIni;
-            const persentase = totalHariBulanIni > 0 ? ((hadirBulanIni / totalHariBulanIni) * 100).toFixed(1) : 0;
-
-            return NextResponse.json({
-                cards: {
-                    totalHariBulanIni,
-                    hadirBulanIni,
-                    tidakHadirBulanIni,
-                    persentaseKehadiran: persentase,
-                },
-            });
+            whereClause.userId = { in: studentIds };
         }
 
-        return NextResponse.json({ error: "Role unknown" }, { status: 403 });
+        const absensiList = await prisma.absensi.findMany({
+            where: whereClause,
+            include: {
+                dataSiswa: true,
+            },
+            orderBy: { tanggal: "desc" },
+        });
+
+        const uniqueUserIds = Array.from(
+            new Set(absensiList.map((item) => item.userId))
+        );
+
+        const users = await prisma.user.findMany({
+            where: {
+                username: { in: uniqueUserIds },
+            },
+            select: {
+                username: true,
+                name: true,
+            },
+        });
+
+        const userMap = new Map();
+        users.forEach((u) => {
+            if (u.username) userMap.set(u.username, u.name);
+        });
+
+        const formattedData = absensiList.map((item) => {
+            const namaSiswa = userMap.get(item.userId) || item.userId || "Siswa";
+
+            return {
+                id: item.id,
+                userId: item.userId,
+                siswa: namaSiswa,
+                kelas: item.dataSiswa?.kelas || "-",
+                tempatPKL: item.dataSiswa?.tempatPKL || "-",
+                tanggal: item.tanggal,
+                waktu: item.waktu || "-",
+                status: item.status,
+                tipe: item.tipe,
+                kegiatan: item.kegiatan || "-",
+                keterangan: item.keterangan || "-",
+                lokasi: item.lokasi || null,
+                foto: item.foto || null,
+                tandaTangan: item.tandaTangan || null,
+                bukti: item.bukti || null,
+            };
+        });
+
+        return NextResponse.json(formattedData);
     } catch (error) {
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        return NextResponse.json(
+            { error: "Internal Server Error" },
+            { status: 500 }
+        );
+    }
+}
+
+export async function POST(req: NextRequest) {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user)
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const userRole = (session.user as any).role;
+    if (userRole !== "SISWA") {
+        return NextResponse.json(
+            { error: "Hanya siswa yang bisa absen" },
+            { status: 403 }
+        );
+    }
+
+    try {
+        const formData = await req.formData();
+
+        const user = await prisma.user.findUnique({
+            where: { email: (session.user as any).email },
+            select: { username: true },
+        });
+        if (!user || !user.username)
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
+
+        const fotoFile = formData.get("foto") as File | null;
+        const buktiFile = formData.get("bukti") as File | null;
+
+        // AMBIL DATA TANDA TANGAN (Bisa berupa File lama atau String Base64 baru)
+        const ttdRaw = formData.get("tandaTangan");
+
+        let fotoUrl = null;
+        let buktiUrl = null;
+        let ttdUrl = null;
+
+        if (fotoFile && typeof fotoFile !== "string")
+            fotoUrl = await uploadFile(fotoFile);
+
+        if (buktiFile && typeof buktiFile !== "string")
+            buktiUrl = await uploadFile(buktiFile);
+
+        // LOGIKA PENYIMPANAN TANDA TANGAN
+        if (ttdRaw) {
+            // Jika string base64 (dari canvas), simpan langsung
+            if (typeof ttdRaw === 'string' && ttdRaw.startsWith('data:image')) {
+                ttdUrl = ttdRaw;
+            }
+            // Fallback: Jika masih ada yang pakai upload file (legacy)
+            else if (typeof ttdRaw !== "string") {
+                ttdUrl = await uploadFile(ttdRaw as File);
+            }
+        }
+
+        const status = formData.get("status") as string;
+
+        const newAbsensi = await prisma.absensi.create({
+            data: {
+                userId: user.username,
+                tanggal: new Date(),
+                waktu:
+                    (formData.get("waktu") as string) || new Date().toLocaleTimeString(),
+                status: status,
+                tipe: status === "Pulang" ? "keluar" : "masuk",
+                kegiatan: (formData.get("kegiatan") as string) || "",
+                keterangan: (formData.get("keterangan") as string) || "",
+                lokasi: (formData.get("lokasi") as string) || "",
+                foto: fotoUrl,
+                tandaTangan: ttdUrl, // Base64 string masuk sini
+                bukti: buktiUrl,
+            },
+        });
+
+        return NextResponse.json(newAbsensi, { status: 201 });
+    } catch (error) {
+        console.error("Error Absensi POST:", error);
+        return NextResponse.json(
+            { error: "Gagal menyimpan absensi" },
+            { status: 500 }
+        );
     }
 }
