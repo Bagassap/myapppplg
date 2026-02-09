@@ -28,12 +28,6 @@ export default function Home() {
           <span className="text-yellow-300">Online PKL</span>
         </h1>
 
-        {/* Deskripsi */}
-        <p className="mt-3 text-center text-gray-200 max-w-md">
-          Sistem presensi Praktik Kerja Lapangan berbasis online untuk memantau
-          kehadiran siswa
-        </p>
-
         {/* Info fitur / icon */}
         <div className="mt-6 grid grid-cols-2 gap-4 w-full">
           <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2 hover:bg-white/20 transition">
