@@ -7,7 +7,7 @@ import { CheckCircle, XCircle, TrendingUp, Calendar } from "lucide-react";
 export default function SiswaDashboard() {
   const [loading, setLoading] = useState(true);
 
-  // State Stats
+  // State Stats dengan nilai default
   const [stats, setStats] = useState({
     totalHariBulanIni: 0,
     hadirBulanIni: 0,
@@ -22,7 +22,14 @@ export default function SiswaDashboard() {
         const res = await fetch("/api/dashboard");
         if (res.ok) {
           const data = await res.json();
-          setStats(data.cards);
+          setStats(
+            data.cards || {
+              totalHariBulanIni: 0,
+              hadirBulanIni: 0,
+              tidakHadirBulanIni: 0,
+              persentaseKehadiran: 0,
+            },
+          );
         }
       } catch (error) {
         console.error("Gagal mengambil data", error);
@@ -50,6 +57,7 @@ export default function SiswaDashboard() {
 
           {/* Statistik Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+            {/* Card 1: Total Hari */}
             <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-blue-200">
               <div className="flex items-center justify-between mb-4">
                 <Calendar className="w-8 h-8 text-blue-600" />
@@ -59,9 +67,12 @@ export default function SiswaDashboard() {
                 Total Hari Kerja
               </h3>
               <p className="text-3xl font-bold text-blue-600">
-                {loading ? "..." : stats.totalHariBulanIni}
+                {/* PERBAIKAN: Gunakan Optional Chaining (?.) dan nilai default (0) */}
+                {loading ? "..." : stats?.totalHariBulanIni || 0}
               </p>
             </div>
+
+            {/* Card 2: Hadir */}
             <div className="bg-gradient-to-br from-green-100 to-green-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-green-200">
               <div className="flex items-center justify-between mb-4">
                 <CheckCircle className="w-8 h-8 text-green-600" />
@@ -73,9 +84,11 @@ export default function SiswaDashboard() {
                 Hari Hadir
               </h3>
               <p className="text-3xl font-bold text-green-600">
-                {loading ? "..." : stats.hadirBulanIni}
+                {loading ? "..." : stats?.hadirBulanIni || 0}
               </p>
             </div>
+
+            {/* Card 3: Tidak Hadir */}
             <div className="bg-gradient-to-br from-red-100 to-red-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-red-200">
               <div className="flex items-center justify-between mb-4">
                 <XCircle className="w-8 h-8 text-red-600" />
@@ -85,9 +98,11 @@ export default function SiswaDashboard() {
                 Hari Tidak Hadir
               </h3>
               <p className="text-3xl font-bold text-red-600">
-                {loading ? "..." : stats.tidakHadirBulanIni}
+                {loading ? "..." : stats?.tidakHadirBulanIni || 0}
               </p>
             </div>
+
+            {/* Card 4: Persentase */}
             <div className="bg-gradient-to-br from-indigo-100 to-blue-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-indigo-200">
               <div className="flex items-center justify-between mb-4">
                 <TrendingUp className="w-8 h-8 text-indigo-600" />
@@ -99,12 +114,10 @@ export default function SiswaDashboard() {
                 Persentase Kehadiran
               </h3>
               <p className="text-3xl font-bold text-indigo-600">
-                {loading ? "..." : stats.persentaseKehadiran}%
+                {loading ? "..." : stats?.persentaseKehadiran || 0}%
               </p>
             </div>
           </div>
-
-          {/* SECTION NOTIFIKASI SUDAH DIHAPUS TOTAL */}
         </main>
       </div>
     </div>
