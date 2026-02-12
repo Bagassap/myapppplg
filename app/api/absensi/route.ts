@@ -6,7 +6,6 @@ import { authOptions } from "../auth/[...nextauth]/route";
 
 export const dynamic = "force-dynamic";
 
-// GET METHOD (Tetap Sama - Tidak Berubah)
 export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
@@ -31,6 +30,7 @@ export async function GET(req: NextRequest) {
     }
 
     try {
+        // --- LOGIC PERMISSION / FILTERING ---
         if (userRole === "SISWA") {
             const userData = await prisma.user.findUnique({
                 where: { email: userEmail },
@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
             if (!userData || !userData.username)
                 return NextResponse.json([], { status: 200 });
             whereClause.userId = userData.username;
+
         } else if (userRole === "GURU") {
             const guruUser = await prisma.user.findUnique({
                 where: { email: userEmail },
@@ -54,20 +55,39 @@ export async function GET(req: NextRequest) {
                 select: { userId: true },
             });
             const studentIds = myStudents.map((s) => s.userId);
+
             if (studentIds.length === 0) return NextResponse.json([], { status: 200 });
+
             whereClause.userId = { in: studentIds };
         }
 
+        // --- FETCH DATA ABSENSI ---
         const absensiList = await prisma.absensi.findMany({
             where: whereClause,
             include: { dataSiswa: true },
             orderBy: { tanggal: "desc" },
         });
 
+        // --- FETCH REAL NAME DARI TABEL USER ---
+        const uniqueUserIds = Array.from(new Set(absensiList.map(item => item.userId)));
+
+        const users = await prisma.user.findMany({
+            where: { username: { in: uniqueUserIds } },
+            select: { username: true, name: true }
+        });
+
+        const userMap = users.reduce((acc, curr) => {
+            if (curr.username) {
+                acc[curr.username] = curr.name || curr.username; // Fallback ke NIS jika nama kosong
+            }
+            return acc;
+        }, {} as Record<string, string>);
+
+        // --- MAPPING RESULT ---
         const formattedData = absensiList.map((item) => ({
             id: item.id,
             userId: item.userId,
-            siswa: item.userId,
+            siswa: userMap[item.userId] || item.userId,
             kelas: item.dataSiswa?.kelas || "-",
             tempatPKL: item.dataSiswa?.tempatPKL || "-",
             tanggal: item.tanggal,
@@ -84,11 +104,11 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json(formattedData);
     } catch (error) {
+        console.error("Error GET Absensi:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
 
-// POST METHOD (Handling Base64 Signature)
 export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session || !session.user)
@@ -116,21 +136,11 @@ export async function POST(req: NextRequest) {
         let buktiUrl = null;
         let ttdUrl = null;
 
-        // Upload Foto dan Bukti (File Biasa)
         if (fotoFile && typeof fotoFile !== "string") fotoUrl = await uploadFile(fotoFile);
         if (buktiFile && typeof buktiFile !== "string") buktiUrl = await uploadFile(buktiFile);
 
-        // Upload Tanda Tangan (Bisa Base64 atau File Legacy)
         if (ttdRaw) {
             if (typeof ttdRaw === 'string' && ttdRaw.startsWith('data:image')) {
-                // Backend Anda harus support menyimpan string base64 langsung ke DB
-                // ATAU upload base64 tersebut ke storage (Supabase/S3) lalu ambil URL-nya.
-                // Jika DB field tipe String dan cukup panjang, simpan Base64 aman.
-                // TAPI, jika function uploadFile Anda pintar, Anda bisa convert base64 -> Buffer -> Upload di sini.
-                // Untuk amannya, kita asumsikan disimpan sebagai string Base64 di database (URL field)
-                // atau Anda punya utilitas upload base64. 
-
-                // *Solusi Simpel:* Simpan Base64 string langsung (jika kolom DB TEXT/VARCHAR panjang)
                 ttdUrl = ttdRaw;
             }
             else if (typeof ttdRaw !== "string") {

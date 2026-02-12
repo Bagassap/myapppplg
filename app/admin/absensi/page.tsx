@@ -9,7 +9,6 @@ import {
   Download,
   CheckSquare,
   X,
-  Edit,
   Calendar,
   ChevronLeft,
   ChevronRight,
@@ -33,8 +32,6 @@ export default function AdminAbsensi() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [editingNote, setEditingNote] = useState<number | null>(null);
-  const [newNote, setNewNote] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -268,15 +265,10 @@ export default function AdminAbsensi() {
         <div className="flex flex-wrap gap-1 sm:gap-2">
           <button
             onClick={() => handleViewSiswaPresensi(item.siswa)}
-            className="p-1 sm:p-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
+            className="flex items-center gap-1 px-3 py-1.5 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-xs sm:text-sm font-medium"
           >
             <UserCheck className="w-3 h-3 sm:w-4 sm:h-4" />
-          </button>
-          <button
-            onClick={() => setEditingNote(item.id)}
-            className="p-1 sm:p-2 bg-indigo-500 text-white rounded-lg"
-          >
-            <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span>Lihat Presensi</span>
           </button>
         </div>
       </td>

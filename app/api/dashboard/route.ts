@@ -161,7 +161,6 @@ export async function POST(req: NextRequest) {
         const fotoFile = formData.get("foto") as File | null;
         const buktiFile = formData.get("bukti") as File | null;
 
-        // AMBIL DATA TANDA TANGAN (Bisa berupa File lama atau String Base64 baru)
         const ttdRaw = formData.get("tandaTangan");
 
         let fotoUrl = null;
@@ -174,13 +173,12 @@ export async function POST(req: NextRequest) {
         if (buktiFile && typeof buktiFile !== "string")
             buktiUrl = await uploadFile(buktiFile);
 
-        // LOGIKA PENYIMPANAN TANDA TANGAN
         if (ttdRaw) {
-            // Jika string base64 (dari canvas), simpan langsung
+
             if (typeof ttdRaw === 'string' && ttdRaw.startsWith('data:image')) {
                 ttdUrl = ttdRaw;
             }
-            // Fallback: Jika masih ada yang pakai upload file (legacy)
+
             else if (typeof ttdRaw !== "string") {
                 ttdUrl = await uploadFile(ttdRaw as File);
             }
@@ -200,7 +198,7 @@ export async function POST(req: NextRequest) {
                 keterangan: (formData.get("keterangan") as string) || "",
                 lokasi: (formData.get("lokasi") as string) || "",
                 foto: fotoUrl,
-                tandaTangan: ttdUrl, // Base64 string masuk sini
+                tandaTangan: ttdUrl,
                 bukti: buktiUrl,
             },
         });
