@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
 
         const userMap = users.reduce((acc, curr) => {
             if (curr.username) {
-                acc[curr.username] = curr.name || curr.username; // Fallback ke NIS jika nama kosong
+                acc[curr.username] = curr.name || curr.username;
             }
             return acc;
         }, {} as Record<string, string>);

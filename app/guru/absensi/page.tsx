@@ -8,28 +8,22 @@ import {
   Filter,
   Download,
   CheckSquare,
-  Clock,
+  X,
   Calendar,
-  AlertCircle,
   ChevronLeft,
   ChevronRight,
   UserCheck,
   MapPin,
-  X,
-  ImageIcon,
+  Image as ImageIcon,
   PenTool,
 } from "lucide-react";
 
 export default function GuruAbsensi() {
   const { data: session, status } = useSession();
-
-  // State Filter
   const [selectedPKL, setSelectedPKL] = useState("Semua Tempat PKL");
   const [selectedPeriod, setSelectedPeriod] = useState("Bulan Ini");
   const [selectedSiswa, setSelectedSiswa] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("Semua");
-
-  // State Data & UI
   const [showSiswaPresensi, setShowSiswaPresensi] = useState(false);
   const [presensiData, setPresensiData] = useState<any[]>([]);
   const [siswaPresensiData, setSiswaPresensiData] = useState<
@@ -38,17 +32,8 @@ export default function GuruAbsensi() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // STATE BARU: Preview Gambar Modal
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
-
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-
-  const getKeterangan = (status: string, catatan: string) => {
-    if (catatan && catatan !== "-") return catatan;
-    return status;
-  };
 
   useEffect(() => {
     if (status === "loading") return;
@@ -93,41 +78,40 @@ export default function GuruAbsensi() {
         const response = await fetch(`/api/absensi?${params.toString()}`, {
           cache: "no-store",
         });
-        if (!response.ok) throw new Error("Gagal mengambil data absensi.");
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Gagal mengambil data absensi: ${errorText}`);
+        }
 
         const data = await response.json();
-        const transformedData = Array.isArray(data)
-          ? data.map((item: any) => ({
-              id: item.id,
-              siswa: item.siswa || "Siswa Tidak Dikenal",
-              tempatPKL: item.tempatPKL || "-",
-              status: item.status,
-              waktu: item.waktu || "-",
-              catatan: item.keterangan || "",
-              kegiatan: item.kegiatan || "",
-              lokasi: item.lokasi || "",
-              foto: item.foto || "",
-              tandaTangan: item.tandaTangan || "",
-              bukti: item.bukti || "",
-              tanggal: new Date(item.tanggal).toLocaleDateString("id-ID", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              }),
-            }))
-          : [];
+
+        const transformedData = data.map((item: any) => ({
+          id: item.id,
+          siswa: item.siswa || "Tidak Diketahui",
+          tempatPKL: item.tempatPKL || "Tidak Diketahui",
+          status: item.status,
+          waktu: item.waktu || "-",
+          catatan: item.keterangan || "",
+          kegiatan: item.kegiatan || "",
+          lokasi: item.lokasi || "",
+          foto: item.foto || "",
+          tandaTangan: item.tandaTangan || "",
+          bukti: item.bukti || "",
+          tanggal: new Date(item.tanggal).toLocaleDateString("id-ID"),
+        }));
 
         setPresensiData(transformedData);
 
         const grouped: Record<string, any[]> = {};
         transformedData.forEach((item: any) => {
-          const siswaName = item.siswa;
-          if (!grouped[siswaName]) grouped[siswaName] = [];
-          grouped[siswaName].push(item);
+          const siswa = item.siswa;
+          if (!grouped[siswa]) grouped[siswa] = [];
+          grouped[siswa].push(item);
         });
         setSiswaPresensiData(grouped);
       } catch (err: any) {
-        setError(err.message || "Terjadi kesalahan.");
+        console.error("Fetch error:", err);
+        setError(err.message);
       } finally {
         setLoading(false);
       }
@@ -151,12 +135,50 @@ export default function GuruAbsensi() {
   const endIndex = startIndex + itemsPerPage;
   const currentData = filteredData.slice(startIndex, endIndex);
 
-  // FUNGSI BARU: Buka Modal Preview
-  const openImagePreview = (url: string) => {
-    if (url) setPreviewImage(url);
+  const handleExport = () => {
+    if (filteredData.length === 0) {
+      alert("Tidak ada data untuk diekspor.");
+      return;
+    }
+
+    const headers = [
+      "Tanggal",
+      "Siswa",
+      "Tempat PKL",
+      "Status",
+      "Waktu",
+      "Catatan",
+      "Kegiatan",
+      "Lokasi",
+    ];
+
+    const rows = filteredData.map((row) =>
+      [
+        `"${row.tanggal}"`,
+        `"${row.siswa}"`,
+        `"${row.tempatPKL}"`,
+        `"${row.status}"`,
+        `"${row.waktu}"`,
+        `"${(row.catatan || "").replace(/"/g, '""')}"`,
+        `"${(row.kegiatan || "").replace(/"/g, '""')}"`,
+        `"${row.lokasi || "-"}"`,
+      ].join(","),
+    );
+
+    const csvContent = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute(
+      "download",
+      `Laporan_Absensi_Bimbingan_${new Date().toISOString().split("T")[0]}.csv`,
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
-  // ... (Kode handleExport, handleViewSiswaPresensi, pagination tetap sama) ...
   const handleViewSiswaPresensi = (siswa: string) => {
     setSelectedSiswa(siswa);
     setShowSiswaPresensi(true);
@@ -167,202 +189,373 @@ export default function GuruAbsensi() {
   const handleNext = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
   };
-  const handleExport = () => {
-    /* ... kode export Anda ... */
+
+  const openImage = (url: string) => {
+    if (url) window.open(url, "_blank");
   };
 
-  if (loading)
+  if (loading || error) {
     return (
-      <div className="flex h-screen bg-gray-50 flex-col items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="flex h-screen bg-gray-50 overflow-hidden">
+        <Sidebar />
+        <div className="flex-1 flex flex-col min-w-0">
+          <TopBar />
+          <main className="flex-1 flex items-center justify-center p-6 sm:p-8 lg:p-12">
+            {loading ? (
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
+            ) : (
+              <p className="text-red-600">{error}</p>
+            )}
+          </main>
+        </div>
       </div>
     );
+  }
+
+  const renderTableHeaders = () => (
+    <>
+      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 rounded-tl-xl text-xs sm:text-base">
+        Siswa
+      </th>
+      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base hidden sm:table-cell">
+        Tempat PKL
+      </th>
+      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base">
+        Status
+      </th>
+      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base">
+        Waktu
+      </th>
+      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base hidden md:table-cell">
+        Catatan
+      </th>
+      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 rounded-tr-xl text-xs sm:text-base">
+        Aksi
+      </th>
+    </>
+  );
+
+  const renderTableRow = (item: any) => (
+    <tr
+      key={item.id}
+      className="border-b border-gray-100 hover:bg-indigo-50 transition-colors"
+    >
+      <td className="px-2 py-3 sm:px-6 sm:py-4 font-medium text-gray-900 text-xs sm:text-base break-words">
+        {item.siswa}
+        <div className="text-[10px] text-gray-500 sm:hidden mt-1">
+          {item.tempatPKL}
+        </div>
+      </td>
+      <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base hidden sm:table-cell">
+        {item.tempatPKL}
+      </td>
+      <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base">
+        <div className="flex items-center gap-1 sm:gap-2">
+          {item.status === "Hadir" && (
+            <CheckSquare className="w-3 h-3 sm:w-4 sm:h-4 text-green-600 shrink-0" />
+          )}
+          <span>{item.status}</span>
+        </div>
+      </td>
+      <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base whitespace-nowrap">
+        {item.waktu}
+      </td>
+      <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base hidden md:table-cell">
+        {item.catatan || "-"}
+      </td>
+      <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700">
+        <div className="flex flex-wrap gap-1 sm:gap-2">
+          {/* Tombol Edit DIHAPUS sesuai instruksi */}
+          <button
+            onClick={() => handleViewSiswaPresensi(item.siswa)}
+            className="flex items-center gap-1 px-3 py-1.5 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-xs sm:text-sm font-medium"
+          >
+            <UserCheck className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span>Lihat Presensi</span>
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar />
-        <main className="flex-1 p-4 sm:p-8 lg:p-12 overflow-y-auto w-full">
-          {/* ... (HEADER, ERROR, FILTER SECTION TETAP SAMA) ... */}
-          {/* Salin bagian Header dan Filter dari kode lama Anda di sini */}
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold">Absensi Bimbingan</h1>
+        <main className="flex-1 p-4 sm:p-8 lg:p-12 overflow-y-auto overflow-x-hidden w-full max-w-full">
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-xl sm:text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2 sm:gap-3">
+              <Calendar className="w-8 h-8 sm:w-12 sm:h-12 text-indigo-600" />
+              Absensi
+            </h1>
+            <p className="text-gray-600 text-sm sm:text-lg">
+              Lihat presensi siswa bimbingan Anda.
+            </p>
           </div>
 
-          {/* FILTER UI PLACEHOLDER (Gunakan kode lama Anda) */}
-          <div className="bg-white p-4 rounded-xl shadow mb-6">
-            <h3 className="font-bold mb-4">Filter</h3>
-            {/* ... Dropdown filter Anda ... */}
-            <div className="flex gap-4 flex-wrap">
-              <select
-                value={selectedPeriod}
-                onChange={(e) => setSelectedPeriod(e.target.value)}
-                className="border p-2 rounded"
-              >
-                <option>Hari Ini</option>
-                <option>Bulan Ini</option>
-              </select>
-              {/* ... dst ... */}
+          <div className="bg-white p-4 sm:p-8 rounded-2xl sm:rounded-3xl shadow-lg border border-gray-200 mb-6 sm:mb-10">
+            <h3 className="text-lg sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center gap-2">
+              <Filter className="w-5 h-5 sm:w-7 sm:h-7 text-indigo-600" />
+              Filter & Ekspor
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              {[
+                {
+                  label: "Tempat PKL",
+                  val: selectedPKL,
+                  set: setSelectedPKL,
+                  opt: [
+                    "Semua Tempat PKL",
+                    ...new Set(presensiData.map((i) => i.tempatPKL)),
+                  ],
+                },
+                {
+                  label: "Periode",
+                  val: selectedPeriod,
+                  set: setSelectedPeriod,
+                  opt: ["Hari Ini", "Bulan Ini", "Tahun Ini"],
+                },
+                {
+                  label: "Siswa",
+                  val: selectedSiswa,
+                  set: setSelectedSiswa,
+                  opt: [
+                    "Semua Siswa",
+                    ...new Set(presensiData.map((i) => i.siswa)),
+                  ],
+                },
+                {
+                  label: "Status",
+                  val: selectedStatus,
+                  set: setSelectedStatus,
+                  opt: ["Semua", "Hadir", "Pulang", "Izin", "Libur"],
+                },
+              ].map((f, idx) => (
+                <div key={idx} className="flex flex-col">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
+                    {f.label}
+                  </label>
+                  <select
+                    value={f.val}
+                    onChange={(e) => f.set(e.target.value)}
+                    className="w-full px-3 py-2 sm:py-3 border border-indigo-200 rounded-xl bg-gray-50 text-sm sm:text-base focus:ring-2 focus:ring-indigo-50 outline-none"
+                  >
+                    {f.opt.map((o) => (
+                      <option key={o} value={o === "Semua Siswa" ? "" : o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+              <div className="flex items-end">
+                <button
+                  onClick={handleExport}
+                  className="w-full sm:w-auto px-6 flex items-center justify-center gap-2 py-2 sm:py-3 bg-indigo-600 text-white rounded-xl shadow hover:bg-indigo-700 transition-all text-sm sm:text-base font-medium"
+                >
+                  <Download className="w-4 h-4 sm:w-5 sm:h-5" /> CSV
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* TABLE SECTION (Tabel Utama) */}
-          {/* Di Tabel Utama biasanya hanya ringkasan. Tombol 'Lihat' membuka detail. */}
-          <div className="bg-white rounded-2xl shadow-xl border overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-4">Tanggal</th>
-                    <th className="px-6 py-4">Siswa</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4">Aksi</th>
+          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-200 overflow-hidden">
+            <div className="p-4 sm:p-8 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-lg sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <CheckSquare className="w-5 h-5 sm:w-7 sm:h-7 text-green-600" />
+                Daftar Presensi
+              </h3>
+            </div>
+
+            <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300">
+              <table className="w-full table-auto min-w-full">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-100">
+                    {renderTableHeaders()}
                   </tr>
                 </thead>
-                <tbody>
-                  {currentData.map((item) => (
-                    <tr key={item.id} className="border-b hover:bg-gray-50">
-                      <td className="px-6 py-4">{item.tanggal}</td>
-                      <td className="px-6 py-4 font-medium">{item.siswa}</td>
-                      <td className="px-6 py-4">{item.status}</td>
-                      <td className="px-6 py-4">
-                        <button
-                          onClick={() => handleViewSiswaPresensi(item.siswa)}
-                          className="bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700"
-                        >
-                          Lihat Detail
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                <tbody className="divide-y divide-gray-50">
+                  {currentData.map((item) => renderTableRow(item))}
                 </tbody>
               </table>
             </div>
+
+            {currentData.length === 0 && (
+              <div className="py-12 text-center text-gray-500 text-sm sm:text-base">
+                Data tidak ditemukan.
+              </div>
+            )}
+
+            <div className="p-4 sm:p-8 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-xs sm:text-sm text-gray-600 font-medium">
+                Menampilkan {startIndex + 1}-
+                {Math.min(endIndex, filteredData.length)} dari{" "}
+                {filteredData.length}
+              </p>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={handlePrevious}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm disabled:opacity-50"
+                >
+                  <ChevronLeft className="w-4 h-4" /> Prev
+                </button>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={handleNext}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm disabled:opacity-50"
+                >
+                  Next <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* MODAL DETAIL RIWAYAT SISWA (Popup Besar) */}
           {showSiswaPresensi && selectedSiswa && (
-            <div
-              className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-              onClick={() => setShowSiswaPresensi(false)}
-            >
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4">
               <div
-                className="bg-white w-full max-w-6xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="p-4 border-b flex justify-between">
-                  <h3 className="font-bold text-xl">
-                    Riwayat: {selectedSiswa}
+                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                onClick={() => setShowSiswaPresensi(false)}
+              />
+              <div className="relative bg-white w-full max-w-6xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+                <div className="p-4 sm:p-6 border-b flex items-center justify-between">
+                  <h3 className="font-bold text-lg sm:text-2xl truncate pr-4">
+                    Riwayat {selectedSiswa}
                   </h3>
-                  <button onClick={() => setShowSiswaPresensi(false)}>
+                  <button
+                    onClick={() => setShowSiswaPresensi(false)}
+                    className="p-2 hover:bg-gray-100 rounded-full"
+                  >
                     <X className="w-6 h-6" />
                   </button>
                 </div>
-
-                <div className="flex-1 overflow-auto p-4">
-                  <table className="w-full text-sm text-left">
-                    <thead className="bg-gray-50 sticky top-0">
-                      <tr>
-                        <th className="px-4 py-3">Tanggal</th>
-                        <th className="px-4 py-3">Status</th>
-                        <th className="px-4 py-3 text-center">Foto</th>
-                        <th className="px-4 py-3 text-center">TTD</th>
-                        <th className="px-4 py-3">Keterangan</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(siswaPresensiData[selectedSiswa] || []).map(
-                        (item: any) => (
-                          <tr key={item.id} className="border-b">
-                            <td className="px-4 py-3">{item.tanggal}</td>
-                            <td className="px-4 py-3">{item.status}</td>
-
-                            {/* FOTO DENGAN PREVIEW */}
-                            <td className="px-4 py-3 text-center">
-                              {item.foto ? (
-                                <button
-                                  onClick={() => openImagePreview(item.foto)}
-                                  className="group relative w-12 h-12 border rounded overflow-hidden mx-auto"
+                <div className="flex-1 overflow-auto p-2 sm:p-6">
+                  <div className="w-full overflow-x-auto">
+                    <table className="w-full text-xs sm:text-base min-w-[800px] sm:min-w-full">
+                      <thead className="bg-gray-50 sticky top-0 z-10">
+                        <tr>
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">
+                            Tanggal
+                          </th>
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">
+                            Status
+                          </th>
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">
+                            Waktu
+                          </th>
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">
+                            Lokasi
+                          </th>
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-center w-24">
+                            Foto
+                          </th>
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-center w-24">
+                            TTD
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(siswaPresensiData[selectedSiswa] || []).map(
+                          (item: any) => (
+                            <tr key={item.id} className="hover:bg-gray-50">
+                              <td className="px-2 py-2 sm:px-4 sm:py-3">
+                                {item.tanggal}
+                              </td>
+                              <td className="px-2 py-2 sm:px-4 sm:py-3">
+                                <span
+                                  className={`px-2 py-1 rounded text-xs font-medium ${
+                                    item.status === "Hadir"
+                                      ? "bg-green-100 text-green-800"
+                                      : item.status === "Izin"
+                                        ? "bg-yellow-100 text-yellow-800"
+                                        : "bg-gray-100 text-gray-800"
+                                  }`}
                                 >
-                                  <img
-                                    src={item.foto}
-                                    className="w-full h-full object-cover"
-                                    alt="Foto"
-                                  />
-                                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-all" />
-                                </button>
-                              ) : (
-                                <ImageIcon className="w-5 h-5 mx-auto text-gray-300" />
-                              )}
-                            </td>
-
-                            {/* TANDA TANGAN DENGAN PREVIEW */}
-                            <td className="px-4 py-3 text-center">
-                              {item.tandaTangan ? (
-                                <button
-                                  onClick={() =>
-                                    openImagePreview(item.tandaTangan)
-                                  }
-                                  className="bg-white border rounded p-1 hover:border-indigo-500 transition-colors mx-auto block"
-                                >
-                                  <img
-                                    src={item.tandaTangan}
-                                    className="h-8 w-auto object-contain"
-                                    alt="TTD"
-                                  />
-                                </button>
-                              ) : (
-                                <PenTool className="w-5 h-5 mx-auto text-gray-300" />
-                              )}
-                            </td>
-
-                            <td className="px-4 py-3">
-                              {getKeterangan(item.status, item.catatan)}
-                            </td>
-                          </tr>
-                        ),
-                      )}
-                    </tbody>
-                  </table>
+                                  {item.status}
+                                </span>
+                              </td>
+                              <td className="px-2 py-2 sm:px-4 sm:py-3">
+                                {item.waktu}
+                              </td>
+                              <td className="px-2 py-2 sm:px-4 sm:py-3">
+                                {item.lokasi ? (
+                                  <a
+                                    href={`https://www.google.com/maps?q=${item.lokasi}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:underline flex items-center gap-1"
+                                  >
+                                    <MapPin className="w-3 h-3" /> Map
+                                  </a>
+                                ) : (
+                                  "-"
+                                )}
+                              </td>
+                              <td className="px-2 py-2 sm:px-4 sm:py-3 text-center">
+                                {item.foto ? (
+                                  <div
+                                    className="flex justify-center cursor-pointer group"
+                                    onClick={() => openImage(item.foto)}
+                                    title="Klik untuk memperbesar"
+                                  >
+                                    <div className="relative w-10 h-10 sm:w-12 sm:h-12 border rounded overflow-hidden shadow-sm hover:shadow-md transition-all">
+                                      <img
+                                        src={item.foto}
+                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                                        alt="Foto"
+                                        onError={(e) => {
+                                          (
+                                            e.target as HTMLImageElement
+                                          ).style.display = "none";
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex justify-center text-gray-300">
+                                    <ImageIcon className="w-5 h-5" />
+                                  </div>
+                                )}
+                              </td>
+                              <td className="px-2 py-2 sm:px-4 sm:py-3 text-center">
+                                {item.tandaTangan ? (
+                                  <div
+                                    className="flex justify-center cursor-pointer group"
+                                    onClick={() => openImage(item.tandaTangan)}
+                                    title="Klik untuk memperbesar"
+                                  >
+                                    <div className="relative w-10 h-10 sm:w-12 sm:h-12 border rounded bg-white overflow-hidden shadow-sm hover:shadow-md transition-all">
+                                      <img
+                                        src={item.tandaTangan}
+                                        className="w-full h-full object-contain group-hover:scale-110 transition-transform p-1"
+                                        alt="TTD"
+                                        onError={(e) => {
+                                          (
+                                            e.target as HTMLImageElement
+                                          ).style.display = "none";
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex justify-center text-gray-300">
+                                    <PenTool className="w-5 h-5" />
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          ),
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
           )}
         </main>
       </div>
-
-      {/* MODAL LIGHTBOX PREVIEW (Ditaruh paling luar) */}
-      {previewImage && (
-        <div
-          className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
-          onClick={() => setPreviewImage(null)}
-        >
-          <div
-            className="relative max-w-4xl w-full max-h-screen flex flex-col items-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setPreviewImage(null)}
-              className="absolute -top-10 right-0 text-white hover:text-gray-300"
-            >
-              <X className="w-8 h-8" />
-            </button>
-            <img
-              src={previewImage}
-              alt="Preview Besar"
-              className="max-w-full max-h-[85vh] object-contain rounded shadow-2xl bg-white"
-            />
-            <a
-              href={previewImage}
-              download="file_presensi.png"
-              className="mt-4 text-white underline hover:text-indigo-300"
-            >
-              Download Gambar
-            </a>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

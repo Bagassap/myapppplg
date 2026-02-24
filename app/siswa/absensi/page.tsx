@@ -6,7 +6,6 @@ import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import dynamic from "next/dynamic";
 
-// --- PERBAIKAN 1: Menambahkan type casting 'as any' agar Ref terbaca ---
 const SignatureCanvas = dynamic(() => import("react-signature-canvas"), {
   ssr: false,
   loading: () => (
@@ -29,6 +28,9 @@ import {
   Trash2,
   FileText,
   UploadCloud,
+  User,
+  Hash,
+  BookOpen,
 } from "lucide-react";
 
 export default function SiswaAbsensi() {
@@ -177,27 +179,17 @@ export default function SiswaAbsensi() {
 
   // --- Handle Submit ---
   const handleAbsenSubmit = async () => {
-    // 1. VALIDASI TANDA TANGAN
     if (sigCanvas.current?.isEmpty()) {
       alert("⚠️ Tanda Tangan wajib digambar!");
       return;
     }
-
-    // 2. Validasi Field Wajib
     if (!absenForm.lokasi) {
       alert("Lokasi/GPS wajib diambil.");
       return;
     }
-
     if (!absenForm.foto) {
       alert("Foto Selfie/Lokasi wajib diupload untuk verifikasi.");
       return;
-    }
-
-    if (isStatusIzinOrSakit && !absenForm.bukti) {
-      // Optional: Uncomment jika ingin mewajibkan upload surat
-      // alert("Mohon upload bukti surat keterangan (Izin/Sakit).");
-      // return;
     }
 
     const textContent = isStatusPulang ? absenForm.kegiatan : absenForm.catatan;
@@ -213,14 +205,12 @@ export default function SiswaAbsensi() {
     formData.append("status", absenForm.status);
     formData.append("waktu", absenForm.waktuLokasi);
     formData.append("lokasi", absenForm.lokasi);
-
     formData.append("keterangan", absenForm.catatan || "");
     formData.append("kegiatan", absenForm.kegiatan || "");
 
     if (absenForm.foto) formData.append("foto", absenForm.foto);
     if (absenForm.bukti) formData.append("bukti", absenForm.bukti);
 
-    // --- CONVERT CANVAS TO BASE64 ---
     const signatureDataURL = sigCanvas.current
       .getTrimmedCanvas()
       .toDataURL("image/png");
@@ -430,6 +420,61 @@ export default function SiswaAbsensi() {
                     }}
                     className="space-y-5"
                   >
+                    <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
+                      <h4 className="text-sm font-semibold text-indigo-700 mb-3 flex items-center gap-2">
+                        <User className="w-4 h-4" /> Data Diri
+                      </h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1">
+                            <User className="w-3 h-3" /> Nama
+                          </label>
+                          <input
+                            type="text"
+                            value={siswaData.nama || "-"}
+                            disabled
+                            readOnly
+                            className="px-3 py-2 rounded-lg border border-gray-200 bg-gray-100 text-gray-700 text-sm cursor-not-allowed"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1">
+                            <Hash className="w-3 h-3" /> NIS
+                          </label>
+                          <input
+                            type="text"
+                            value={siswaData.nis || "-"}
+                            disabled
+                            readOnly
+                            className="px-3 py-2 rounded-lg border border-gray-200 bg-gray-100 text-gray-700 text-sm cursor-not-allowed"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1">
+                            <BookOpen className="w-3 h-3" /> Kelas
+                          </label>
+                          <input
+                            type="text"
+                            value={siswaData.kelas || "-"}
+                            disabled
+                            readOnly
+                            className="px-3 py-2 rounded-lg border border-gray-200 bg-gray-100 text-gray-700 text-sm cursor-not-allowed"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1">
+                            <MapPin className="w-3 h-3" /> Tempat PKL
+                          </label>
+                          <input
+                            type="text"
+                            value={siswaData.tempatPKL || "-"}
+                            disabled
+                            readOnly
+                            className="px-3 py-2 rounded-lg border border-gray-200 bg-gray-100 text-gray-700 text-sm cursor-not-allowed"
+                          />
+                        </div>
+                      </div>
+                    </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Status Kehadiran
@@ -455,7 +500,6 @@ export default function SiswaAbsensi() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        {/* PERBAIKAN 2: Menghapus 'block' karena sudah ada 'flex' */}
                         <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
                           <ClockIcon className="w-4 h-4" /> Waktu
                         </label>
@@ -467,7 +511,6 @@ export default function SiswaAbsensi() {
                         />
                       </div>
                       <div>
-                        {/* PERBAIKAN 2: Menghapus 'block' */}
                         <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
                           <MapPin className="w-4 h-4" /> Lokasi (GPS){" "}
                           <span className="text-red-500">*</span>
@@ -494,7 +537,6 @@ export default function SiswaAbsensi() {
 
                     {/* FOTO SELFIE */}
                     <div>
-                      {/* PERBAIKAN 2: Menghapus 'block' */}
                       <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
                         <Camera className="w-4 h-4" /> Foto Selfie / Lokasi{" "}
                         <span className="text-red-500">*</span>
@@ -518,7 +560,6 @@ export default function SiswaAbsensi() {
                     {/* INPUT KHUSUS IZIN/SAKIT */}
                     {isStatusIzinOrSakit && (
                       <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-100">
-                        {/* PERBAIKAN 2: Menghapus 'block' */}
                         <label className="text-sm font-semibold text-yellow-800 mb-2 flex items-center gap-1">
                           <UploadCloud className="w-4 h-4" /> Upload Surat Bukti
                           (Dokter/Ortu)
@@ -537,7 +578,6 @@ export default function SiswaAbsensi() {
                     )}
 
                     <div>
-                      {/* PERBAIKAN 2: Menghapus 'block' */}
                       <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
                         <FileText className="w-4 h-4" />{" "}
                         {isStatusPulang ? "Laporan Kegiatan" : "Keterangan"}
@@ -596,7 +636,7 @@ export default function SiswaAbsensi() {
                           penColor="black"
                           velocityFilterWeight={0.7}
                           canvasProps={{
-                            className: "w-full h-40 block", // Tinggi canvas
+                            className: "w-full h-40 block",
                             style: { width: "100%", height: "160px" },
                           }}
                         />
