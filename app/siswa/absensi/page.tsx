@@ -127,7 +127,7 @@ export default function SiswaAbsensi() {
                 : siswaRaw;
           if (siswa) {
             setSiswaData({
-              nama: session.user?.name || "",
+              nama: siswa.name || session.user?.name || "",
               nis: siswa.userId || siswa.id?.toString() || "",
               kelas: siswa.kelas || "",
               tempatPKL: siswa.tempatPKL || "",
