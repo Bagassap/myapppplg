@@ -5,12 +5,13 @@ import Link from "next/link";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react"; // [TAMBAHAN] Eye, EyeOff
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // [TAMBAHAN]
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -102,18 +103,32 @@ export default function LoginPage() {
               />
             </div>
 
+            {/* [TAMBAHAN] Show/Hide Password — hanya blok ini yang berubah dari aslinya */}
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-500 w-5 h-5" />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Masukkan password"
-                className="pl-10 pr-4 w-full py-2.5 md:py-2 rounded-lg border border-gray-300 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:outline-none transition text-sm sm:text-base"
+                className="pl-10 pr-10 w-full py-2.5 md:py-2 rounded-lg border border-gray-300 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:outline-none transition text-sm sm:text-base"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
+              </button>
             </div>
+            {/* [END TAMBAHAN] */}
 
             <button
               type="submit"

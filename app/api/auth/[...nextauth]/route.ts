@@ -42,27 +42,18 @@ export const authOptions: NextAuthOptions = {
     ],
     session: {
         strategy: "jwt",
+        maxAge: 30 * 24 * 60 * 60,
     },
     secret: process.env.NEXTAUTH_SECRET,
     pages: {
         signIn: '/login',
         error: '/login',
     },
-    cookies: {
-        sessionToken: {
-            name: `next-auth.session-token`,
-            options: {
-                httpOnly: true,
-                sameSite: 'lax',
-                path: '/',
-                secure: process.env.NODE_ENV === 'production' && process.env.NEXTAUTH_URL?.startsWith("https"),
-            },
-        },
-    },
     callbacks: {
         async jwt({ token, user }: { token: any; user: any }) {
             if (user) {
                 token.role = user.role;
+                token.id = user.id;
             }
             return token;
         },
