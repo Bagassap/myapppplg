@@ -42,12 +42,30 @@ export const authOptions: NextAuthOptions = {
     ],
     session: {
         strategy: "jwt",
-        maxAge: 30 * 24 * 60 * 60,
+        maxAge: 30 * 24 * 60 * 60, // 30 hari
     },
     secret: process.env.NEXTAUTH_SECRET,
     pages: {
         signIn: '/login',
         error: '/login',
+    },
+    // ROOT CAUSE FIX:
+    // NEXTAUTH_URL = http://192.168.20.6:3000 (HTTP, bukan HTTPS)
+    // Tapi NODE_ENV=production (karena npm run build+start) menyebabkan
+    // Next-Auth otomatis set secure:true pada cookie.
+    // Browser MENOLAK mengirim Secure cookie ke HTTP → getToken() di middleware
+    // tidak menemukan token → redirect ke login setelah beberapa navigasi.
+    // Fix: override cookie config, secure mengikuti URL bukan NODE_ENV.
+    cookies: {
+        sessionToken: {
+            name: "next-auth.session-token",
+            options: {
+                httpOnly: true,
+                sameSite: "lax",
+                path: "/",
+                secure: process.env.NEXTAUTH_URL?.startsWith("https://") ?? false,
+            },
+        },
     },
     callbacks: {
         async jwt({ token, user }: { token: any; user: any }) {
