@@ -1,4 +1,3 @@
-// app/contexts/ThemeContext.tsx
 "use client";
 
 import {
@@ -18,47 +17,46 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+function applyTheme(newTheme: Theme) {
+  const root = document.documentElement;
+  if (newTheme === "Dark") {
+    root.classList.add("dark");
+  } else if (newTheme === "Light") {
+    root.classList.remove("dark");
+  } else {
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    ).matches;
+    prefersDark ? root.classList.add("dark") : root.classList.remove("dark");
+  }
+}
+
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setThemeState] = useState<Theme>("Light");
 
-  // Load tema dari localStorage saat komponen mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem("pengaturanSistem");
-    if (savedTheme) {
-      const settings = JSON.parse(savedTheme);
-      setThemeState(settings.tema || "Light");
+    const savedSettings = localStorage.getItem("pengaturanSistem");
+    if (savedSettings) {
+      try {
+        const settings = JSON.parse(savedSettings);
+        const saved = settings.tema as Theme;
+        if (saved) {
+          setThemeState(saved);
+          applyTheme(saved);
+        }
+      } catch {}
     }
   }, []);
 
-  // Fungsi untuk mengubah tema dan menerapkan ke DOM
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-    const root = document.documentElement; // Target <html>
-    if (newTheme === "Dark") {
-      root.classList.add("dark");
-    } else if (newTheme === "Light") {
-      root.classList.remove("dark");
-    } else if (newTheme === "Auto") {
-      const prefersDark = window.matchMedia(
-        "(prefers-color-scheme: dark)",
-      ).matches;
-      if (prefersDark) {
-        root.classList.add("dark");
-      } else {
-        root.classList.remove("dark");
-      }
-    }
-    // Simpan ke localStorage
+    applyTheme(newTheme);
+
     const savedSettings = localStorage.getItem("pengaturanSistem");
     const settings = savedSettings ? JSON.parse(savedSettings) : {};
     settings.tema = newTheme;
     localStorage.setItem("pengaturanSistem", JSON.stringify(settings));
   };
-
-  // Terapkan tema saat state berubah (hati-hati dengan loop, tapi aman di sini)
-  useEffect(() => {
-    setTheme(theme);
-  }, [theme]);
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
