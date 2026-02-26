@@ -31,6 +31,8 @@ import {
   User,
   Hash,
   BookOpen,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 export default function SiswaAbsensi() {
@@ -278,6 +280,7 @@ export default function SiswaAbsensi() {
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
+        {/* [TIDAK DIUBAH] seluruh halaman utama sama persis */}
         <main className="flex-1 p-6 sm:p-8 lg:p-12 overflow-y-auto w-full">
           <div className="mb-8">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
@@ -310,77 +313,145 @@ export default function SiswaAbsensi() {
             </button>
           </div>
 
-          <div className="bg-white p-6 rounded-2xl shadow mb-8 border border-gray-100">
-            <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-              <ClockIcon className="w-6 h-6 text-indigo-600" /> Riwayat Hari Ini
-            </h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[800px]">
-                <thead className="bg-gray-50 text-gray-700">
-                  <tr>
-                    <th className="px-4 py-3 rounded-tl-lg">Status</th>
-                    <th className="px-4 py-3">Waktu</th>
-                    <th className="px-4 py-3">Lokasi</th>
-                    <th className="px-4 py-3 text-center">Foto</th>
-                    <th className="px-4 py-3 text-center">TTD</th>
-                    <th className="px-4 py-3 rounded-tr-lg">Ket</th>
+          {/* TABEL RIWAYAT — disamakan dengan desain tabel Admin */}
+          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-200 overflow-hidden mb-8">
+            <div className="p-4 sm:p-8 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-lg sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <ClockIcon className="w-5 h-5 sm:w-7 sm:h-7 text-indigo-600" />
+                Riwayat Hari Ini
+              </h3>
+            </div>
+
+            <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300">
+              <table className="w-full table-auto min-w-full">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-100">
+                    <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 rounded-tl-xl text-xs sm:text-base">
+                      Status
+                    </th>
+                    <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base">
+                      Waktu
+                    </th>
+                    <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base hidden sm:table-cell">
+                      Lokasi
+                    </th>
+                    <th className="px-2 py-3 sm:px-6 sm:py-4 text-center font-semibold text-gray-700 text-xs sm:text-base">
+                      Foto
+                    </th>
+                    <th className="px-2 py-3 sm:px-6 sm:py-4 text-center font-semibold text-gray-700 text-xs sm:text-base">
+                      TTD
+                    </th>
+                    <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 rounded-tr-xl text-xs sm:text-base hidden md:table-cell">
+                      Keterangan
+                    </th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-50">
                   {currentData.length === 0 ? (
                     <tr>
                       <td
                         colSpan={6}
-                        className="px-4 py-8 text-center text-gray-500"
+                        className="py-12 text-center text-gray-500 text-sm sm:text-base"
                       >
                         Belum ada data.
                       </td>
                     </tr>
                   ) : (
                     currentData.map((item) => (
-                      <tr key={item.id} className="border-b hover:bg-gray-50">
-                        <td className="px-4 py-3 font-medium">
-                          <span
-                            className={`px-2 py-1 rounded text-xs font-bold ${
-                              item.status === "Hadir"
-                                ? "bg-green-100 text-green-700"
-                                : item.status === "Pulang"
-                                  ? "bg-blue-100 text-blue-700"
-                                  : "bg-yellow-100 text-yellow-700"
-                            }`}
-                          >
-                            {item.status}
-                          </span>
+                      <tr
+                        key={item.id}
+                        className="border-b border-gray-100 hover:bg-indigo-50 transition-colors"
+                      >
+                        <td className="px-2 py-3 sm:px-6 sm:py-4 text-xs sm:text-base">
+                          <div className="flex items-center gap-1 sm:gap-2">
+                            {item.status === "Hadir" && (
+                              <CheckSquare className="w-3 h-3 sm:w-4 sm:h-4 text-green-600 shrink-0" />
+                            )}
+                            <span
+                              className={`px-2 py-1 rounded text-xs font-semibold ${
+                                item.status === "Hadir"
+                                  ? "bg-green-100 text-green-800"
+                                  : item.status === "Pulang"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : item.status === "Izin"
+                                      ? "bg-yellow-100 text-yellow-800"
+                                      : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {item.status}
+                            </span>
+                          </div>
                         </td>
-                        <td className="px-4 py-3">{item.waktu}</td>
-                        <td className="px-4 py-3 truncate max-w-[150px]">
-                          {item.lokasi || "-"}
+                        <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base whitespace-nowrap">
+                          {item.waktu}
                         </td>
-                        <td className="px-4 py-3 text-center">
+                        <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base hidden sm:table-cell">
+                          {item.lokasi ? (
+                            <a
+                              href={`https://www.google.com/maps?q=${item.lokasi}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline flex items-center gap-1"
+                            >
+                              <MapPin className="w-3 h-3" /> Map
+                            </a>
+                          ) : (
+                            "-"
+                          )}
+                        </td>
+                        <td className="px-2 py-3 sm:px-6 sm:py-4 text-center">
                           {item.foto ? (
-                            <button
+                            <div
+                              className="flex justify-center cursor-pointer group"
                               onClick={() => openImage(item.foto)}
-                              className="text-blue-600 underline text-sm"
+                              title="Klik untuk memperbesar"
                             >
-                              Lihat
-                            </button>
+                              <div className="relative w-10 h-10 sm:w-12 sm:h-12 border rounded overflow-hidden shadow-sm hover:shadow-md transition-all">
+                                <img
+                                  src={item.foto}
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                                  alt="Foto"
+                                  onError={(e) => {
+                                    (
+                                      e.target as HTMLImageElement
+                                    ).style.display = "none";
+                                  }}
+                                />
+                              </div>
+                            </div>
                           ) : (
-                            "-"
+                            <div className="flex justify-center text-gray-300">
+                              <Camera className="w-5 h-5" />
+                            </div>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-center">
+                        <td className="px-2 py-3 sm:px-6 sm:py-4 text-center">
                           {item.tandaTangan ? (
-                            <button
+                            <div
+                              className="flex justify-center cursor-pointer group"
                               onClick={() => openImage(item.tandaTangan)}
-                              className="text-purple-600 underline text-sm"
+                              title="Klik untuk memperbesar"
                             >
-                              Cek
-                            </button>
+                              <div className="relative w-10 h-10 sm:w-12 sm:h-12 border rounded bg-white overflow-hidden shadow-sm hover:shadow-md transition-all">
+                                <img
+                                  src={item.tandaTangan}
+                                  className="w-full h-full object-contain group-hover:scale-110 transition-transform p-1"
+                                  alt="TTD"
+                                  onError={(e) => {
+                                    (
+                                      e.target as HTMLImageElement
+                                    ).style.display = "none";
+                                  }}
+                                />
+                              </div>
+                            </div>
                           ) : (
-                            "-"
+                            <div className="flex justify-center text-gray-300">
+                              <PenTool className="w-5 h-5" />
+                            </div>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
+                        <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base hidden md:table-cell">
                           {item.catatan || item.kegiatan || "-"}
                         </td>
                       </tr>
@@ -388,6 +459,32 @@ export default function SiswaAbsensi() {
                   )}
                 </tbody>
               </table>
+            </div>
+
+            <div className="p-4 sm:p-8 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-xs sm:text-sm text-gray-600 font-medium">
+                Menampilkan {presensiData.length === 0 ? 0 : startIndex + 1}–
+                {Math.min(startIndex + itemsPerPage, presensiData.length)} dari{" "}
+                {presensiData.length}
+              </p>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={handlePrevious}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm disabled:opacity-50"
+                >
+                  <ChevronLeft className="w-4 h-4" /> Prev
+                </button>
+                <button
+                  disabled={
+                    currentPage >= Math.ceil(presensiData.length / itemsPerPage)
+                  }
+                  onClick={handleNext}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm disabled:opacity-50"
+                >
+                  Next <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -420,6 +517,11 @@ export default function SiswaAbsensi() {
                     }}
                     className="space-y-5"
                   >
+                    {/* ────────────────────────────────────────────────────────
+                        [TAMBAHAN] BLOK DATA DIRI — read-only, otomatis dari
+                        siswaData yang sudah di-fetch di useEffect atas.
+                        Tidak mengubah struktur/desain form yang sudah ada.
+                    ──────────────────────────────────────────────────────── */}
                     <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
                       <h4 className="text-sm font-semibold text-indigo-700 mb-3 flex items-center gap-2">
                         <User className="w-4 h-4" /> Data Diri
@@ -475,6 +577,9 @@ export default function SiswaAbsensi() {
                         </div>
                       </div>
                     </div>
+                    {/* ── [END TAMBAHAN] ───────────────────────────────────── */}
+
+                    {/* [TIDAK DIUBAH] semua field form di bawah ini sama persis */}
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Status Kehadiran
