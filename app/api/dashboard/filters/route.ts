@@ -1,103 +1,94 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "../../auth/[...nextauth]/route";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: Request) {
+export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
-
     if (!session || !session.user) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const user = session.user as any;
-    const { role, email } = user;
-    const userRole = role ? role.toUpperCase() : "";
+    const userRole = user.role ? user.role.toUpperCase() : "";
+    const userEmail = user.email;
 
     try {
-        let kelasOption: any[] = [];
-        let tempatPKLOption: any[] = [];
-        let tanggalOption: string[] = [];
+        // Ambil daftar tanggal unik dari absensi (30 hari terakhir)
+        const tiga0HariLalu = new Date();
+        tiga0HariLalu.setDate(tiga0HariLalu.getDate() - 30);
 
+        const absensiList = await prisma.absensi.findMany({
+            where: { tanggal: { gte: tiga0HariLalu } },
+            select: { tanggal: true },
+            distinct: ["tanggal"],
+            orderBy: { tanggal: "desc" },
+        });
+
+        // Format tanggal menjadi YYYY-MM-DD (string unik per hari)
+        const tanggalSet = new Set<string>();
+        absensiList.forEach((a) => {
+            const dateStr = a.tanggal.toISOString().split("T")[0];
+            tanggalSet.add(dateStr);
+        });
+        const tanggal = Array.from(tanggalSet).sort((a, b) => b.localeCompare(a));
+
+        // ── ADMIN: kembalikan daftar kelas ──
         if (userRole === "ADMIN") {
-            const distinctKelas = await prisma.dataSiswa.findMany({
-                distinct: ['kelas'],
-                select: { kelas: true },
-                orderBy: { kelas: 'asc' }
+            const kelasRows = await prisma.dataSiswa.groupBy({
+                by: ["kelas"],
+                orderBy: { kelas: "asc" },
             });
 
-            kelasOption = distinctKelas.map(k => ({
+            const kelas = kelasRows.map((k) => ({
                 id: k.kelas,
-                label: k.kelas
+                label: k.kelas,
             }));
 
-            const rawTanggal = await prisma.absensi.findMany({
-                select: { tanggal: true },
-                orderBy: { tanggal: 'desc' },
-                take: 100
-            });
-
-            const uniqueDates = new Set(
-                rawTanggal.map(t => t.tanggal.toISOString().split('T')[0])
-            );
-            tanggalOption = Array.from(uniqueDates);
+            return NextResponse.json({ kelas, tanggal });
         }
-        else if (userRole === "GURU") {
+
+        // ── GURU: kembalikan daftar tempat PKL dari siswa bimbingannya ──
+        if (userRole === "GURU") {
             const guruUser = await prisma.user.findUnique({
-                where: { email: email || "" },
-                select: { name: true, username: true }
+                where: { email: userEmail },
+                select: { name: true, username: true },
             });
 
-            if (guruUser && guruUser.name) {
-                const searchConditions: any[] = [
-                    { guruPembimbing: { contains: guruUser.name, mode: "insensitive" } }
-                ];
-                if (guruUser.username) {
-                    searchConditions.push({ guruPembimbing: { contains: guruUser.username, mode: "insensitive" } });
-                }
+            if (!guruUser?.name) {
+                return NextResponse.json({ tempatPKL: [], tanggal });
+            }
 
-                const siswaBimbingan = await prisma.dataSiswa.findMany({
-                    where: { OR: searchConditions },
-                    select: { userId: true, tempatPKL: true }
+            const searchConditions: any[] = [
+                { guruPembimbing: { contains: guruUser.name, mode: "insensitive" } },
+            ];
+            if (guruUser.username) {
+                searchConditions.push({
+                    guruPembimbing: { contains: guruUser.username, mode: "insensitive" },
                 });
+            }
 
-                const distinctPKL = [...new Set(siswaBimbingan.map(s => s.tempatPKL).filter(Boolean))];
-                tempatPKLOption = distinctPKL.sort().map(pkl => ({
-                    id: pkl,
-                    label: pkl
+            const siswaBimbingan = await prisma.dataSiswa.findMany({
+                where: { OR: searchConditions },
+                select: { tempatPKL: true },
+                distinct: ["tempatPKL"],
+            });
+
+            const tempatPKL = siswaBimbingan
+                .filter((s) => s.tempatPKL)
+                .map((s) => ({
+                    id: s.tempatPKL as string,
+                    label: s.tempatPKL as string,
                 }));
 
-                const siswaIds = siswaBimbingan.map(s => s.userId);
-
-                if (siswaIds.length > 0) {
-                    const rawTanggalGuru = await prisma.absensi.findMany({
-                        where: { userId: { in: siswaIds } },
-                        select: { tanggal: true },
-                        orderBy: { tanggal: 'desc' },
-                        take: 100
-                    });
-
-                    const uniqueDatesGuru = new Set(
-                        rawTanggalGuru.map(t => t.tanggal.toISOString().split('T')[0])
-                    );
-                    tanggalOption = Array.from(uniqueDatesGuru);
-                }
-            }
+            return NextResponse.json({ tempatPKL, tanggal });
         }
 
-        return NextResponse.json({
-            kelas: kelasOption,
-            tempatPKL: tempatPKLOption,
-            tanggal: tanggalOption
-        });
-
+        return NextResponse.json({ tanggal });
     } catch (error) {
-        return NextResponse.json({
-            kelas: [],
-            tempatPKL: [],
-            tanggal: []
-        });
+        console.error("Dashboard filters error:", error);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

@@ -1,100 +1,87 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-// ✅ IMPORT DARI LIB (Jangan bikin new PrismaClient lagi)
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "../../auth/[...nextauth]/route";
 
-interface UserSession {
-    name?: string | null;
-    email?: string | null;
-    image?: string | null;
-    role: string;
-    id: number | string;
-}
+export const dynamic = "force-dynamic";
 
-export async function GET(request: Request) {
+export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
-
     if (!session || !session.user) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = session.user as UserSession;
-    const { role, name } = user;
+    const user = session.user as any;
+    const userRole = user.role ? user.role.toUpperCase() : "";
 
-    const { searchParams } = new URL(request.url);
+    if (userRole !== "ADMIN") {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
-    const kelasParam = searchParams.get('kelas');
-    const tanggalParam = searchParams.get('tanggal');
-    const statusParam = searchParams.get('status');
+    const { searchParams } = new URL(req.url);
+    const kelasFilter = searchParams.get("kelas");
+    const tanggalFilter = searchParams.get("tanggal");
 
     try {
-        let whereClause: any = {};
-
-        if (tanggalParam) {
-            const start = new Date(tanggalParam);
+        // Filter tanggal
+        let tanggalWhere: any = {};
+        if (tanggalFilter) {
+            const start = new Date(tanggalFilter);
             start.setHours(0, 0, 0, 0);
-            const end = new Date(tanggalParam);
+            const end = new Date(tanggalFilter);
             end.setHours(23, 59, 59, 999);
-            whereClause.tanggal = { gte: start, lte: end };
+            tanggalWhere = { gte: start, lte: end };
+        } else {
+            const now = new Date();
+            const startBulan = new Date(now.getFullYear(), now.getMonth(), 1);
+            const endBulan = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+            tanggalWhere = { gte: startBulan, lte: endBulan };
         }
 
-        if (statusParam) {
-            whereClause.status = statusParam;
-        }
-
-        let siswaFilter: any = {};
-
-        if (role === "GURU") {
-            siswaFilter.guruPembimbing = name;
-        }
-
-        if (kelasParam) {
-            siswaFilter.kelas = kelasParam;
-        }
-
-        if (Object.keys(siswaFilter).length > 0) {
-            whereClause.dataSiswa = siswaFilter;
-        }
-
-        const data = await prisma.absensi.findMany({
-            where: whereClause,
-            include: {
-                dataSiswa: {
-                    select: {
-                        kelas: true,
-                        guruPembimbing: true
-                    }
-                }
+        // Ambil data absensi dengan relasi dataSiswa
+        const absensiList = await prisma.absensi.findMany({
+            where: {
+                tanggal: tanggalWhere,
+                ...(kelasFilter
+                    ? { dataSiswa: { kelas: kelasFilter } }
+                    : {}),
             },
-            orderBy: {
-                tanggal: 'desc'
-            }
+            include: { dataSiswa: true },
+            orderBy: { tanggal: "desc" },
         });
 
-        const header = "Tanggal,User ID,Kelas,Guru Pembimbing,Status,Waktu\n";
-        const csvRows = data.map(row => {
-            const tgl = row.tanggal.toISOString().split('T')[0];
-            const uid = row.userId;
-            const kls = row.dataSiswa?.kelas || "-";
-            const guru = row.dataSiswa?.guruPembimbing || "-";
-            const sts = row.status;
-            const wkt = row.waktu || "-";
-
-            return `${tgl},${uid},${kls},"${guru}",${sts},${wkt}`;
+        // Ambil nama siswa
+        const userIds = [...new Set(absensiList.map((a) => a.userId))];
+        const users = await prisma.user.findMany({
+            where: { username: { in: userIds } },
+            select: { username: true, name: true },
         });
+        const userMap = new Map(users.map((u) => [u.username, u.name]));
 
-        const csvContent = header + csvRows.join("\n");
+        // Build CSV
+        const headers = ["Tanggal", "Nama Siswa", "Kelas", "Tempat PKL", "Status", "Waktu", "Keterangan"];
+        const rows = absensiList.map((a) => [
+            `"${a.tanggal.toLocaleDateString("id-ID")}"`,
+            `"${userMap.get(a.userId) || a.userId}"`,
+            `"${a.dataSiswa?.kelas || "-"}"`,
+            `"${a.dataSiswa?.tempatPKL || "-"}"`,
+            `"${a.status}"`,
+            `"${a.waktu || "-"}"`,
+            `"${(a.keterangan || "").replace(/"/g, '""')}"`,
+        ].join(","));
 
-        return new NextResponse(csvContent, {
+        const csv = [headers.join(","), ...rows].join("\n");
+        const filename = `Laporan_Dashboard_${new Date().toISOString().split("T")[0]}.csv`;
+
+        return new NextResponse(csv, {
             status: 200,
             headers: {
-                'Content-Type': 'text/csv',
-                'Content-Disposition': `attachment; filename="laporan_absensi_${role}.csv"`
-            }
+                "Content-Type": "text/csv; charset=utf-8",
+                "Content-Disposition": `attachment; filename="${filename}"`,
+            },
         });
-
     } catch (error) {
-        return NextResponse.json({ error: "Export failed" }, { status: 500 });
+        console.error("Dashboard export error:", error);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
