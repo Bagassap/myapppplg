@@ -57,7 +57,6 @@ html.dark .bg-gray-200 {
   background-color: #4b5563 !important;
 }
 
-/* ── Teks ── */
 html.dark .text-gray-900 {
   color: #f9fafb !important;
 }
@@ -113,6 +112,10 @@ html.dark select {
 html.dark input::placeholder,
 html.dark textarea::placeholder {
   color: #9ca3af !important;
+}
+
+html.dark aside {
+  background: linear-gradient(to bottom, #0f172a, #1e1b4b, #0f172a) !important;
 }
 
 html.dark header.bg-white {
@@ -196,6 +199,7 @@ html.dark select.bg-gray-50 {
   background-color: #374151 !important;
   color: #f9fafb !important;
 }
+
 html.dark button.bg-white {
   background-color: #374151 !important;
   color: #f9fafb !important;
