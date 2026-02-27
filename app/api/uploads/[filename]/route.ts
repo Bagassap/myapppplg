@@ -4,9 +4,9 @@ import path from "path";
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: { filename: string } }
+    { params }: { params: Promise<{ filename: string }> }
 ) {
-    const filename = params.filename;
+    const { filename } = await params;
 
     if (!filename || filename.includes("..") || filename.includes("/")) {
         return new NextResponse("Bad Request", { status: 400 });
