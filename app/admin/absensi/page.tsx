@@ -31,8 +31,9 @@ export default function AdminAbsensi() {
   >({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [currentPage, setCurrentPage] = useState(1);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewType, setPreviewType] = useState<"foto" | "ttd">("foto");
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -47,7 +48,6 @@ export default function AdminAbsensi() {
       try {
         setLoading(true);
         setError(null);
-
         const params = new URLSearchParams();
         if (selectedPeriod === "Hari Ini") {
           const today = new Date().toISOString().split("T")[0];
@@ -76,13 +76,12 @@ export default function AdminAbsensi() {
         }
 
         const response = await fetch(`/api/absensi?${params.toString()}`);
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Gagal mengambil data absensi: ${errorText}`);
-        }
+        if (!response.ok)
+          throw new Error(
+            `Gagal mengambil data absensi: ${await response.text()}`,
+          );
 
         const data = await response.json();
-
         const transformedData = data.map((item: any) => ({
           id: item.id,
           siswa: item.siswa || "Tidak Diketahui",
@@ -99,16 +98,13 @@ export default function AdminAbsensi() {
         }));
 
         setPresensiData(transformedData);
-
         const grouped: Record<string, any[]> = {};
         transformedData.forEach((item: any) => {
-          const siswa = item.siswa;
-          if (!grouped[siswa]) grouped[siswa] = [];
-          grouped[siswa].push(item);
+          if (!grouped[item.siswa]) grouped[item.siswa] = [];
+          grouped[item.siswa].push(item);
         });
         setSiswaPresensiData(grouped);
       } catch (err: any) {
-        console.error("Fetch error:", err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -133,12 +129,17 @@ export default function AdminAbsensi() {
   const endIndex = startIndex + itemsPerPage;
   const currentData = filteredData.slice(startIndex, endIndex);
 
+  const openPreview = (url: string, type: "foto" | "ttd") => {
+    if (!url) return;
+    setPreviewUrl(url);
+    setPreviewType(type);
+  };
+
   const handleExport = () => {
     if (filteredData.length === 0) {
       alert("Tidak ada data untuk diekspor.");
       return;
     }
-
     const headers = [
       "Tanggal",
       "Siswa",
@@ -149,7 +150,6 @@ export default function AdminAbsensi() {
       "Kegiatan",
       "Lokasi",
     ];
-
     const rows = filteredData.map((row) =>
       [
         `"${row.tanggal}"`,
@@ -162,7 +162,6 @@ export default function AdminAbsensi() {
         `"${row.lokasi || "-"}"`,
       ].join(","),
     );
-
     const csvContent = [headers.join(","), ...rows].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -186,10 +185,6 @@ export default function AdminAbsensi() {
   };
   const handleNext = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-  };
-
-  const openImage = (url: string) => {
-    if (url) window.open(url, "_blank");
   };
 
   if (loading || error) {
@@ -364,7 +359,6 @@ export default function AdminAbsensi() {
                 Daftar Presensi
               </h3>
             </div>
-
             <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300">
               <table className="w-full table-auto min-w-full">
                 <thead>
@@ -377,13 +371,11 @@ export default function AdminAbsensi() {
                 </tbody>
               </table>
             </div>
-
             {currentData.length === 0 && (
               <div className="py-12 text-center text-gray-500 text-sm sm:text-base">
                 Data tidak ditemukan.
               </div>
             )}
-
             <div className="p-4 sm:p-8 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-xs sm:text-sm text-gray-600 font-medium">
                 Menampilkan {startIndex + 1}-
@@ -461,13 +453,7 @@ export default function AdminAbsensi() {
                               </td>
                               <td className="px-2 py-2 sm:px-4 sm:py-3">
                                 <span
-                                  className={`px-2 py-1 rounded text-xs font-medium ${
-                                    item.status === "Hadir"
-                                      ? "bg-green-100 text-green-800"
-                                      : item.status === "Izin"
-                                        ? "bg-yellow-100 text-yellow-800"
-                                        : "bg-gray-100 text-gray-800"
-                                  }`}
+                                  className={`px-2 py-1 rounded text-xs font-medium ${item.status === "Hadir" ? "bg-green-100 text-green-800" : item.status === "Izin" ? "bg-yellow-100 text-yellow-800" : "bg-gray-100 text-gray-800"}`}
                                 >
                                   {item.status}
                                 </span>
@@ -489,12 +475,13 @@ export default function AdminAbsensi() {
                                   "-"
                                 )}
                               </td>
-
                               <td className="px-2 py-2 sm:px-4 sm:py-3 text-center">
                                 {item.foto ? (
                                   <div
                                     className="flex justify-center cursor-pointer group"
-                                    onClick={() => openImage(item.foto)}
+                                    onClick={() =>
+                                      openPreview(item.foto, "foto")
+                                    }
                                     title="Klik untuk memperbesar"
                                   >
                                     <div className="relative w-10 h-10 sm:w-12 sm:h-12 border rounded overflow-hidden shadow-sm hover:shadow-md transition-all">
@@ -516,12 +503,13 @@ export default function AdminAbsensi() {
                                   </div>
                                 )}
                               </td>
-
                               <td className="px-2 py-2 sm:px-4 sm:py-3 text-center">
                                 {item.tandaTangan ? (
                                   <div
                                     className="flex justify-center cursor-pointer group"
-                                    onClick={() => openImage(item.tandaTangan)}
+                                    onClick={() =>
+                                      openPreview(item.tandaTangan, "ttd")
+                                    }
                                     title="Klik untuk memperbesar"
                                   >
                                     <div className="relative w-10 h-10 sm:w-12 sm:h-12 border rounded bg-white overflow-hidden shadow-sm hover:shadow-md transition-all">
@@ -555,6 +543,135 @@ export default function AdminAbsensi() {
           )}
         </main>
       </div>
+
+      {previewUrl && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center"
+          style={{ animation: "fadeIn 0.2s ease" }}
+          onClick={() => setPreviewUrl(null)}
+        >
+          {/* Backdrop dengan blur dan gradient */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,27,75,0.95) 100%)",
+              backdropFilter: "blur(20px)",
+            }}
+          />
+
+          {/* Dekorasi background */}
+          <div
+            className="absolute top-0 left-0 w-96 h-96 rounded-full opacity-10"
+            style={{
+              background: "radial-gradient(circle, #6366f1, transparent)",
+              filter: "blur(60px)",
+              transform: "translate(-30%, -30%)",
+            }}
+          />
+          <div
+            className="absolute bottom-0 right-0 w-96 h-96 rounded-full opacity-10"
+            style={{
+              background: "radial-gradient(circle, #8b5cf6, transparent)",
+              filter: "blur(60px)",
+              transform: "translate(30%, 30%)",
+            }}
+          />
+
+          <div
+            className="relative w-full mx-4 flex flex-col items-center"
+            style={{
+              maxWidth: previewType === "ttd" ? "480px" : "720px",
+              animation: "scaleIn 0.25s cubic-bezier(0.34,1.56,0.64,1)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header label */}
+            <div className="flex items-center gap-3 mb-4 self-start">
+              <div
+                className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase"
+                style={{
+                  background: "rgba(99,102,241,0.2)",
+                  border: "1px solid rgba(99,102,241,0.4)",
+                  color: "#a5b4fc",
+                }}
+              >
+                {previewType === "ttd" ? (
+                  <PenTool className="w-3 h-3" />
+                ) : (
+                  <ImageIcon className="w-3 h-3" />
+                )}
+                {previewType === "ttd" ? "Tanda Tangan" : "Foto Absensi"}
+              </div>
+            </div>
+
+            {/* Card gambar */}
+            <div
+              className="w-full rounded-2xl overflow-hidden relative"
+              style={{
+                background:
+                  previewType === "ttd"
+                    ? "rgba(255,255,255,0.98)"
+                    : "transparent",
+                boxShadow:
+                  "0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08)",
+                padding: previewType === "ttd" ? "32px" : "0",
+              }}
+            >
+              {previewType !== "ttd" && (
+                <div
+                  className="absolute inset-0 rounded-2xl"
+                  style={{
+                    background:
+                      "linear-gradient(to bottom, transparent 60%, rgba(15,23,42,0.8))",
+                    zIndex: 1,
+                    pointerEvents: "none",
+                  }}
+                />
+              )}
+              <img
+                src={previewUrl}
+                alt={previewType === "foto" ? "Foto Absensi" : "Tanda Tangan"}
+                className="w-full block"
+                style={{
+                  maxHeight: previewType === "ttd" ? "200px" : "70vh",
+                  objectFit: previewType === "ttd" ? "contain" : "cover",
+                  borderRadius: previewType === "ttd" ? "0" : "16px",
+                }}
+              />
+            </div>
+
+            {/* Footer aksi */}
+            <div className="flex items-center justify-between w-full mt-4 px-1">
+              <p className="text-xs" style={{ color: "rgba(165,180,252,0.6)" }}>
+                Klik di luar untuk menutup
+              </p>
+              <button
+                onClick={() => setPreviewUrl(null)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
+                style={{
+                  background: "rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  color: "rgba(255,255,255,0.8)",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.background = "rgba(255,255,255,0.15)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = "rgba(255,255,255,0.08)")
+                }
+              >
+                <X className="w-4 h-4" /> Tutup
+              </button>
+            </div>
+          </div>
+
+          <style>{`
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes scaleIn { from { opacity: 0; transform: scale(0.92) translateY(12px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+          `}</style>
+        </div>
+      )}
     </div>
   );
 }
