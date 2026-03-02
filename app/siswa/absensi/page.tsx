@@ -48,6 +48,8 @@ export default function SiswaAbsensi() {
   const [presensiData, setPresensiData] = useState<any[]>([]);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewType, setPreviewType] = useState<"foto" | "ttd">("foto");
+  const [gpsError, setGpsError] = useState<string | null>(null);
+  const [gpsLoading, setGpsLoading] = useState(false);
 
   const sigCanvas = useRef<any>(null);
 
@@ -146,19 +148,17 @@ export default function SiswaAbsensi() {
   }, [session, status]);
 
   const getCurrentLocation = () => {
+    setGpsError(null);
+
     if (!navigator.geolocation) {
-      alert(
-        "Browser tidak mendukung Geolocation. Gunakan Chrome atau Safari terbaru.",
+      setGpsError(
+        "Browser tidak mendukung GPS. Gunakan Safari atau Chrome terbaru.",
       );
       return;
     }
 
-    if (location.protocol !== "https:" && location.hostname !== "localhost") {
-      alert("Lokasi GPS membutuhkan koneksi HTTPS. Hubungi administrator.");
-      return;
-    }
-
-    setAbsenForm((prev) => ({ ...prev, lokasi: "Mengambil titik lokasi..." }));
+    setGpsLoading(true);
+    setAbsenForm((prev) => ({ ...prev, lokasi: "" }));
 
     const onSuccess = (position: GeolocationPosition) => {
       const { latitude, longitude } = position.coords;
@@ -166,33 +166,41 @@ export default function SiswaAbsensi() {
         ...prev,
         lokasi: `${latitude}, ${longitude}`,
       }));
+      setGpsError(null);
+      setGpsLoading(false);
     };
 
     const onError = (error: GeolocationPositionError) => {
       setAbsenForm((prev) => ({ ...prev, lokasi: "" }));
-      if (error.code === error.PERMISSION_DENIED) {
-        alert();
-      } else if (error.code === error.TIMEOUT) {
-        alert(
-          "Waktu pengambilan lokasi habis. Pastikan GPS aktif lalu coba lagi.",
+      setGpsLoading(false);
+      if (error.code === 1) {
+        setGpsError(
+          "Akses lokasi ditolak. Di iPhone: Pengaturan > Safari > Lokasi > Izinkan Saat Menggunakan. Lalu muat ulang halaman.",
+        );
+      } else if (error.code === 3) {
+        setGpsError(
+          "Waktu habis. Pastikan GPS aktif dan sinyal baik, lalu coba lagi.",
         );
       } else {
-        alert("Lokasi tidak tersedia. Pastikan GPS aktif dan coba lagi.");
+        setGpsError(
+          "GPS tidak tersedia. Pastikan Location Services aktif di Pengaturan iPhone.",
+        );
       }
+    };
+
+    const tryLowAccuracy = () => {
+      navigator.geolocation.getCurrentPosition(onSuccess, onError, {
+        enableHighAccuracy: false,
+        timeout: 15000,
+        maximumAge: 60000,
+      });
     };
 
     navigator.geolocation.getCurrentPosition(
       onSuccess,
       (error) => {
-        if (
-          error.code === error.TIMEOUT ||
-          error.code === error.POSITION_UNAVAILABLE
-        ) {
-          navigator.geolocation.getCurrentPosition(onSuccess, onError, {
-            enableHighAccuracy: false,
-            timeout: 10000,
-            maximumAge: 60000,
-          });
+        if (error.code === 3 || error.code === 2) {
+          tryLowAccuracy();
         } else {
           onError(error);
         }
@@ -622,12 +630,26 @@ export default function SiswaAbsensi() {
                           <button
                             type="button"
                             onClick={getCurrentLocation}
-                            disabled={isSubmitting}
-                            className="px-3 bg-indigo-100 text-indigo-700 rounded-xl hover:bg-indigo-200 transition-colors"
+                            disabled={isSubmitting || gpsLoading}
+                            className="px-3 bg-indigo-100 text-indigo-700 rounded-xl hover:bg-indigo-200 transition-colors flex items-center justify-center min-w-[44px]"
                           >
-                            <MapPin className="w-5 h-5" />
+                            {gpsLoading ? (
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                              <MapPin className="w-5 h-5" />
+                            )}
                           </button>
                         </div>
+                        {gpsError && (
+                          <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 leading-relaxed">
+                            ⚠️ {gpsError}
+                          </div>
+                        )}
+                        {absenForm.lokasi && !gpsError && !gpsLoading && (
+                          <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-xl text-xs text-green-700 flex items-center gap-1">
+                            ✅ Lokasi berhasil diambil
+                          </div>
+                        )}
                       </div>
                     </div>
 
