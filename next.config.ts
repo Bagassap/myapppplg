@@ -1,9 +1,25 @@
 import type { NextConfig } from "next";
 
-process.env.TURBOPACK = '0';
-
 const nextConfig: NextConfig = {
   transpilePackages: ['pg'],
+  compress: true,
+  poweredByHeader: false,
+  async headers() {
+    return [
+      {
+        source: '/api/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
+        source: '/api/uploads/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
