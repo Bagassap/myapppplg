@@ -1,102 +1,100 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 
 interface GreetingData {
   greeting: string;
   emoji: string;
-  sub: string;
-  from: string;
-  to: string;
+  color: string;
 }
 
 function getGreeting(): GreetingData {
   const hour = new Date().getHours();
   if (hour >= 4 && hour < 11)
-    return {
-      greeting: "Selamat Pagi",
-      emoji: "🌤️",
-      sub: "Mulai hari dengan semangat!",
-      from: "#fde68a",
-      to: "#fbbf24",
-    };
+    return { greeting: "Selamat Pagi", emoji: "🌤️", color: "#fbbf24" };
   if (hour >= 11 && hour < 15)
-    return {
-      greeting: "Selamat Siang",
-      emoji: "☀️",
-      sub: "Tetap produktif hari ini.",
-      from: "#fdba74",
-      to: "#f97316",
-    };
+    return { greeting: "Selamat Siang", emoji: "☀️", color: "#f97316" };
   if (hour >= 15 && hour < 19)
-    return {
-      greeting: "Selamat Sore",
-      emoji: "🌇",
-      sub: "Jaga semangat hingga akhir.",
-      from: "#f9a8d4",
-      to: "#ec4899",
-    };
-  return {
-    greeting: "Selamat Malam",
-    emoji: "🌙",
-    sub: "Istirahat yang cukup ya.",
-    from: "#a5b4fc",
-    to: "#818cf8",
-  };
+    return { greeting: "Selamat Sore", emoji: "🌇", color: "#ec4899" };
+  return { greeting: "Selamat Malam", emoji: "🌙", color: "#818cf8" };
 }
 
-export default function GreetingBanner() {
+interface Props {
+  role?: string; // "Admin" | "Guru" | "Siswa"
+}
+
+export default function GreetingBanner({ role }: Props) {
+  const { data: session } = useSession();
   const [data, setData] = useState<GreetingData | null>(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     setData(getGreeting());
-    const t = setTimeout(() => setVisible(true), 80);
+    const t = setTimeout(() => setVisible(true), 60);
     return () => clearTimeout(t);
   }, []);
 
   if (!data) return null;
 
+  const name = (session?.user as any)?.name || session?.user?.email || "";
+  const firstName = name.split(" ")[0];
+
   return (
     <div
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(10px)",
-        transition: "opacity 0.6s ease, transform 0.6s ease",
+        transform: visible ? "translateY(0)" : "translateY(8px)",
+        transition: "opacity 0.5s ease, transform 0.5s ease",
       }}
-      className="w-full flex flex-col items-center gap-1 py-3"
+      className="mb-6 sm:mb-8"
     >
-      {/* Pill badge */}
-      <div
-        style={{
-          background: `linear-gradient(135deg, ${data.from}22, ${data.to}33)`,
-          border: `1px solid ${data.from}66`,
-        }}
-        className="flex items-center gap-2 px-4 py-1.5 rounded-full backdrop-blur-sm"
-      >
+      <div className="flex items-center gap-3 flex-wrap">
+        {/* Emoji dengan glow */}
         <span
-          style={{ filter: "drop-shadow(0 0 6px rgba(255,255,255,0.6))" }}
-          className="text-lg"
+          style={{
+            fontSize: "2rem",
+            filter: `drop-shadow(0 0 8px ${data.color}66)`,
+            lineHeight: 1,
+          }}
           role="img"
           aria-label={data.greeting}
         >
           {data.emoji}
         </span>
-        <span
-          style={{
-            background: `linear-gradient(90deg, ${data.from}, ${data.to})`,
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-          }}
-          className="text-sm font-bold tracking-widest uppercase"
-        >
-          {data.greeting}
-        </span>
+
+        <div>
+          {/* Greeting utama */}
+          <p
+            style={{
+              background: `linear-gradient(90deg, ${data.color}, ${data.color}aa)`,
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+            className="text-sm font-semibold tracking-widest uppercase leading-none mb-1"
+          >
+            {data.greeting}
+            {firstName ? `, ${firstName}` : ""}
+          </p>
+
+          {/* Sub text — judul dashboard */}
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
+            {role ? `${role} Dashboard` : "Dashboard"}
+          </h1>
+        </div>
       </div>
 
-      {/* Sub text */}
-      <p className="text-white/50 text-xs tracking-wide italic">{data.sub}</p>
+      {/* Divider tipis dengan warna sesuai waktu */}
+      <div
+        style={{
+          background: `linear-gradient(90deg, ${data.color}44, transparent)`,
+          height: "2px",
+          borderRadius: "999px",
+          marginTop: "12px",
+          width: "200px",
+        }}
+      />
     </div>
   );
 }

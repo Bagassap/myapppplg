@@ -1,5 +1,6 @@
 "use client";
 import Sidebar from "@/components/layout/SidebarSiswa";
+import GreetingBanner from "@/components/GreetingBanner";
 import TopBar from "@/components/layout/TopBar";
 import { useState, useEffect } from "react";
 import {
@@ -120,16 +121,13 @@ export default function SiswaDashboard() {
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
         <main className="flex-1 p-6 sm:p-8 lg:p-12 overflow-y-auto overflow-x-hidden">
-          <div className="mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-              Siswa Dashboard
-            </h1>
-            <p className="text-gray-600 text-sm sm:text-base md:text-lg">
-              Pantau ringkasan kehadiran pribadi Anda di tempat PKL.
-            </p>
-          </div>
+          {/* ✅ Greeting Banner */}
+          <GreetingBanner role="Siswa" />
+          <p className="text-gray-600 text-sm sm:text-base md:text-lg -mt-4 mb-6 sm:mb-8">
+            Pantau ringkasan kehadiran pribadi Anda di tempat PKL.
+          </p>
 
-          {/* Statistik Card */}
+          {/* Statistik Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
             <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-blue-200">
               <div className="flex items-center justify-between mb-4">

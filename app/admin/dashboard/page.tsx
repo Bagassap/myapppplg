@@ -1,6 +1,7 @@
 "use client";
 import Sidebar from "@/components/layout/SidebarAdmin";
 import TopBar from "@/components/layout/TopBar";
+import GreetingBanner from "@/components/GreetingBanner";
 import { useState, useEffect } from "react";
 import {
   Users,
@@ -16,7 +17,6 @@ export default function AdminDashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState("Semua Periode");
   const [loading, setLoading] = useState(true);
 
-  // Initial State
   const [stats, setStats] = useState({
     totalSiswa: 0,
     hadirHariIni: 0,
@@ -25,13 +25,11 @@ export default function AdminDashboard() {
   });
   const [classData, setClassData] = useState<any[]>([]);
 
-  // Filter Options
   const [filters, setFilters] = useState({
     kelas: [] as { id: string; label: string }[],
     tanggal: [] as string[],
   });
 
-  // 1. Fetch Filters (Hanya Sekali saat Load)
   useEffect(() => {
     const fetchFilters = async () => {
       try {
@@ -42,7 +40,6 @@ export default function AdminDashboard() {
             kelas: data.kelas || [],
             tanggal: data.tanggal || [],
           });
-          // Set default periode jika ada data
           if (data.tanggal && data.tanggal.length > 0) {
             setSelectedPeriod(data.tanggal[0]);
           }
@@ -54,19 +51,15 @@ export default function AdminDashboard() {
     fetchFilters();
   }, []);
 
-  // 2. Fetch Dashboard Data (Setiap kali Filter Berubah)
   useEffect(() => {
     const fetchDashboard = async () => {
       setLoading(true);
       try {
-        // PERBAIKAN: Kirim parameter filter ke API
         const params = new URLSearchParams();
         if (selectedClass !== "Semua Kelas")
           params.append("kelas", selectedClass);
         if (selectedPeriod !== "Semua Periode")
           params.append("tanggal", selectedPeriod);
-
-        // Tambahkan timestamp agar tidak dicache browser
         params.append("t", new Date().getTime().toString());
 
         const res = await fetch(`/api/dashboard?${params.toString()}`);
@@ -81,9 +74,8 @@ export default function AdminDashboard() {
         setLoading(false);
       }
     };
-
     fetchDashboard();
-  }, [selectedClass, selectedPeriod]); // Trigger ulang saat filter berubah
+  }, [selectedClass, selectedPeriod]);
 
   const handleExport = () => {
     const query = new URLSearchParams({
@@ -99,14 +91,11 @@ export default function AdminDashboard() {
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
         <main className="flex-1 p-6 sm:p-8 lg:p-12 overflow-y-auto overflow-x-hidden">
-          <div className="mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-              Admin Dashboard
-            </h1>
-            <p className="text-gray-600 text-sm sm:text-base md:text-lg">
-              Pantau statistik kehadiran siswa secara keseluruhan.
-            </p>
-          </div>
+          {/* ✅ Greeting Banner */}
+          <GreetingBanner role="Admin" />
+          <p className="text-gray-600 text-sm sm:text-base md:text-lg -mt-4 mb-6 sm:mb-8">
+            Pantau statistik kehadiran siswa secara keseluruhan.
+          </p>
 
           {/* Filter Section */}
           <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">

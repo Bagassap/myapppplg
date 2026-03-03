@@ -1,6 +1,7 @@
 "use client";
 import Sidebar from "@/components/layout/SidebarGuru";
 import TopBar from "@/components/layout/TopBar";
+import GreetingBanner from "@/components/GreetingBanner";
 import { useState, useEffect } from "react";
 import { Users, CheckCircle, XCircle, TrendingUp, Filter } from "lucide-react";
 
@@ -9,7 +10,6 @@ export default function GuruDashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState("Semua Periode");
   const [loading, setLoading] = useState(true);
 
-  // Stats Dashboard
   const [stats, setStats] = useState({
     totalSiswaPKL: 0,
     hadirHariIni: 0,
@@ -18,13 +18,11 @@ export default function GuruDashboard() {
   });
   const [pklData, setPklData] = useState<any[]>([]);
 
-  // State Filter Real
   const [filters, setFilters] = useState({
     tempatPKL: [] as { id: string; label: string }[],
     tanggal: [] as string[],
   });
 
-  // 1. Fetch Filters
   useEffect(() => {
     const fetchFilters = async () => {
       try {
@@ -39,14 +37,11 @@ export default function GuruDashboard() {
             setSelectedPeriod(data.tanggal[0]);
           }
         }
-      } catch (error) {
-        // Silent error
-      }
+      } catch (error) {}
     };
     fetchFilters();
   }, []);
 
-  // 2. Fetch Data
   useEffect(() => {
     const fetchDashboard = async () => {
       setLoading(true);
@@ -56,7 +51,6 @@ export default function GuruDashboard() {
           params.append("tempatPKL", selectedPKL);
         if (selectedPeriod !== "Semua Periode")
           params.append("tanggal", selectedPeriod);
-
         params.append("t", new Date().getTime().toString());
 
         const res = await fetch(`/api/dashboard?${params.toString()}`);
@@ -66,12 +60,10 @@ export default function GuruDashboard() {
           if (data.table) setPklData(data.table);
         }
       } catch (error) {
-        // Silent error
       } finally {
         setLoading(false);
       }
     };
-
     fetchDashboard();
   }, [selectedPKL, selectedPeriod]);
 
@@ -81,14 +73,11 @@ export default function GuruDashboard() {
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
         <main className="flex-1 p-6 sm:p-8 lg:p-12 overflow-y-auto overflow-x-hidden">
-          <div className="mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-              Guru Dashboard
-            </h1>
-            <p className="text-gray-600 text-sm sm:text-base md:text-lg">
-              Pantau ringkasan kehadiran siswa di tempat PKL yang Anda bimbing.
-            </p>
-          </div>
+          {/* ✅ Greeting Banner */}
+          <GreetingBanner role="Guru" />
+          <p className="text-gray-600 text-sm sm:text-base md:text-lg -mt-4 mb-6 sm:mb-8">
+            Pantau ringkasan kehadiran siswa di tempat PKL yang Anda bimbing.
+          </p>
 
           {/* Filter Section */}
           <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
@@ -96,7 +85,6 @@ export default function GuruDashboard() {
               <Filter className="w-5 h-5 text-indigo-500" />
               Filter Data
             </h3>
-            {/* Grid diubah menjadi 2 kolom karena tombol dihapus */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 items-end">
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-gray-700 mb-2">
@@ -105,7 +93,7 @@ export default function GuruDashboard() {
                 <select
                   value={selectedPKL}
                   onChange={(e) => setSelectedPKL(e.target.value)}
-                  className="w-full px-4 py-3 border border-indigo-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 hover:shadow-md"
+                  className="w-full px-4 py-3 border border-indigo-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200 hover:shadow-md"
                 >
                   <option>Semua Tempat PKL</option>
                   {filters.tempatPKL.map((pkl) => (
@@ -123,7 +111,7 @@ export default function GuruDashboard() {
                 <select
                   value={selectedPeriod}
                   onChange={(e) => setSelectedPeriod(e.target.value)}
-                  className="w-full px-4 py-3 border border-indigo-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 hover:shadow-md"
+                  className="w-full px-4 py-3 border border-indigo-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200 hover:shadow-md"
                 >
                   <option>Semua Periode</option>
                   {filters.tanggal.map((t) => (
@@ -150,6 +138,7 @@ export default function GuruDashboard() {
                 {loading ? "..." : stats.totalSiswaPKL}
               </p>
             </div>
+
             <div className="bg-gradient-to-br from-green-100 to-green-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-green-200">
               <div className="flex items-center justify-between mb-4">
                 <CheckCircle className="w-8 h-8 text-green-600" />
@@ -164,6 +153,7 @@ export default function GuruDashboard() {
                 {loading ? "..." : stats.hadirHariIni}
               </p>
             </div>
+
             <div className="bg-gradient-to-br from-red-100 to-red-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-red-200">
               <div className="flex items-center justify-between mb-4">
                 <XCircle className="w-8 h-8 text-red-600" />
@@ -176,6 +166,7 @@ export default function GuruDashboard() {
                 {loading ? "..." : stats.tidakHadir}
               </p>
             </div>
+
             <div className="bg-gradient-to-br from-indigo-100 to-blue-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-indigo-200">
               <div className="flex items-center justify-between mb-4">
                 <TrendingUp className="w-8 h-8 text-indigo-600" />
@@ -192,7 +183,7 @@ export default function GuruDashboard() {
             </div>
           </div>
 
-          {/* Tabel Responsive */}
+          {/* Tabel */}
           <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
             <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
               <CheckCircle className="w-6 h-6 text-green-600" />
