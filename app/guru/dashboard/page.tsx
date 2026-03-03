@@ -74,7 +74,7 @@ export default function GuruDashboard() {
         <TopBar />
         <main className="flex-1 p-6 sm:p-8 lg:p-12 overflow-y-auto overflow-x-hidden">
           {/* ✅ Greeting Banner */}
-          <GreetingBanner role="Guru" />
+          <GreetingBanner />
           <p className="text-gray-600 text-sm sm:text-base md:text-lg -mt-4 mb-6 sm:mb-8">
             Pantau ringkasan kehadiran siswa di tempat PKL yang Anda bimbing.
           </p>

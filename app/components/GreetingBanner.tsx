@@ -20,11 +20,7 @@ function getGreeting(): GreetingData {
   return { greeting: "Selamat Malam", emoji: "🌙", color: "#818cf8" };
 }
 
-interface Props {
-  role?: string; // "Admin" | "Guru" | "Siswa"
-}
-
-export default function GreetingBanner({ role }: Props) {
+export default function GreetingBanner() {
   const { data: session } = useSession();
   const [data, setData] = useState<GreetingData | null>(null);
   const [visible, setVisible] = useState(false);
@@ -79,9 +75,6 @@ export default function GreetingBanner({ role }: Props) {
           </p>
 
           {/* Sub text — judul dashboard */}
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
-            {role ? `${role} Dashboard` : "Dashboard"}
-          </h1>
         </div>
       </div>
 
