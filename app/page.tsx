@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, ClipboardList, Trophy, User } from "lucide-react";
+import GreetingBanner from "@/components/GreetingBanner";
 
 export default function Home() {
   return (
@@ -28,8 +29,11 @@ export default function Home() {
           <span className="text-yellow-300">Online PKL</span>
         </h1>
 
+        {/* ✅ Greeting Banner — ditambahkan di sini */}
+        <GreetingBanner />
+
         {/* Info fitur / icon */}
-        <div className="mt-6 grid grid-cols-2 gap-4 w-full">
+        <div className="mt-2 grid grid-cols-2 gap-4 w-full">
           <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2 hover:bg-white/20 transition">
             <BookOpen className="w-5 h-5 text-blue-400" />
             <span className="text-white text-sm">Presensi Harian</span>
