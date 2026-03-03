@@ -7,17 +7,43 @@ interface GreetingData {
   greeting: string;
   emoji: string;
   color: string;
+  colorDark: string;
+  motivasi: string;
 }
 
 function getGreeting(): GreetingData {
   const hour = new Date().getHours();
   if (hour >= 4 && hour < 11)
-    return { greeting: "Selamat Pagi", emoji: "🌤️", color: "#fbbf24" };
+    return {
+      greeting: "Selamat Pagi",
+      emoji: "🌤️",
+      color: "#d97706",
+      colorDark: "#fbbf24",
+      motivasi: "Awali hari dengan niat yang baik dan semangat penuh! 💪",
+    };
   if (hour >= 11 && hour < 15)
-    return { greeting: "Selamat Siang", emoji: "☀️", color: "#f97316" };
+    return {
+      greeting: "Selamat Siang",
+      emoji: "☀️",
+      color: "#ea580c",
+      colorDark: "#f97316",
+      motivasi: "Tetap fokus dan produktif, kamu sudah sejauh ini! 🔥",
+    };
   if (hour >= 15 && hour < 19)
-    return { greeting: "Selamat Sore", emoji: "🌇", color: "#ec4899" };
-  return { greeting: "Selamat Malam", emoji: "🌙", color: "#818cf8" };
+    return {
+      greeting: "Selamat Sore",
+      emoji: "🌇",
+      color: "#db2777",
+      colorDark: "#ec4899",
+      motivasi: "Pertahankan semangat hingga akhir, hampir selesai! ✨",
+    };
+  return {
+    greeting: "Selamat Malam",
+    emoji: "🌙",
+    color: "#4f46e5",
+    colorDark: "#818cf8",
+    motivasi: "Istirahat yang cukup, besok kita mulai lagi lebih baik! 🌟",
+  };
 }
 
 export default function GreetingBanner() {
@@ -45,12 +71,12 @@ export default function GreetingBanner() {
       }}
       className="mb-6 sm:mb-8"
     >
-      <div className="flex items-center gap-3 flex-wrap">
-        {/* Emoji dengan glow */}
+      {/* Greeting utama */}
+      <div className="flex items-center gap-3 flex-wrap mb-2">
         <span
           style={{
-            fontSize: "2rem",
-            filter: `drop-shadow(0 0 8px ${data.color}66)`,
+            fontSize: "2.5rem",
+            filter: `drop-shadow(0 0 10px ${data.colorDark}88)`,
             lineHeight: 1,
           }}
           role="img"
@@ -59,33 +85,31 @@ export default function GreetingBanner() {
           {data.emoji}
         </span>
 
-        <div>
-          {/* Greeting utama */}
-          <p
-            style={{
-              background: `linear-gradient(90deg, ${data.color}, ${data.color}aa)`,
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-            className="text-sm font-semibold tracking-widest uppercase leading-none mb-1"
-          >
-            {data.greeting}
-            {firstName ? `, ${firstName}` : ""}
-          </p>
-
-          {/* Sub text — judul dashboard */}
-        </div>
+        <h2
+          style={{ color: data.color }}
+          className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight tracking-tight"
+        >
+          {data.greeting}
+          {firstName && (
+            <span className="text-gray-800" style={{ fontWeight: 800 }}>
+              , {firstName}
+            </span>
+          )}
+        </h2>
       </div>
 
-      {/* Divider tipis dengan warna sesuai waktu */}
+      {/* Kata penyemangat */}
+      <p className="text-base sm:text-lg font-medium text-gray-600 ml-1 mb-3">
+        {data.motivasi}
+      </p>
+
+      {/* Divider */}
       <div
         style={{
-          background: `linear-gradient(90deg, ${data.color}44, transparent)`,
-          height: "2px",
+          background: `linear-gradient(90deg, ${data.color}66, transparent)`,
+          height: "3px",
           borderRadius: "999px",
-          marginTop: "12px",
-          width: "200px",
+          width: "260px",
         }}
       />
     </div>
