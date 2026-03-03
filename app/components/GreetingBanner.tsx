@@ -7,7 +7,6 @@ interface GreetingData {
   greeting: string;
   emoji: string;
   color: string;
-  colorDark: string;
   motivasi: string;
 }
 
@@ -17,32 +16,28 @@ function getGreeting(): GreetingData {
     return {
       greeting: "Selamat Pagi",
       emoji: "🌤️",
-      color: "#d97706",
-      colorDark: "#fbbf24",
-      motivasi: "Awali hari dengan niat yang baik dan semangat penuh! 💪",
+      color: "#92400e",
+      motivasi: "Awali hari dengan semangat dan niat yang baik.",
     };
   if (hour >= 11 && hour < 15)
     return {
       greeting: "Selamat Siang",
       emoji: "☀️",
-      color: "#ea580c",
-      colorDark: "#f97316",
-      motivasi: "Tetap fokus dan produktif, kamu sudah sejauh ini! 🔥",
+      color: "#9a3412",
+      motivasi: "Tetap fokus dan produktif, kamu sudah sejauh ini.",
     };
   if (hour >= 15 && hour < 19)
     return {
       greeting: "Selamat Sore",
       emoji: "🌇",
-      color: "#db2777",
-      colorDark: "#ec4899",
-      motivasi: "Pertahankan semangat hingga akhir, hampir selesai! ✨",
+      color: "#9d174d",
+      motivasi: "Pertahankan semangat hingga akhir hari ini.",
     };
   return {
     greeting: "Selamat Malam",
     emoji: "🌙",
-    color: "#4f46e5",
-    colorDark: "#818cf8",
-    motivasi: "Istirahat yang cukup, besok kita mulai lagi lebih baik! 🌟",
+    color: "#3730a3",
+    motivasi: "Istirahat yang cukup, besok kita mulai lagi lebih baik.",
   };
 }
 
@@ -66,50 +61,43 @@ export default function GreetingBanner() {
     <div
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(8px)",
+        transform: visible ? "translateY(0)" : "translateY(6px)",
         transition: "opacity 0.5s ease, transform 0.5s ease",
       }}
       className="mb-6 sm:mb-8"
     >
-      {/* Greeting utama */}
-      <div className="flex items-center gap-3 flex-wrap mb-2">
+      {/* Greeting */}
+      <div className="flex items-center gap-2 mb-1">
         <span
-          style={{
-            fontSize: "2.5rem",
-            filter: `drop-shadow(0 0 10px ${data.colorDark}88)`,
-            lineHeight: 1,
-          }}
+          style={{ fontSize: "1.75rem", lineHeight: 1 }}
           role="img"
           aria-label={data.greeting}
         >
           {data.emoji}
         </span>
-
         <h2
           style={{ color: data.color }}
-          className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight tracking-tight"
+          className="text-2xl sm:text-3xl font-bold tracking-tight"
         >
           {data.greeting}
           {firstName && (
-            <span className="text-gray-800" style={{ fontWeight: 800 }}>
-              , {firstName}
-            </span>
+            <span className="text-gray-700 font-semibold">, {firstName}</span>
           )}
         </h2>
       </div>
 
-      {/* Kata penyemangat */}
-      <p className="text-base sm:text-lg font-medium text-gray-600 ml-1 mb-3">
+      {/* Motivasi */}
+      <p className="text-sm sm:text-base text-gray-500 ml-1 mb-3 font-normal">
         {data.motivasi}
       </p>
 
       {/* Divider */}
       <div
         style={{
-          background: `linear-gradient(90deg, ${data.color}66, transparent)`,
-          height: "3px",
+          background: `linear-gradient(90deg, ${data.color}55, transparent)`,
+          height: "2px",
           borderRadius: "999px",
-          width: "260px",
+          width: "220px",
         }}
       />
     </div>
