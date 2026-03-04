@@ -5,6 +5,7 @@ import TopBar from "@/components/layout/TopBar";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useExportPDF } from "@/hooks/useExportPDF";
+import TidakHadirSection from "@/components/absensi/TidakHadirSection";
 import {
   Filter,
   Download,
@@ -14,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   UserCheck,
+  UserX,
   MapPin,
   Image as ImageIcon,
   PenTool,
@@ -376,6 +378,9 @@ export default function GuruAbsensi() {
               </div>
             </div>
           </div>
+
+          {/* ── SECTION SISWA TIDAK HADIR ─────────────────────────── */}
+          <TidakHadirSection period={selectedPeriod} role="guru" />
 
           {showSiswaPresensi && selectedSiswa && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4">

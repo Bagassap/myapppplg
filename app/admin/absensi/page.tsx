@@ -5,6 +5,7 @@ import TopBar from "@/components/layout/TopBar";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useExportPDF } from "@/hooks/useExportPDF";
+import TidakHadirSection from "@/components/absensi/TidakHadirSection";
 import {
   Filter,
   Download,
@@ -14,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   UserCheck,
+  UserX,
   MapPin,
   Image as ImageIcon,
   PenTool,
@@ -29,9 +31,7 @@ export default function AdminAbsensi() {
   const [selectedStatus, setSelectedStatus] = useState("Semua");
   const [showSiswaPresensi, setShowSiswaPresensi] = useState(false);
   const [presensiData, setPresensiData] = useState<any[]>([]);
-  const [siswaPresensiData, setSiswaPresensiData] = useState<
-    Record<string, any[]>
-  >({});
+  const [siswaPresensiData, setSiswaPresensiData] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -58,31 +58,20 @@ export default function AdminAbsensi() {
           params.append("endDate", today);
         } else if (selectedPeriod === "Bulan Ini") {
           const now = new Date();
-          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-            .toISOString()
-            .split("T")[0];
-          const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-            .toISOString()
-            .split("T")[0];
+          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+          const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];
           params.append("startDate", startOfMonth);
           params.append("endDate", endOfMonth);
         } else if (selectedPeriod === "Tahun Ini") {
           const now = new Date();
-          const startOfYear = new Date(now.getFullYear(), 0, 1)
-            .toISOString()
-            .split("T")[0];
-          const endOfYear = new Date(now.getFullYear(), 11, 31)
-            .toISOString()
-            .split("T")[0];
+          const startOfYear = new Date(now.getFullYear(), 0, 1).toISOString().split("T")[0];
+          const endOfYear = new Date(now.getFullYear(), 11, 31).toISOString().split("T")[0];
           params.append("startDate", startOfYear);
           params.append("endDate", endOfYear);
         }
 
         const response = await fetch(`/api/absensi?${params.toString()}`);
-        if (!response.ok)
-          throw new Error(
-            `Gagal mengambil data absensi: ${await response.text()}`,
-          );
+        if (!response.ok) throw new Error(`Gagal mengambil data absensi: ${await response.text()}`);
 
         const data = await response.json();
         const transformedData = data.map((item: any) => ({
@@ -118,11 +107,8 @@ export default function AdminAbsensi() {
   }, [session, status, selectedPeriod]);
 
   const filteredData = presensiData.filter((item) => {
-    const matchesPKL =
-      selectedPKL === "Semua Tempat PKL" || item.tempatPKL === selectedPKL;
-    const matchesStatus =
-      selectedStatus === "Semua" ||
-      item.status.toLowerCase() === selectedStatus.toLowerCase();
+    const matchesPKL = selectedPKL === "Semua Tempat PKL" || item.tempatPKL === selectedPKL;
+    const matchesStatus = selectedStatus === "Semua" || item.status.toLowerCase() === selectedStatus.toLowerCase();
     const matchesSiswa = selectedSiswa === "" || item.siswa === selectedSiswa;
     return matchesPKL && matchesStatus && matchesSiswa;
   });
@@ -142,16 +128,9 @@ export default function AdminAbsensi() {
     exportPDF(filteredData, "Laporan Absensi PKL — Admin");
   };
 
-  const handleViewSiswaPresensi = (siswa: string) => {
-    setSelectedSiswa(siswa);
-    setShowSiswaPresensi(true);
-  };
-  const handlePrevious = () => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1);
-  };
-  const handleNext = () => {
-    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-  };
+  const handleViewSiswaPresensi = (siswa: string) => { setSelectedSiswa(siswa); setShowSiswaPresensi(true); };
+  const handlePrevious = () => { if (currentPage > 1) setCurrentPage(currentPage - 1); };
+  const handleNext = () => { if (currentPage < totalPages) setCurrentPage(currentPage + 1); };
 
   if (loading || error) {
     return (
@@ -160,11 +139,7 @@ export default function AdminAbsensi() {
         <div className="flex-1 flex flex-col min-w-0">
           <TopBar />
           <main className="flex-1 flex items-center justify-center p-6 sm:p-8 lg:p-12">
-            {loading ? (
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
-            ) : (
-              <p className="text-red-600">{error}</p>
-            )}
+            {loading ? <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" /> : <p className="text-red-600">{error}</p>}
           </main>
         </div>
       </div>
@@ -173,61 +148,33 @@ export default function AdminAbsensi() {
 
   const renderTableHeaders = () => (
     <>
-      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 rounded-tl-xl text-xs sm:text-base">
-        Siswa
-      </th>
-      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base hidden sm:table-cell">
-        Tempat PKL
-      </th>
-      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base">
-        Status
-      </th>
-      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base">
-        Waktu
-      </th>
-      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base hidden md:table-cell">
-        Catatan
-      </th>
-      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 rounded-tr-xl text-xs sm:text-base">
-        Aksi
-      </th>
+      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 rounded-tl-xl text-xs sm:text-base">Siswa</th>
+      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base hidden sm:table-cell">Tempat PKL</th>
+      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base">Status</th>
+      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base">Waktu</th>
+      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base hidden md:table-cell">Catatan</th>
+      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 rounded-tr-xl text-xs sm:text-base">Aksi</th>
     </>
   );
 
   const renderTableRow = (item: any) => (
-    <tr
-      key={item.id}
-      className="border-b border-gray-100 hover:bg-indigo-50 transition-colors"
-    >
+    <tr key={item.id} className="border-b border-gray-100 hover:bg-indigo-50 transition-colors">
       <td className="px-2 py-3 sm:px-6 sm:py-4 font-medium text-gray-900 text-xs sm:text-base break-words">
         {item.siswa}
-        <div className="text-[10px] text-gray-500 sm:hidden mt-1">
-          {item.tempatPKL}
-        </div>
+        <div className="text-[10px] text-gray-500 sm:hidden mt-1">{item.tempatPKL}</div>
       </td>
-      <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base hidden sm:table-cell">
-        {item.tempatPKL}
-      </td>
+      <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base hidden sm:table-cell">{item.tempatPKL}</td>
       <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base">
         <div className="flex items-center gap-1 sm:gap-2">
-          {item.status === "Hadir" && (
-            <CheckSquare className="w-3 h-3 sm:w-4 sm:h-4 text-green-600 shrink-0" />
-          )}
+          {item.status === "Hadir" && <CheckSquare className="w-3 h-3 sm:w-4 sm:h-4 text-green-600 shrink-0" />}
           <span>{item.status}</span>
         </div>
       </td>
-      <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base whitespace-nowrap">
-        {item.waktu}
-      </td>
-      <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base hidden md:table-cell">
-        {item.catatan || "-"}
-      </td>
+      <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base whitespace-nowrap">{item.waktu}</td>
+      <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base hidden md:table-cell">{item.catatan || "-"}</td>
       <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700">
         <div className="flex flex-wrap gap-1 sm:gap-2">
-          <button
-            onClick={() => handleViewSiswaPresensi(item.siswa)}
-            className="flex items-center gap-1 px-3 py-1.5 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-xs sm:text-sm font-medium"
-          >
+          <button onClick={() => handleViewSiswaPresensi(item.siswa)} className="flex items-center gap-1 px-3 py-1.5 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-xs sm:text-sm font-medium">
             <UserCheck className="w-3 h-3 sm:w-4 sm:h-4" />
             <span>Lihat Presensi</span>
           </button>
@@ -247,9 +194,7 @@ export default function AdminAbsensi() {
               <Calendar className="w-8 h-8 sm:w-12 sm:h-12 text-indigo-600" />
               Absensi
             </h1>
-            <p className="text-gray-600 text-sm sm:text-lg">
-              Lihat semua presensi siswa PKL.
-            </p>
+            <p className="text-gray-600 text-sm sm:text-lg">Lihat semua presensi siswa PKL.</p>
           </div>
 
           <div className="bg-white p-4 sm:p-8 rounded-2xl sm:rounded-3xl shadow-lg border border-gray-200 mb-6 sm:mb-10">
@@ -259,51 +204,15 @@ export default function AdminAbsensi() {
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               {[
-                {
-                  label: "Tempat PKL",
-                  val: selectedPKL,
-                  set: setSelectedPKL,
-                  opt: [
-                    "Semua Tempat PKL",
-                    ...new Set(presensiData.map((i) => i.tempatPKL)),
-                  ],
-                },
-                {
-                  label: "Periode",
-                  val: selectedPeriod,
-                  set: setSelectedPeriod,
-                  opt: ["Hari Ini", "Bulan Ini", "Tahun Ini"],
-                },
-                {
-                  label: "Siswa",
-                  val: selectedSiswa,
-                  set: setSelectedSiswa,
-                  opt: [
-                    "Semua Siswa",
-                    ...new Set(presensiData.map((i) => i.siswa)),
-                  ],
-                },
-                {
-                  label: "Status",
-                  val: selectedStatus,
-                  set: setSelectedStatus,
-                  opt: ["Semua", "Hadir", "Pulang", "Izin", "Libur"],
-                },
+                { label: "Tempat PKL", val: selectedPKL, set: setSelectedPKL, opt: ["Semua Tempat PKL", ...new Set(presensiData.map((i) => i.tempatPKL))] },
+                { label: "Periode", val: selectedPeriod, set: setSelectedPeriod, opt: ["Hari Ini", "Bulan Ini", "Tahun Ini"] },
+                { label: "Siswa", val: selectedSiswa, set: setSelectedSiswa, opt: ["Semua Siswa", ...new Set(presensiData.map((i) => i.siswa))] },
+                { label: "Status", val: selectedStatus, set: setSelectedStatus, opt: ["Semua", "Hadir", "Pulang", "Izin", "Libur"] },
               ].map((f, idx) => (
                 <div key={idx} className="flex flex-col">
-                  <label className="text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
-                    {f.label}
-                  </label>
-                  <select
-                    value={f.val}
-                    onChange={(e) => f.set(e.target.value)}
-                    className="w-full px-3 py-2 sm:py-3 border border-indigo-200 rounded-xl bg-gray-50 text-sm sm:text-base focus:ring-2 focus:ring-indigo-50 outline-none"
-                  >
-                    {f.opt.map((o) => (
-                      <option key={o} value={o === "Semua Siswa" ? "" : o}>
-                        {o}
-                      </option>
-                    ))}
+                  <label className="text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">{f.label}</label>
+                  <select value={f.val} onChange={(e) => f.set(e.target.value)} className="w-full px-3 py-2 sm:py-3 border border-indigo-200 rounded-xl bg-gray-50 text-sm sm:text-base focus:ring-2 focus:ring-indigo-50 outline-none">
+                    {f.opt.map((o) => (<option key={o} value={o === "Semua Siswa" ? "" : o}>{o}</option>))}
                   </select>
                 </div>
               ))}
@@ -314,14 +223,9 @@ export default function AdminAbsensi() {
                   className="w-full sm:w-auto px-6 flex items-center justify-center gap-2 py-2 sm:py-3 bg-red-600 text-white rounded-xl shadow hover:bg-red-700 transition-all text-sm sm:text-base font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {exporting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" /> Membuat
-                      PDF...
-                    </>
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Membuat PDF...</>
                   ) : (
-                    <>
-                      <Download className="w-4 h-4 sm:w-5 sm:h-5" /> PDF
-                    </>
+                    <><Download className="w-4 h-4 sm:w-5 sm:h-5" /> PDF</>
                   )}
                 </button>
               </div>
@@ -338,60 +242,38 @@ export default function AdminAbsensi() {
             <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300">
               <table className="w-full table-auto min-w-full">
                 <thead>
-                  <tr className="bg-gray-50 border-b border-gray-100">
-                    {renderTableHeaders()}
-                  </tr>
+                  <tr className="bg-gray-50 border-b border-gray-100">{renderTableHeaders()}</tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {currentData.map((item) => renderTableRow(item))}
-                </tbody>
+                <tbody className="divide-y divide-gray-50">{currentData.map((item) => renderTableRow(item))}</tbody>
               </table>
             </div>
-            {currentData.length === 0 && (
-              <div className="py-12 text-center text-gray-500 text-sm sm:text-base">
-                Data tidak ditemukan.
-              </div>
-            )}
+            {currentData.length === 0 && <div className="py-12 text-center text-gray-500 text-sm sm:text-base">Data tidak ditemukan.</div>}
             <div className="p-4 sm:p-8 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-xs sm:text-sm text-gray-600 font-medium">
-                Menampilkan {startIndex + 1}-
-                {Math.min(endIndex, filteredData.length)} dari{" "}
-                {filteredData.length}
+                Menampilkan {startIndex + 1}-{Math.min(endIndex, filteredData.length)} dari {filteredData.length}
               </p>
               <div className="flex gap-2 w-full sm:w-auto">
-                <button
-                  disabled={currentPage === 1}
-                  onClick={handlePrevious}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm disabled:opacity-50"
-                >
+                <button disabled={currentPage === 1} onClick={handlePrevious} className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm disabled:opacity-50">
                   <ChevronLeft className="w-4 h-4" /> Prev
                 </button>
-                <button
-                  disabled={currentPage === totalPages}
-                  onClick={handleNext}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm disabled:opacity-50"
-                >
+                <button disabled={currentPage === totalPages} onClick={handleNext} className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm disabled:opacity-50">
                   Next <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
           </div>
 
+
+          {/* ── SECTION SISWA TIDAK HADIR ─────────────────────────── */}
+          <TidakHadirSection period={selectedPeriod} role="admin" />
+
           {showSiswaPresensi && selectedSiswa && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4">
-              <div
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                onClick={() => setShowSiswaPresensi(false)}
-              />
+              <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowSiswaPresensi(false)} />
               <div className="relative bg-white w-full max-w-6xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col">
                 <div className="p-4 sm:p-6 border-b flex items-center justify-between">
-                  <h3 className="font-bold text-lg sm:text-2xl truncate pr-4">
-                    Riwayat {selectedSiswa}
-                  </h3>
-                  <button
-                    onClick={() => setShowSiswaPresensi(false)}
-                    className="p-2 hover:bg-gray-100 rounded-full"
-                  >
+                  <h3 className="font-bold text-lg sm:text-2xl truncate pr-4">Riwayat {selectedSiswa}</h3>
+                  <button onClick={() => setShowSiswaPresensi(false)} className="p-2 hover:bg-gray-100 rounded-full">
                     <X className="w-6 h-6" />
                   </button>
                 </div>
@@ -400,116 +282,55 @@ export default function AdminAbsensi() {
                     <table className="w-full text-xs sm:text-base min-w-[800px] sm:min-w-full">
                       <thead className="bg-gray-50 sticky top-0 z-10">
                         <tr>
-                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">
-                            Tanggal
-                          </th>
-                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">
-                            Status
-                          </th>
-                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">
-                            Waktu
-                          </th>
-                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">
-                            Lokasi
-                          </th>
-                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-center w-24">
-                            Foto
-                          </th>
-                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-center w-24">
-                            TTD
-                          </th>
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">Tanggal</th>
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">Status</th>
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">Waktu</th>
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">Lokasi</th>
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-center w-24">Foto</th>
+                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-center w-24">TTD</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {(siswaPresensiData[selectedSiswa] || []).map(
-                          (item: any) => (
-                            <tr key={item.id} className="hover:bg-gray-50">
-                              <td className="px-2 py-2 sm:px-4 sm:py-3">
-                                {item.tanggal}
-                              </td>
-                              <td className="px-2 py-2 sm:px-4 sm:py-3">
-                                <span
-                                  className={`px-2 py-1 rounded text-xs font-medium ${item.status === "Hadir" ? "bg-green-100 text-green-800" : item.status === "Izin" ? "bg-yellow-100 text-yellow-800" : "bg-gray-100 text-gray-800"}`}
-                                >
-                                  {item.status}
-                                </span>
-                              </td>
-                              <td className="px-2 py-2 sm:px-4 sm:py-3">
-                                {item.waktu}
-                              </td>
-                              <td className="px-2 py-2 sm:px-4 sm:py-3">
-                                {item.lokasi ? (
-                                  <a
-                                    href={`https://www.google.com/maps?q=${item.lokasi}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 hover:underline flex items-center gap-1"
-                                  >
-                                    <MapPin className="w-3 h-3" /> Map
-                                  </a>
-                                ) : (
-                                  "-"
-                                )}
-                              </td>
-                              <td className="px-2 py-2 sm:px-4 sm:py-3 text-center">
-                                {item.foto ? (
-                                  <div
-                                    className="flex justify-center cursor-pointer group"
-                                    onClick={() =>
-                                      openPreview(item.foto, "foto")
-                                    }
-                                    title="Klik untuk memperbesar"
-                                  >
-                                    <div className="relative w-10 h-10 sm:w-12 sm:h-12 border rounded overflow-hidden shadow-sm hover:shadow-md transition-all">
-                                      <img
-                                        src={item.foto}
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                                        alt="Foto"
-                                        onError={(e) => {
-                                          (
-                                            e.target as HTMLImageElement
-                                          ).style.display = "none";
-                                        }}
-                                      />
-                                    </div>
+                        {(siswaPresensiData[selectedSiswa] || []).map((item: any) => (
+                          <tr key={item.id} className="hover:bg-gray-50">
+                            <td className="px-2 py-2 sm:px-4 sm:py-3">{item.tanggal}</td>
+                            <td className="px-2 py-2 sm:px-4 sm:py-3">
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${item.status === "Hadir" ? "bg-green-100 text-green-800" : item.status === "Izin" ? "bg-yellow-100 text-yellow-800" : "bg-gray-100 text-gray-800"}`}>
+                                {item.status}
+                              </span>
+                            </td>
+                            <td className="px-2 py-2 sm:px-4 sm:py-3">{item.waktu}</td>
+                            <td className="px-2 py-2 sm:px-4 sm:py-3">
+                              {item.lokasi ? (
+                                <a href={`https://www.google.com/maps?q=${item.lokasi}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1">
+                                  <MapPin className="w-3 h-3" /> Map
+                                </a>
+                              ) : "-"}
+                            </td>
+                            <td className="px-2 py-2 sm:px-4 sm:py-3 text-center">
+                              {item.foto ? (
+                                <div className="flex justify-center cursor-pointer group" onClick={() => openPreview(item.foto, "foto")} title="Klik untuk memperbesar">
+                                  <div className="relative w-10 h-10 sm:w-12 sm:h-12 border rounded overflow-hidden shadow-sm hover:shadow-md transition-all">
+                                    <img src={item.foto} className="w-full h-full object-cover group-hover:scale-110 transition-transform" alt="Foto" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                                   </div>
-                                ) : (
-                                  <div className="flex justify-center text-gray-300">
-                                    <ImageIcon className="w-5 h-5" />
+                                </div>
+                              ) : (
+                                <div className="flex justify-center text-gray-300"><ImageIcon className="w-5 h-5" /></div>
+                              )}
+                            </td>
+                            <td className="px-2 py-2 sm:px-4 sm:py-3 text-center">
+                              {item.tandaTangan ? (
+                                <div className="flex justify-center cursor-pointer group" onClick={() => openPreview(item.tandaTangan, "ttd")} title="Klik untuk memperbesar">
+                                  <div className="relative w-10 h-10 sm:w-12 sm:h-12 border rounded bg-white overflow-hidden shadow-sm hover:shadow-md transition-all">
+                                    <img src={item.tandaTangan} className="w-full h-full object-contain group-hover:scale-110 transition-transform p-1" alt="TTD" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                                   </div>
-                                )}
-                              </td>
-                              <td className="px-2 py-2 sm:px-4 sm:py-3 text-center">
-                                {item.tandaTangan ? (
-                                  <div
-                                    className="flex justify-center cursor-pointer group"
-                                    onClick={() =>
-                                      openPreview(item.tandaTangan, "ttd")
-                                    }
-                                    title="Klik untuk memperbesar"
-                                  >
-                                    <div className="relative w-10 h-10 sm:w-12 sm:h-12 border rounded bg-white overflow-hidden shadow-sm hover:shadow-md transition-all">
-                                      <img
-                                        src={item.tandaTangan}
-                                        className="w-full h-full object-contain group-hover:scale-110 transition-transform p-1"
-                                        alt="TTD"
-                                        onError={(e) => {
-                                          (
-                                            e.target as HTMLImageElement
-                                          ).style.display = "none";
-                                        }}
-                                      />
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div className="flex justify-center text-gray-300">
-                                    <PenTool className="w-5 h-5" />
-                                  </div>
-                                )}
-                              </td>
-                            </tr>
-                          ),
-                        )}
+                                </div>
+                              ) : (
+                                <div className="flex justify-center text-gray-300"><PenTool className="w-5 h-5" /></div>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>
@@ -527,83 +348,29 @@ export default function AdminAbsensi() {
           onClick={() => setPreviewUrl(null)}
         >
           {/* Backdrop dengan blur dan gradient */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,27,75,0.95) 100%)",
-              backdropFilter: "blur(20px)",
-            }}
-          />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,27,75,0.95) 100%)", backdropFilter: "blur(20px)" }} />
 
           {/* Dekorasi background */}
-          <div
-            className="absolute top-0 left-0 w-96 h-96 rounded-full opacity-10"
-            style={{
-              background: "radial-gradient(circle, #6366f1, transparent)",
-              filter: "blur(60px)",
-              transform: "translate(-30%, -30%)",
-            }}
-          />
-          <div
-            className="absolute bottom-0 right-0 w-96 h-96 rounded-full opacity-10"
-            style={{
-              background: "radial-gradient(circle, #8b5cf6, transparent)",
-              filter: "blur(60px)",
-              transform: "translate(30%, 30%)",
-            }}
-          />
+          <div className="absolute top-0 left-0 w-96 h-96 rounded-full opacity-10" style={{ background: "radial-gradient(circle, #6366f1, transparent)", filter: "blur(60px)", transform: "translate(-30%, -30%)" }} />
+          <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full opacity-10" style={{ background: "radial-gradient(circle, #8b5cf6, transparent)", filter: "blur(60px)", transform: "translate(30%, 30%)" }} />
 
           <div
             className="relative w-full mx-4 flex flex-col items-center"
-            style={{
-              maxWidth: previewType === "ttd" ? "480px" : "720px",
-              animation: "scaleIn 0.25s cubic-bezier(0.34,1.56,0.64,1)",
-            }}
+            style={{ maxWidth: previewType === "ttd" ? "480px" : "720px", animation: "scaleIn 0.25s cubic-bezier(0.34,1.56,0.64,1)" }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header label */}
             <div className="flex items-center gap-3 mb-4 self-start">
-              <div
-                className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase"
-                style={{
-                  background: "rgba(99,102,241,0.2)",
-                  border: "1px solid rgba(99,102,241,0.4)",
-                  color: "#a5b4fc",
-                }}
-              >
-                {previewType === "ttd" ? (
-                  <PenTool className="w-3 h-3" />
-                ) : (
-                  <ImageIcon className="w-3 h-3" />
-                )}
+              <div className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase" style={{ background: "rgba(99,102,241,0.2)", border: "1px solid rgba(99,102,241,0.4)", color: "#a5b4fc" }}>
+                {previewType === "ttd" ? <PenTool className="w-3 h-3" /> : <ImageIcon className="w-3 h-3" />}
                 {previewType === "ttd" ? "Tanda Tangan" : "Foto Absensi"}
               </div>
             </div>
 
             {/* Card gambar */}
-            <div
-              className="w-full rounded-2xl overflow-hidden relative"
-              style={{
-                background:
-                  previewType === "ttd"
-                    ? "rgba(255,255,255,0.98)"
-                    : "transparent",
-                boxShadow:
-                  "0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08)",
-                padding: previewType === "ttd" ? "32px" : "0",
-              }}
-            >
+            <div className="w-full rounded-2xl overflow-hidden relative" style={{ background: previewType === "ttd" ? "rgba(255,255,255,0.98)" : "transparent", boxShadow: "0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08)", padding: previewType === "ttd" ? "32px" : "0" }}>
               {previewType !== "ttd" && (
-                <div
-                  className="absolute inset-0 rounded-2xl"
-                  style={{
-                    background:
-                      "linear-gradient(to bottom, transparent 60%, rgba(15,23,42,0.8))",
-                    zIndex: 1,
-                    pointerEvents: "none",
-                  }}
-                />
+                <div className="absolute inset-0 rounded-2xl" style={{ background: "linear-gradient(to bottom, transparent 60%, rgba(15,23,42,0.8))", zIndex: 1, pointerEvents: "none" }} />
               )}
               <img
                 src={previewUrl}
@@ -625,17 +392,9 @@ export default function AdminAbsensi() {
               <button
                 onClick={() => setPreviewUrl(null)}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
-                style={{
-                  background: "rgba(255,255,255,0.08)",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  color: "rgba(255,255,255,0.8)",
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.background = "rgba(255,255,255,0.15)")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = "rgba(255,255,255,0.08)")
-                }
+                style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.8)" }}
+                onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.15)")}
+                onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
               >
                 <X className="w-4 h-4" /> Tutup
               </button>
