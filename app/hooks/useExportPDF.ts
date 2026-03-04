@@ -44,7 +44,8 @@ export function useExportPDF() {
         setExporting(true);
 
         try {
-            const { jsPDF } = await import("jspdf");
+            const jsPDFModule = await import("jspdf");
+            const jsPDF = jsPDFModule.default ?? (jsPDFModule as any).jsPDF;
 
             const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
             const pageW = doc.internal.pageSize.getWidth();
@@ -237,7 +238,6 @@ export function useExportPDF() {
                         try {
                             const b64 = await loadImageAsBase64(row.tandaTangan);
                             if (b64) {
-                                // TTD di background putih
                                 doc.setFillColor(255, 255, 255);
                                 doc.rect(cx, sy + 2, 18, 22, "F");
                                 doc.addImage(b64, "PNG", cx, sy + 2, 18, 22, undefined, "FAST");
@@ -258,7 +258,7 @@ export function useExportPDF() {
                     sy += rowH;
                 }
 
-                sy += 8; // gap antar siswa
+                sy += 8;
             }
 
             // ── FOOTER setiap halaman ────────────────────────────────────
