@@ -275,7 +275,18 @@ export function useExportPDF() {
             }
 
             const fileName = `Laporan_Absensi_${new Date().toISOString().split("T")[0]}.pdf`;
-            doc.save(fileName);
+
+            try {
+                const pdfData = doc.output("datauristring");
+                const link = document.createElement("a");
+                link.href = pdfData;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch {
+                doc.save(fileName);
+            }
 
         } catch (err) {
             console.error("Export PDF error:", err);
