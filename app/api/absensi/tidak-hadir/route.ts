@@ -69,17 +69,46 @@ export async function GET(req: NextRequest) {
 
         const sudahAbsenSet = new Set(sudahAbsen.map(a => a.userId));
 
-        // ── Filter siswa yang BELUM absen ──
         const belumAbsenIds = allStudentIds.filter(id => !sudahAbsenSet.has(id));
-
         if (belumAbsenIds.length === 0) return NextResponse.json([], { status: 200 });
-        const userRecords = await prisma.user.findMany({
-            where: { username: { in: belumAbsenIds } },
-            select: { username: true, name: true },
-        });
+        const guruPembimbingRaw = [
+            ...new Set(
+                studentScope
+                    .filter(s => belumAbsenIds.includes(s.userId))
+                    .map(s => s.guruPembimbing)
+                    .filter(Boolean) as string[]
+            ),
+        ];
+
+        const [userRecords, guruRecords] = await Promise.all([
+            prisma.user.findMany({
+                where: { username: { in: belumAbsenIds } },
+                select: { username: true, name: true },
+            }),
+            prisma.user.findMany({
+                where: {
+                    role: "GURU",
+                    OR: guruPembimbingRaw.flatMap(g => [
+                        { name: { contains: g, mode: "insensitive" as const } },
+                        { username: { contains: g, mode: "insensitive" as const } },
+                    ]),
+                },
+                select: { username: true, name: true },
+            }),
+        ]);
+
         const userMap = new Map(userRecords.map(u => [u.username ?? "", u.name ?? u.username ?? ""]));
 
-        // ── Susun response ──
+        const guruNameMap = new Map<string, string>();
+        for (const raw of guruPembimbingRaw) {
+            const found = guruRecords.find(
+                g =>
+                    g.name?.toLowerCase().includes(raw.toLowerCase()) ||
+                    g.username?.toLowerCase().includes(raw.toLowerCase())
+            );
+            guruNameMap.set(raw, found?.name || raw);
+        }
+
         const result = studentScope
             .filter(s => belumAbsenIds.includes(s.userId))
             .map(s => ({
@@ -87,7 +116,9 @@ export async function GET(req: NextRequest) {
                 nama: userMap.get(s.userId) || s.userId,
                 kelas: s.kelas,
                 tempatPKL: s.tempatPKL || "-",
-                guruPembimbing: s.guruPembimbing || "-",
+                guruPembimbing: s.guruPembimbing
+                    ? guruNameMap.get(s.guruPembimbing) || s.guruPembimbing
+                    : "-",
             }));
 
         return NextResponse.json(result);
