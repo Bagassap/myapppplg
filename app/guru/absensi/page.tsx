@@ -4,6 +4,7 @@ import Sidebar from "@/components/layout/SidebarGuru";
 import TopBar from "@/components/layout/TopBar";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useExportPDF } from "@/hooks/useExportPDF";
 import {
   Filter,
   Download,
@@ -16,10 +17,12 @@ import {
   MapPin,
   Image as ImageIcon,
   PenTool,
+  Loader2,
 } from "lucide-react";
 
 export default function GuruAbsensi() {
   const { data: session, status } = useSession();
+  const { exportPDF, exporting } = useExportPDF();
   const [selectedPKL, setSelectedPKL] = useState("Semua Tempat PKL");
   const [selectedPeriod, setSelectedPeriod] = useState("Bulan Ini");
   const [selectedSiswa, setSelectedSiswa] = useState("");
@@ -344,9 +347,19 @@ export default function GuruAbsensi() {
               <div className="flex items-end">
                 <button
                   onClick={handleExport}
-                  className="w-full sm:w-auto px-6 flex items-center justify-center gap-2 py-2 sm:py-3 bg-indigo-600 text-white rounded-xl shadow hover:bg-indigo-700 transition-all text-sm sm:text-base font-medium"
+                  disabled={exporting}
+                  className="w-full sm:w-auto px-6 flex items-center justify-center gap-2 py-2 sm:py-3 bg-red-600 text-white rounded-xl shadow hover:bg-red-700 transition-all text-sm sm:text-base font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <Download className="w-4 h-4 sm:w-5 sm:h-5" /> CSV
+                  {exporting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Membuat
+                      PDF...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4 sm:w-5 sm:h-5" /> PDF
+                    </>
+                  )}
                 </button>
               </div>
             </div>
