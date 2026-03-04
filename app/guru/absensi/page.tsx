@@ -139,44 +139,7 @@ export default function GuruAbsensi() {
   };
 
   const handleExport = () => {
-    if (filteredData.length === 0) {
-      alert("Tidak ada data untuk diekspor.");
-      return;
-    }
-    const headers = [
-      "Tanggal",
-      "Siswa",
-      "Tempat PKL",
-      "Status",
-      "Waktu",
-      "Catatan",
-      "Kegiatan",
-      "Lokasi",
-    ];
-    const rows = filteredData.map((row) =>
-      [
-        `"${row.tanggal}"`,
-        `"${row.siswa}"`,
-        `"${row.tempatPKL}"`,
-        `"${row.status}"`,
-        `"${row.waktu}"`,
-        `"${(row.catatan || "").replace(/"/g, '""')}"`,
-        `"${(row.kegiatan || "").replace(/"/g, '""')}"`,
-        `"${row.lokasi || "-"}"`,
-      ].join(","),
-    );
-    const csvContent = [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute(
-      "download",
-      `Laporan_Absensi_Bimbingan_{new Date().toISOString().split("T")[0]}.csv`,
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    exportPDF(filteredData, "Laporan Absensi PKL — Guru");
   };
 
   const handleViewSiswaPresensi = (siswa: string) => {
