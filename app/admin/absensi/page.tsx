@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 import TidakHadirSection from "@/components/absensi/TidakHadirSection";
 import DeleteAbsensiModal from "@/components/absensi/DeleteAbsensiModal";
 import {
-  Filter,
+  SlidersHorizontal,
   CheckSquare,
   X,
   Calendar,
@@ -258,61 +258,51 @@ export default function AdminAbsensi() {
             </p>
           </div>
 
-          <div className="bg-white p-4 sm:p-8 rounded-2xl sm:rounded-3xl shadow-lg border border-gray-200 mb-6 sm:mb-10">
-            <h3 className="text-lg sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center gap-2">
-              <Filter className="w-5 h-5 sm:w-7 sm:h-7 text-indigo-600" />
-              Filter
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                {
-                  label: "Tempat PKL",
-                  val: selectedPKL,
-                  set: setSelectedPKL,
-                  opt: [
-                    "Semua Tempat PKL",
-                    ...new Set(presensiData.map((i) => i.tempatPKL)),
-                  ],
-                },
-                {
-                  label: "Periode",
-                  val: selectedPeriod,
-                  set: setSelectedPeriod,
-                  opt: ["Hari Ini", "Bulan Ini", "Tahun Ini"],
-                },
-                {
-                  label: "Siswa",
-                  val: selectedSiswa,
-                  set: setSelectedSiswa,
-                  opt: [
-                    "Semua Siswa",
-                    ...new Set(presensiData.map((i) => i.siswa)),
-                  ],
-                },
-                {
-                  label: "Status",
-                  val: selectedStatus,
-                  set: setSelectedStatus,
-                  opt: ["Semua", "Hadir", "Pulang", "Izin", "Libur"],
-                },
-              ].map((f, idx) => (
-                <div key={idx} className="flex flex-col">
-                  <label className="text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
-                    {f.label}
-                  </label>
-                  <select
-                    value={f.val}
-                    onChange={(e) => f.set(e.target.value)}
-                    className="w-full px-3 py-2 sm:py-3 border border-indigo-200 rounded-xl bg-gray-50 text-sm sm:text-base focus:ring-2 focus:ring-indigo-50 outline-none"
-                  >
-                    {f.opt.map((o) => (
-                      <option key={o} value={o === "Semua Siswa" ? "" : o}>
-                        {o}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ))}
+          <div className="bg-white px-5 py-4 rounded-2xl shadow-sm border border-gray-100 mb-6 sm:mb-8 flex flex-wrap gap-3 items-center">
+            <SlidersHorizontal className="w-4 h-4 text-indigo-400 shrink-0" />
+            <div className="flex flex-wrap gap-3 flex-1">
+              <select
+                value={selectedPKL}
+                onChange={(e) => setSelectedPKL(e.target.value)}
+                className="px-4 py-2 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 min-w-[150px]"
+              >
+                <option>Semua Tempat PKL</option>
+                {[...new Set(presensiData.map((i) => i.tempatPKL))].map((o) => (
+                  <option key={o} value={o}>
+                    {o}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={selectedPeriod}
+                onChange={(e) => setSelectedPeriod(e.target.value)}
+                className="px-4 py-2 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 min-w-[130px]"
+              >
+                {["Hari Ini", "Bulan Ini", "Tahun Ini"].map((o) => (
+                  <option key={o}>{o}</option>
+                ))}
+              </select>
+              <select
+                value={selectedSiswa}
+                onChange={(e) => setSelectedSiswa(e.target.value)}
+                className="px-4 py-2 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 min-w-[150px]"
+              >
+                <option value="">Semua Siswa</option>
+                {[...new Set(presensiData.map((i) => i.siswa))].map((o) => (
+                  <option key={o} value={o}>
+                    {o}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="px-4 py-2 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 min-w-[120px]"
+              >
+                {["Semua", "Hadir", "Pulang", "Izin", "Libur"].map((o) => (
+                  <option key={o}>{o}</option>
+                ))}
+              </select>
             </div>
           </div>
 
