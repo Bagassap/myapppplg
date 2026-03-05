@@ -4,10 +4,13 @@ import Sidebar from "@/components/layout/SidebarAdmin";
 import TopBar from "@/components/layout/TopBar";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useExportPDF } from "@/hooks/useExportPDF";
 import TidakHadirSection from "@/components/absensi/TidakHadirSection";
 import DeleteAbsensiModal from "@/components/absensi/DeleteAbsensiModal";
 import {
   SlidersHorizontal,
+  Download,
+  Loader2,
   CheckSquare,
   X,
   Calendar,
@@ -22,6 +25,7 @@ import {
 
 export default function AdminAbsensi() {
   const { data: session, status } = useSession();
+  const { exportPDF, exporting } = useExportPDF();
   const [selectedPKL, setSelectedPKL] = useState("Semua Tempat PKL");
   const [selectedPeriod, setSelectedPeriod] = useState("Hari Ini");
   const [selectedSiswa, setSelectedSiswa] = useState("");
@@ -139,6 +143,10 @@ export default function AdminAbsensi() {
 
   const handleDeleteSuccess = (deletedId: number) => {
     setPresensiData((prev) => prev.filter((item) => item.id !== deletedId));
+  };
+
+  const handleExport = () => {
+    exportPDF(filteredData, "Laporan Absensi PKL — Admin");
   };
 
   const handleViewSiswaPresensi = (siswa: string) => {
@@ -304,6 +312,21 @@ export default function AdminAbsensi() {
                 ))}
               </select>
             </div>
+            <button
+              onClick={handleExport}
+              disabled={exporting}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed shrink-0"
+            >
+              {exporting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> PDF...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4" /> PDF
+                </>
+              )}
+            </button>
           </div>
 
           <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-200 overflow-hidden">

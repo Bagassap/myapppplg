@@ -4,9 +4,12 @@ import Sidebar from "@/components/layout/SidebarGuru";
 import TopBar from "@/components/layout/TopBar";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useExportPDF } from "@/hooks/useExportPDF";
 import TidakHadirSection from "@/components/absensi/TidakHadirSection";
 import {
   SlidersHorizontal,
+  Download,
+  Loader2,
   CheckSquare,
   X,
   Calendar,
@@ -21,6 +24,7 @@ import {
 
 export default function GuruAbsensi() {
   const { data: session, status } = useSession();
+  const { exportPDF, exporting } = useExportPDF();
   const [selectedPKL, setSelectedPKL] = useState("Semua Tempat PKL");
   const [selectedPeriod, setSelectedPeriod] = useState("Bulan Ini");
   const [selectedSiswa, setSelectedSiswa] = useState("");
@@ -134,6 +138,10 @@ export default function GuruAbsensi() {
     if (!url) return;
     setPreviewUrl(url);
     setPreviewType(type);
+  };
+
+  const handleExport = () => {
+    exportPDF(filteredData, "Laporan Absensi PKL — Guru");
   };
 
   const handleViewSiswaPresensi = (siswa: string) => {
@@ -292,6 +300,21 @@ export default function GuruAbsensi() {
                 ))}
               </select>
             </div>
+            <button
+              onClick={handleExport}
+              disabled={exporting}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed shrink-0"
+            >
+              {exporting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> PDF...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4" /> PDF
+                </>
+              )}
+            </button>
           </div>
 
           <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-200 overflow-hidden">
