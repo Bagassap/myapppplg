@@ -4,12 +4,10 @@ import Sidebar from "@/components/layout/SidebarAdmin";
 import TopBar from "@/components/layout/TopBar";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useExportPDF } from "@/hooks/useExportPDF";
 import TidakHadirSection from "@/components/absensi/TidakHadirSection";
 import DeleteAbsensiModal from "@/components/absensi/DeleteAbsensiModal";
 import {
   Filter,
-  Download,
   CheckSquare,
   X,
   Calendar,
@@ -20,12 +18,10 @@ import {
   MapPin,
   Image as ImageIcon,
   PenTool,
-  Loader2,
 } from "lucide-react";
 
 export default function AdminAbsensi() {
   const { data: session, status } = useSession();
-  const { exportPDF, exporting } = useExportPDF();
   const [selectedPKL, setSelectedPKL] = useState("Semua Tempat PKL");
   const [selectedPeriod, setSelectedPeriod] = useState("Hari Ini");
   const [selectedSiswa, setSelectedSiswa] = useState("");
@@ -143,10 +139,6 @@ export default function AdminAbsensi() {
 
   const handleDeleteSuccess = (deletedId: number) => {
     setPresensiData((prev) => prev.filter((item) => item.id !== deletedId));
-  };
-
-  const handleExport = () => {
-    exportPDF(filteredData, "Laporan Absensi PKL — Admin");
   };
 
   const handleViewSiswaPresensi = (siswa: string) => {
@@ -269,9 +261,9 @@ export default function AdminAbsensi() {
           <div className="bg-white p-4 sm:p-8 rounded-2xl sm:rounded-3xl shadow-lg border border-gray-200 mb-6 sm:mb-10">
             <h3 className="text-lg sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center gap-2">
               <Filter className="w-5 h-5 sm:w-7 sm:h-7 text-indigo-600" />
-              Filter & Ekspor
+              Filter
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
                 {
                   label: "Tempat PKL",
@@ -321,24 +313,6 @@ export default function AdminAbsensi() {
                   </select>
                 </div>
               ))}
-              <div className="flex items-end">
-                <button
-                  onClick={handleExport}
-                  disabled={exporting}
-                  className="w-full sm:w-auto px-6 flex items-center justify-center gap-2 py-2 sm:py-3 bg-red-600 text-white rounded-xl shadow hover:bg-red-700 transition-all text-sm sm:text-base font-medium disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {exporting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" /> Membuat
-                      PDF...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="w-4 h-4 sm:w-5 sm:h-5" /> PDF
-                    </>
-                  )}
-                </button>
-              </div>
             </div>
           </div>
 
