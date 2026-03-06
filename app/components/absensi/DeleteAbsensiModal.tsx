@@ -57,7 +57,7 @@ export default function DeleteAbsensiModal({
           setOpen(true);
           setError(null);
         }}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-semibold transition-colors border border-red-200"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg text-xs font-semibold transition-colors border border-red-200 dark:border-red-800"
         title="Hapus data absensi"
       >
         <Trash2 className="w-3 h-3" />
@@ -72,20 +72,22 @@ export default function DeleteAbsensiModal({
             onClick={() => !loading && setOpen(false)}
           />
           <div
-            className="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden"
+            className="relative bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden"
             style={{ animation: "scaleIn .2s cubic-bezier(0.34,1.56,0.64,1)" }}
           >
             {/* Header */}
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+            <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="p-1.5 bg-red-100 rounded-lg">
                   <AlertTriangle className="w-4 h-4 text-red-600" />
                 </div>
-                <h3 className="font-semibold text-slate-800">Hapus Absensi</h3>
+                <h3 className="font-semibold text-slate-800 dark:text-white">
+                  Hapus Absensi
+                </h3>
               </div>
               <button
                 onClick={() => !loading && setOpen(false)}
-                className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
               >
                 <X className="w-4 h-4 text-slate-400" />
               </button>
@@ -93,35 +95,39 @@ export default function DeleteAbsensiModal({
 
             {/* Body */}
             <div className="px-5 py-5">
-              <p className="text-sm text-slate-500 mb-4">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                 Data berikut akan dihapus secara permanen:
               </p>
 
               {/* Info card */}
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-4 space-y-2.5">
+              <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 mb-4 space-y-2.5">
                 {[
                   {
                     label: "Siswa",
                     val: namaSiswa,
-                    cls: "font-semibold text-slate-800",
+                    cls: "font-semibold text-slate-800 dark:text-white",
                   },
-                  { label: "Tanggal", val: tanggal, cls: "text-slate-600" },
+                  {
+                    label: "Tanggal",
+                    val: tanggal,
+                    cls: "text-slate-600 dark:text-slate-300",
+                  },
                   {
                     label: "Status",
                     val: status,
-                    cls: `font-semibold ${STATUS_COLOR[status] ?? "text-slate-600"}`,
+                    cls: `font-semibold ${STATUS_COLOR[status] ?? "text-slate-600 dark:text-slate-300"}`,
                   },
                   {
                     label: "ID",
                     val: `#${absensiId}`,
-                    cls: "font-mono text-xs text-slate-400",
+                    cls: "font-mono text-xs text-slate-400 dark:text-slate-500",
                   },
                 ].map((r) => (
                   <div
                     key={r.label}
                     className="flex items-center justify-between gap-4"
                   >
-                    <span className="text-xs text-slate-400 font-medium">
+                    <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
                       {r.label}
                     </span>
                     <span className={`text-sm text-right ${r.cls}`}>
@@ -146,7 +152,7 @@ export default function DeleteAbsensiModal({
                 <button
                   onClick={() => setOpen(false)}
                   disabled={loading}
-                  className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors text-sm font-medium disabled:opacity-50"
+                  className="flex-1 px-4 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm font-medium disabled:opacity-50"
                 >
                   Batal
                 </button>

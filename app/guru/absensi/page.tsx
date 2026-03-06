@@ -251,20 +251,20 @@ export default function GuruAbsensi() {
     );
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-7">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 dark:bg-slate-950 px-4 sm:px-6 lg:px-8 py-7">
           {/* Page Header */}
           <div className="mb-7">
             <div className="flex items-center gap-2.5 mb-1">
               <span className="block w-1 h-6 bg-violet-600 rounded-full" />
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
                 Data Absensi
               </h1>
             </div>
-            <p className="text-slate-400 text-sm pl-3.5">
+            <p className="text-slate-400 dark:text-slate-500 text-sm pl-3.5">
               Pantau kehadiran siswa bimbingan Anda.
             </p>
           </div>
@@ -307,10 +307,10 @@ export default function GuruAbsensi() {
             ].map((s) => (
               <div
                 key={s.label}
-                className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4 flex items-center justify-between"
+                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm px-5 py-4 flex items-center justify-between"
               >
                 <div>
-                  <p className="text-xs font-medium text-slate-400 mb-1">
+                  <p className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
                     {s.label}
                   </p>
                   <p className={`text-2xl font-bold ${s.color}`}>
@@ -321,7 +321,9 @@ export default function GuruAbsensi() {
                     )}
                   </p>
                 </div>
-                <div className={`p-2.5 rounded-xl ring-1 ${s.ring} ${s.bg}`}>
+                <div
+                  className={`p-2.5 rounded-xl ring-1 dark:bg-slate-800 ${s.ring} ${s.bg}`}
+                >
                   {s.icon}
                 </div>
               </div>
@@ -329,7 +331,7 @@ export default function GuruAbsensi() {
           </div>
 
           {/* Filter Bar */}
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm px-4 py-3 mb-5 flex flex-wrap items-center gap-2.5">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm px-4 py-3 mb-5 flex flex-wrap items-center gap-2.5">
             <SlidersHorizontal className="w-4 h-4 text-slate-400 shrink-0" />
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -410,19 +412,19 @@ export default function GuruAbsensi() {
           </div>
 
           {/* Table */}
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mb-6">
-            <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="font-semibold text-slate-700 text-sm">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden mb-6">
+            <div className="px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <h2 className="font-semibold text-slate-700 dark:text-slate-200 text-sm">
                 Daftar Presensi
               </h2>
-              <span className="text-xs text-slate-400 bg-slate-50 border border-slate-200 px-2.5 py-0.5 rounded-full font-medium">
+              <span className="text-xs text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 rounded-full font-medium">
                 {loading ? "…" : `${filteredData.length} record`}
               </span>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm min-w-[640px]">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/70">
+                  <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50">
                     {[
                       "Siswa",
                       "Tempat PKL",
@@ -433,7 +435,7 @@ export default function GuruAbsensi() {
                     ].map((h, idx) => (
                       <th
                         key={h}
-                        className={`px-5 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider
+                        className={`px-5 py-2.5 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider
                         ${idx === 1 ? "hidden sm:table-cell" : ""}
                         ${idx === 4 ? "hidden md:table-cell" : ""}`}
                       >
@@ -442,13 +444,13 @@ export default function GuruAbsensi() {
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                   {loading ? (
                     <SkeletonRows />
                   ) : currentData.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="py-16 text-center">
-                        <div className="flex flex-col items-center gap-2 text-slate-400">
+                        <div className="flex flex-col items-center gap-2 text-slate-400 dark:text-slate-500">
                           <ClipboardList className="w-9 h-9 opacity-25" />
                           <p className="text-sm font-medium">
                             Tidak ada data ditemukan
@@ -463,7 +465,7 @@ export default function GuruAbsensi() {
                     currentData.map((item) => (
                       <tr
                         key={item.id}
-                        className="hover:bg-slate-50/80 transition-colors"
+                        className="hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors"
                       >
                         <td className="px-5 py-3.5">
                           <div className="flex items-center gap-3">
@@ -471,25 +473,25 @@ export default function GuruAbsensi() {
                               {item.siswa.charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0">
-                              <p className="font-semibold text-slate-800 truncate">
+                              <p className="font-semibold text-slate-800 dark:text-slate-100 truncate">
                                 {item.siswa}
                               </p>
-                              <p className="text-xs text-slate-400 sm:hidden truncate">
+                              <p className="text-xs text-slate-400 dark:text-slate-500 sm:hidden truncate">
                                 {item.tempatPKL}
                               </p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-5 py-3.5 text-slate-500 hidden sm:table-cell">
+                        <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400 hidden sm:table-cell">
                           {item.tempatPKL}
                         </td>
                         <td className="px-5 py-3.5">
                           <StatusBadge status={item.status} />
                         </td>
-                        <td className="px-5 py-3.5 text-slate-500 font-mono text-xs whitespace-nowrap">
+                        <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400 font-mono text-xs whitespace-nowrap">
                           {item.waktu}
                         </td>
-                        <td className="px-5 py-3.5 text-slate-400 text-xs hidden md:table-cell max-w-[180px]">
+                        <td className="px-5 py-3.5 text-slate-400 dark:text-slate-500 text-xs hidden md:table-cell max-w-[180px]">
                           <span className="block truncate">
                             {item.catatan || "—"}
                           </span>
@@ -508,8 +510,8 @@ export default function GuruAbsensi() {
                 </tbody>
               </table>
             </div>
-            <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between gap-4">
-              <p className="text-xs text-slate-400">
+            <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex items-center justify-between gap-4">
+              <p className="text-xs text-slate-400 dark:text-slate-500">
                 {filteredData.length === 0
                   ? "Tidak ada data"
                   : `${startIndex + 1}–${Math.min(startIndex + itemsPerPage, filteredData.length)} dari ${filteredData.length}`}
@@ -518,11 +520,11 @@ export default function GuruAbsensi() {
                 <button
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((p) => p - 1)}
-                  className="flex items-center gap-1 px-3 py-1.5 border border-slate-200 bg-white rounded-lg text-xs hover:bg-slate-50 disabled:opacity-40 transition-colors"
+                  className="flex items-center gap-1 px-3 py-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-slate-300 rounded-lg text-xs hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" /> Prev
                 </button>
-                <span className="px-2.5 py-1.5 text-xs text-slate-600 font-semibold">
+                <span className="px-2.5 py-1.5 text-xs text-slate-600 dark:text-slate-300 font-semibold">
                   {currentPage}/{totalPages}
                 </span>
                 <button
@@ -548,31 +550,33 @@ export default function GuruAbsensi() {
             onClick={() => setModalSiswa(null)}
           />
           <div
-            className="relative bg-white w-full sm:max-w-5xl max-h-[90vh] sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col"
+            className="relative bg-white dark:bg-slate-900 w-full sm:max-w-5xl max-h-[90vh] sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col"
             style={{ animation: "slideUp .25s cubic-bezier(.32,1.25,.6,1)" }}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800 sticky top-0 bg-white dark:bg-slate-900 z-10">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-violet-100 text-violet-600 font-bold text-sm flex items-center justify-center">
                   {modalSiswa.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-800">{modalSiswa}</p>
-                  <p className="text-xs text-slate-400">
+                  <p className="font-semibold text-slate-800 dark:text-slate-100">
+                    {modalSiswa}
+                  </p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">
                     Riwayat Presensi Lengkap
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setModalSiswa(null)}
-                className="p-2 hover:bg-slate-100 rounded-xl transition-colors"
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
               >
                 <X className="w-5 h-5 text-slate-400" />
               </button>
             </div>
             <div className="flex-1 overflow-auto">
               <table className="w-full text-sm min-w-[640px]">
-                <thead className="sticky top-0 bg-slate-50 border-b border-slate-100 z-10">
+                <thead className="sticky top-0 bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 z-10">
                   <tr>
                     {[
                       "Tanggal",
@@ -584,26 +588,26 @@ export default function GuruAbsensi() {
                     ].map((h) => (
                       <th
                         key={h}
-                        className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider"
+                        className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                       >
                         {h}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                   {(siswaMap[modalSiswa] || []).map((item) => (
                     <tr
                       key={item.id}
-                      className="hover:bg-slate-50 transition-colors"
+                      className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                     >
-                      <td className="px-4 py-3 font-medium text-slate-700 text-sm">
+                      <td className="px-4 py-3 font-medium text-slate-700 dark:text-slate-300 text-sm">
                         {item.tanggal}
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={item.status} />
                       </td>
-                      <td className="px-4 py-3 text-slate-500 font-mono text-xs">
+                      <td className="px-4 py-3 text-slate-500 dark:text-slate-400 font-mono text-xs">
                         {item.waktu}
                       </td>
                       <td className="px-4 py-3">
@@ -650,7 +654,7 @@ export default function GuruAbsensi() {
                               setPreviewUrl(item.tandaTangan);
                               setPreviewType("ttd");
                             }}
-                            className="w-10 h-10 border-2 border-slate-200 rounded-xl overflow-hidden cursor-pointer bg-white p-0.5 hover:scale-105 hover:shadow-md transition-all"
+                            className="w-10 h-10 border-2 border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden cursor-pointer bg-white dark:bg-slate-800 p-0.5 hover:scale-105 hover:shadow-md transition-all"
                           >
                             <img
                               src={item.tandaTangan}
@@ -710,7 +714,7 @@ export default function GuruAbsensi() {
               </button>
             </div>
             <div
-              className={`rounded-2xl overflow-hidden shadow-2xl ${previewType === "ttd" ? "bg-white p-8" : ""}`}
+              className={`rounded-2xl overflow-hidden shadow-2xl ${previewType === "ttd" ? "bg-white dark:bg-slate-100 p-8" : ""}`}
             >
               <img
                 src={previewUrl}
