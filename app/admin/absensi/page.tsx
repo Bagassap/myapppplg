@@ -48,7 +48,7 @@ const STATUS_STYLES: Record<string, { pill: string; dot: string }> = {
     dot: "bg-red-500",
   },
   Libur: {
-    pill: "bg-slate-100 text-slate-500 ring-1 ring-slate-200",
+    pill: "bg-gray-100 text-gray-500 ring-1 ring-slate-200",
     dot: "bg-slate-400",
   },
 };
@@ -70,27 +70,27 @@ function SkeletonRows() {
   return (
     <>
       {[...Array(5)].map((_, i) => (
-        <tr key={i} className="border-b border-slate-100">
+        <tr key={i} className="border-b border-gray-100">
           <td className="px-5 py-3.5">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-full animate-pulse" />
-              <div className="h-3.5 bg-slate-100 rounded-full w-28 animate-pulse" />
+              <div className="w-8 h-8 bg-gray-100 rounded-full animate-pulse" />
+              <div className="h-3.5 bg-gray-100 rounded-full w-28 animate-pulse" />
             </div>
           </td>
           <td className="px-5 py-3.5 hidden sm:table-cell">
-            <div className="h-3.5 bg-slate-100 dark:bg-slate-800 rounded-full w-24 animate-pulse" />
+            <div className="h-3.5 bg-gray-100 rounded-full w-24 animate-pulse" />
           </td>
           <td className="px-5 py-3.5">
-            <div className="h-5 bg-slate-100 dark:bg-slate-800 rounded-full w-16 animate-pulse" />
+            <div className="h-5 bg-gray-100 rounded-full w-16 animate-pulse" />
           </td>
           <td className="px-5 py-3.5">
-            <div className="h-3.5 bg-slate-100 dark:bg-slate-800 rounded-full w-14 animate-pulse" />
+            <div className="h-3.5 bg-gray-100 rounded-full w-14 animate-pulse" />
           </td>
           <td className="px-5 py-3.5 hidden md:table-cell">
-            <div className="h-3.5 bg-slate-100 dark:bg-slate-800 rounded-full w-32 animate-pulse" />
+            <div className="h-3.5 bg-gray-100 rounded-full w-32 animate-pulse" />
           </td>
           <td className="px-5 py-3.5">
-            <div className="h-7 bg-slate-100 dark:bg-slate-800 rounded-lg w-20 animate-pulse" />
+            <div className="h-7 bg-gray-100 rounded-lg w-20 animate-pulse" />
           </td>
         </tr>
       ))}
@@ -112,7 +112,7 @@ function FilterSelect({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-500 transition-shadow"
+      className="px-3 py-1.5 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-shadow"
     >
       {options.map((o) => (
         <option key={o} value={o}>
@@ -243,7 +243,7 @@ export default function AdminAbsensi() {
 
   if (error)
     return (
-      <div className="flex h-screen bg-slate-50 dark:bg-slate-950">
+      <div className="flex h-screen bg-gray-50">
         <Sidebar />
         <div className="flex-1 flex flex-col">
           <TopBar />
@@ -258,21 +258,21 @@ export default function AdminAbsensi() {
     );
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 dark:bg-slate-950 px-4 sm:px-6 lg:px-8 py-7">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 px-4 sm:px-6 lg:px-8 py-7">
           {/* ── Page Header ── */}
           <div className="mb-7 flex items-start justify-between">
             <div>
               <div className="flex items-center gap-2.5 mb-1">
                 <span className="block w-1 h-6 bg-indigo-600 rounded-full" />
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
                   Data Absensi
                 </h1>
               </div>
-              <p className="text-slate-400 dark:text-slate-500 text-sm pl-3.5">
+              <p className="text-gray-500 text-sm pl-3.5">
                 Kelola dan pantau kehadiran seluruh siswa PKL.
               </p>
             </div>
@@ -284,7 +284,7 @@ export default function AdminAbsensi() {
               {
                 label: "Total",
                 val: statTotal,
-                color: "text-slate-700",
+                color: "text-gray-700",
                 ring: "ring-slate-200",
                 bg: "bg-slate-50",
                 icon: <ClipboardList className="w-4 h-4 text-slate-400" />,
@@ -316,15 +316,15 @@ export default function AdminAbsensi() {
             ].map((s) => (
               <div
                 key={s.label}
-                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm px-5 py-4 flex items-center justify-between"
+                className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex items-center justify-between"
               >
                 <div>
-                  <p className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                  <p className="text-xs font-medium text-gray-500 mb-1">
                     {s.label}
                   </p>
                   <p className={`text-2xl font-bold ${s.color}`}>
                     {loading ? (
-                      <span className="inline-block w-8 h-6 bg-slate-100 rounded animate-pulse" />
+                      <span className="inline-block w-8 h-6 bg-gray-100 rounded animate-pulse" />
                     ) : (
                       s.val
                     )}
@@ -338,12 +338,12 @@ export default function AdminAbsensi() {
           </div>
 
           {/* ── Filter Bar ── */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm px-4 py-3 mb-5 flex flex-wrap items-center gap-2.5">
-            <SlidersHorizontal className="w-4 h-4 text-slate-400 shrink-0" />
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-4 py-3 mb-5 flex flex-wrap items-center gap-2.5">
+            <SlidersHorizontal className="w-4 h-4 text-gray-400 shrink-0" />
 
             {/* Search */}
             <div className="relative">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 placeholder="Cari siswa..."
@@ -352,11 +352,11 @@ export default function AdminAbsensi() {
                   setSearchQuery(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="pl-8 pr-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-500 w-[155px]"
+                className="pl-8 pr-3 py-1.5 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 w-[155px]"
               />
             </div>
 
-            <span className="hidden sm:block w-px h-5 bg-slate-200" />
+            <span className="hidden sm:block w-px h-5 bg-gray-200" />
 
             <FilterSelect
               value={selectedPKL}
@@ -423,13 +423,13 @@ export default function AdminAbsensi() {
           </div>
 
           {/* ── Table ── */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden mb-6">
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-6">
             {/* Table header bar */}
-            <div className="px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <h2 className="font-semibold text-slate-700 dark:text-slate-200 text-sm">
+            <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="font-semibold text-gray-700 text-sm">
                 Daftar Presensi
               </h2>
-              <span className="text-xs text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 rounded-full font-medium">
+              <span className="text-xs text-gray-400 bg-gray-50 border border-gray-200 px-2.5 py-0.5 rounded-full font-medium">
                 {loading ? "…" : `${filteredData.length} record`}
               </span>
             </div>
@@ -437,7 +437,7 @@ export default function AdminAbsensi() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm min-w-[680px]">
                 <thead>
-                  <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50">
+                  <tr className="border-b border-gray-100 bg-gray-50">
                     {[
                       "Siswa",
                       "Tempat PKL",
@@ -448,22 +448,22 @@ export default function AdminAbsensi() {
                     ].map((h, idx) => (
                       <th
                         key={h}
-                        className={`px-5 py-2.5 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider
-                        ${idx === 1 ? "hidden sm:table-cell" : ""}
-                        ${idx === 4 ? "hidden md:table-cell" : ""}`}
+                        className={`px-5 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider
+ ${idx === 1 ? "hidden sm:table-cell" : ""}
+ ${idx === 4 ? "hidden md:table-cell" : ""}`}
                       >
                         {h}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                <tbody className="divide-y divide-gray-100">
                   {loading ? (
                     <SkeletonRows />
                   ) : currentData.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="py-16 text-center">
-                        <div className="flex flex-col items-center gap-2 text-slate-400 dark:text-slate-500">
+                        <div className="flex flex-col items-center gap-2 text-gray-400">
                           <ClipboardList className="w-9 h-9 opacity-25" />
                           <p className="text-sm font-medium">
                             Tidak ada data ditemukan
@@ -478,26 +478,26 @@ export default function AdminAbsensi() {
                     currentData.map((item) => (
                       <tr
                         key={item.id}
-                        className="hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors"
+                        className="hover:bg-gray-50 transition-colors"
                       >
                         {/* Siswa */}
                         <td className="px-5 py-3.5">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 font-bold text-xs flex items-center justify-center shrink-0 select-none">
+                            <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 font-bold text-xs flex items-center justify-center shrink-0 select-none">
                               {item.siswa.charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0">
-                              <p className="font-semibold text-slate-800 dark:text-slate-100 truncate">
+                              <p className="font-semibold text-gray-800 truncate">
                                 {item.siswa}
                               </p>
-                              <p className="text-xs text-slate-400 dark:text-slate-500 sm:hidden truncate">
+                              <p className="text-xs text-gray-400 sm:hidden truncate">
                                 {item.tempatPKL}
                               </p>
                             </div>
                           </div>
                         </td>
                         {/* Tempat PKL */}
-                        <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400 hidden sm:table-cell">
+                        <td className="px-5 py-3.5 text-gray-500 hidden sm:table-cell">
                           {item.tempatPKL}
                         </td>
                         {/* Status */}
@@ -505,11 +505,11 @@ export default function AdminAbsensi() {
                           <StatusBadge status={item.status} />
                         </td>
                         {/* Waktu */}
-                        <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400 font-mono text-xs whitespace-nowrap">
+                        <td className="px-5 py-3.5 text-gray-500 font-mono text-xs whitespace-nowrap">
                           {item.waktu}
                         </td>
                         {/* Catatan */}
-                        <td className="px-5 py-3.5 text-slate-400 dark:text-slate-500 text-xs hidden md:table-cell max-w-[180px]">
+                        <td className="px-5 py-3.5 text-gray-400 text-xs hidden md:table-cell max-w-[180px]">
                           <span className="block truncate">
                             {item.catatan || "—"}
                           </span>
@@ -519,7 +519,7 @@ export default function AdminAbsensi() {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => setModalSiswa(item.siswa)}
-                              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-semibold transition-colors border border-indigo-200 dark:border-indigo-700"
+                              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-xs font-semibold transition-colors border border-indigo-200"
                             >
                               <Eye className="w-3 h-3" /> Riwayat
                             </button>
@@ -544,8 +544,8 @@ export default function AdminAbsensi() {
             </div>
 
             {/* Pagination */}
-            <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex items-center justify-between gap-4">
-              <p className="text-xs text-slate-400 dark:text-slate-500">
+            <div className="px-5 py-3 border-t border-gray-100 bg-gray-50 flex items-center justify-between gap-4">
+              <p className="text-xs text-gray-400">
                 {filteredData.length === 0
                   ? "Tidak ada data"
                   : `${startIndex + 1}–${Math.min(startIndex + itemsPerPage, filteredData.length)} dari ${filteredData.length}`}
@@ -554,11 +554,11 @@ export default function AdminAbsensi() {
                 <button
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((p) => p - 1)}
-                  className="flex items-center gap-1 px-3 py-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-slate-300 rounded-lg text-xs hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 transition-colors"
+                  className="flex items-center gap-1 px-3 py-1.5 border border-gray-200 bg-white rounded-lg text-xs hover:bg-gray-50 disabled:opacity-40 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" /> Prev
                 </button>
-                <span className="px-2.5 py-1.5 text-xs text-slate-600 dark:text-slate-300 font-semibold">
+                <span className="px-2.5 py-1.5 text-xs text-gray-600 font-semibold">
                   {currentPage}/{totalPages}
                 </span>
                 <button
@@ -585,27 +585,25 @@ export default function AdminAbsensi() {
             onClick={() => setModalSiswa(null)}
           />
           <div
-            className="relative bg-white dark:bg-slate-900 w-full sm:max-w-5xl max-h-[90vh] sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col"
+            className="relative bg-white w-full sm:max-w-5xl max-h-[90vh] sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col"
             style={{ animation: "slideUp .25s cubic-bezier(.32,1.25,.6,1)" }}
           >
             {/* Modal header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 sticky top-0 z-10">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-white sticky top-0 z-10">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-600 font-bold text-sm flex items-center justify-center">
                   {modalSiswa.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-800 dark:text-slate-100">
-                    {modalSiswa}
-                  </p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                  <p className="font-semibold text-gray-800">{modalSiswa}</p>
+                  <p className="text-xs text-gray-400">
                     Riwayat Presensi Lengkap
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setModalSiswa(null)}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
               >
                 <X className="w-5 h-5 text-slate-400" />
               </button>
@@ -613,7 +611,7 @@ export default function AdminAbsensi() {
             {/* Modal body */}
             <div className="flex-1 overflow-auto">
               <table className="w-full text-sm min-w-[640px]">
-                <thead className="sticky top-0 bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 z-10">
+                <thead className="sticky top-0 bg-gray-50 border-b border-gray-100 z-10">
                   <tr>
                     {[
                       "Tanggal",
@@ -625,26 +623,26 @@ export default function AdminAbsensi() {
                     ].map((h) => (
                       <th
                         key={h}
-                        className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                        className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
                       >
                         {h}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                <tbody className="divide-y divide-gray-100">
                   {(siswaMap[modalSiswa] || []).map((item) => (
                     <tr
                       key={item.id}
-                      className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                      className="hover:bg-gray-50 transition-colors"
                     >
-                      <td className="px-4 py-3 font-medium text-slate-700 dark:text-slate-300 text-sm">
+                      <td className="px-4 py-3 font-medium text-gray-700 text-sm">
                         {item.tanggal}
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={item.status} />
                       </td>
-                      <td className="px-4 py-3 text-slate-500 dark:text-slate-400 font-mono text-xs">
+                      <td className="px-4 py-3 text-gray-500 font-mono text-xs">
                         {item.waktu}
                       </td>
                       <td className="px-4 py-3">
@@ -668,7 +666,7 @@ export default function AdminAbsensi() {
                               setPreviewUrl(item.foto);
                               setPreviewType("foto");
                             }}
-                            className="w-10 h-10 border-2 border-slate-200 rounded-xl overflow-hidden cursor-pointer hover:scale-105 hover:shadow-md transition-all"
+                            className="w-10 h-10 border-2 border-gray-200 rounded-xl overflow-hidden cursor-pointer hover:scale-105 hover:shadow-md transition-all"
                           >
                             <img
                               src={item.foto}
@@ -691,7 +689,7 @@ export default function AdminAbsensi() {
                               setPreviewUrl(item.tandaTangan);
                               setPreviewType("ttd");
                             }}
-                            className="w-10 h-10 border-2 border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden cursor-pointer bg-white dark:bg-slate-800 p-0.5 hover:scale-105 hover:shadow-md transition-all"
+                            className="w-10 h-10 border-2 border-gray-200 rounded-xl overflow-hidden cursor-pointer bg-white p-0.5 hover:scale-105 hover:shadow-md transition-all"
                           >
                             <img
                               src={item.tandaTangan}
@@ -712,7 +710,7 @@ export default function AdminAbsensi() {
                 </tbody>
               </table>
               {!siswaMap[modalSiswa]?.length && (
-                <div className="py-12 text-center text-slate-400 text-sm">
+                <div className="py-12 text-center text-gray-400 text-sm">
                   Tidak ada riwayat.
                 </div>
               )}
@@ -735,7 +733,7 @@ export default function AdminAbsensi() {
             style={{ animation: "scaleIn .2s cubic-bezier(0.34,1.56,0.64,1)" }}
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
                 {previewType === "ttd" ? (
                   <PenTool className="w-3 h-3" />
                 ) : (
@@ -751,7 +749,7 @@ export default function AdminAbsensi() {
               </button>
             </div>
             <div
-              className={`rounded-2xl overflow-hidden shadow-2xl ${previewType === "ttd" ? "bg-white dark:bg-slate-100 p-8" : ""}`}
+              className={`rounded-2xl overflow-hidden shadow-2xl ${previewType === "ttd" ? "bg-white p-8" : ""}`}
             >
               <img
                 src={previewUrl}
@@ -764,21 +762,21 @@ export default function AdminAbsensi() {
                 }}
               />
             </div>
-            <p className="text-center text-xs text-slate-500 mt-3">
+            <p className="text-center text-xs text-gray-500 mt-3">
               Klik di luar untuk menutup
             </p>
           </div>
           <style>{`
-            @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
-            @keyframes scaleIn { from{opacity:0;transform:scale(0.94) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
-            @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
-          `}</style>
+ @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+ @keyframes scaleIn { from{opacity:0;transform:scale(0.94) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+ @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+ `}</style>
         </div>
       )}
 
       <style>{`
-        @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
-      `}</style>
+ @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+ `}</style>
     </div>
   );
 }
