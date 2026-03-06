@@ -73,24 +73,24 @@ function SkeletonRows() {
         <tr key={i} className="border-b border-slate-100">
           <td className="px-5 py-3.5">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-slate-100 rounded-full animate-pulse" />
+              <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-full animate-pulse" />
               <div className="h-3.5 bg-slate-100 rounded-full w-28 animate-pulse" />
             </div>
           </td>
           <td className="px-5 py-3.5 hidden sm:table-cell">
-            <div className="h-3.5 bg-slate-100 rounded-full w-24 animate-pulse" />
+            <div className="h-3.5 bg-slate-100 dark:bg-slate-800 rounded-full w-24 animate-pulse" />
           </td>
           <td className="px-5 py-3.5">
-            <div className="h-5 bg-slate-100 rounded-full w-16 animate-pulse" />
+            <div className="h-5 bg-slate-100 dark:bg-slate-800 rounded-full w-16 animate-pulse" />
           </td>
           <td className="px-5 py-3.5">
-            <div className="h-3.5 bg-slate-100 rounded-full w-14 animate-pulse" />
+            <div className="h-3.5 bg-slate-100 dark:bg-slate-800 rounded-full w-14 animate-pulse" />
           </td>
           <td className="px-5 py-3.5 hidden md:table-cell">
-            <div className="h-3.5 bg-slate-100 rounded-full w-32 animate-pulse" />
+            <div className="h-3.5 bg-slate-100 dark:bg-slate-800 rounded-full w-32 animate-pulse" />
           </td>
           <td className="px-5 py-3.5">
-            <div className="h-7 bg-slate-100 rounded-lg w-20 animate-pulse" />
+            <div className="h-7 bg-slate-100 dark:bg-slate-800 rounded-lg w-20 animate-pulse" />
           </td>
         </tr>
       ))}
@@ -243,7 +243,7 @@ export default function AdminAbsensi() {
 
   if (error)
     return (
-      <div className="flex h-screen bg-slate-50">
+      <div className="flex h-screen bg-slate-50 dark:bg-slate-950">
         <Sidebar />
         <div className="flex-1 flex flex-col">
           <TopBar />
@@ -330,9 +330,7 @@ export default function AdminAbsensi() {
                     )}
                   </p>
                 </div>
-                <div
-                  className={`p-2.5 rounded-xl ring-1 dark:bg-slate-800 ${s.ring} ${s.bg}`}
-                >
+                <div className={`p-2.5 rounded-xl ring-1 ${s.ring} ${s.bg}`}>
                   {s.icon}
                 </div>
               </div>
