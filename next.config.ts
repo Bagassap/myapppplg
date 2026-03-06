@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   transpilePackages: ['pg'],
   compress: true,
   poweredByHeader: false,
+
+  output: 'standalone',
+
   async headers() {
     return [
       {
@@ -14,6 +17,12 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/api/uploads/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      {
+        source: '/_next/static/:path*',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],

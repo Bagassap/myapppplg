@@ -77,7 +77,6 @@ export default function AdminDashboard() {
     fetchDashboard();
   }, [selectedClass, selectedPeriod]);
 
-  // Transformasi classData → format chart
   const chartData = useMemo(() => {
     if (!classData.length) return [];
     return classData.map((item: any) => ({
