@@ -34,137 +34,141 @@ export default function DeleteAbsensiModal({
       if (!res.ok) throw new Error(json.error || "Gagal menghapus");
       setOpen(false);
       onSuccess(absensiId);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (e: any) {
+      setError(e.message);
     } finally {
       setLoading(false);
     }
   };
 
+  const STATUS_COLOR: Record<string, string> = {
+    Hadir: "text-emerald-600",
+    Izin: "text-amber-600",
+    Sakit: "text-orange-600",
+    Alfa: "text-red-600",
+    Pulang: "text-sky-600",
+  };
+
   return (
     <>
-      {/* Tombol hapus di tabel */}
+      {/* Trigger button */}
       <button
         onClick={() => {
           setOpen(true);
           setError(null);
         }}
-        className="flex items-center gap-1 px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-xs sm:text-sm font-medium"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-semibold transition-colors border border-red-200"
         title="Hapus data absensi"
       >
-        <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+        <Trash2 className="w-3 h-3" />
         <span className="hidden sm:inline">Hapus</span>
       </button>
 
-      {/* Modal konfirmasi */}
+      {/* Modal */}
       {open && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-          {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
             onClick={() => !loading && setOpen(false)}
           />
-
           <div
-            className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden"
-            style={{ animation: "scaleIn 0.2s cubic-bezier(0.34,1.56,0.64,1)" }}
+            className="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden"
+            style={{ animation: "scaleIn .2s cubic-bezier(0.34,1.56,0.64,1)" }}
           >
-            {/* Header merah */}
-            <div className="bg-red-500 px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-1.5 bg-white/20 rounded-lg">
-                  <AlertTriangle className="w-5 h-5 text-white" />
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 bg-red-100 rounded-lg">
+                  <AlertTriangle className="w-4 h-4 text-red-600" />
                 </div>
-                <h3 className="font-bold text-white text-lg">
-                  Hapus Data Absensi
-                </h3>
+                <h3 className="font-semibold text-slate-800">Hapus Absensi</h3>
               </div>
               <button
                 onClick={() => !loading && setOpen(false)}
-                className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+                className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 text-white" />
+                <X className="w-4 h-4 text-slate-400" />
               </button>
             </div>
 
             {/* Body */}
-            <div className="px-6 py-5">
-              <p className="text-gray-600 text-sm mb-4">
-                Anda akan menghapus data absensi berikut secara permanen:
+            <div className="px-5 py-5">
+              <p className="text-sm text-slate-500 mb-4">
+                Data berikut akan dihapus secara permanen:
               </p>
 
               {/* Info card */}
-              <div className="bg-red-50 border border-red-100 rounded-xl p-4 mb-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500 font-medium">Siswa</span>
-                  <span className="text-gray-900 font-semibold">
-                    {namaSiswa}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500 font-medium">Tanggal</span>
-                  <span className="text-gray-900">{tanggal}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500 font-medium">Status</span>
-                  <span
-                    className={`font-semibold ${status === "Hadir" ? "text-green-600" : status === "Izin" ? "text-yellow-600" : "text-gray-600"}`}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-4 space-y-2.5">
+                {[
+                  {
+                    label: "Siswa",
+                    val: namaSiswa,
+                    cls: "font-semibold text-slate-800",
+                  },
+                  { label: "Tanggal", val: tanggal, cls: "text-slate-600" },
+                  {
+                    label: "Status",
+                    val: status,
+                    cls: `font-semibold ${STATUS_COLOR[status] ?? "text-slate-600"}`,
+                  },
+                  {
+                    label: "ID",
+                    val: `#${absensiId}`,
+                    cls: "font-mono text-xs text-slate-400",
+                  },
+                ].map((r) => (
+                  <div
+                    key={r.label}
+                    className="flex items-center justify-between gap-4"
                   >
-                    {status}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500 font-medium">ID</span>
-                  <span className="text-gray-400 font-mono text-xs">
-                    #{absensiId}
-                  </span>
-                </div>
+                    <span className="text-xs text-slate-400 font-medium">
+                      {r.label}
+                    </span>
+                    <span className={`text-sm text-right ${r.cls}`}>
+                      {r.val}
+                    </span>
+                  </div>
+                ))}
               </div>
 
-              <p className="text-xs text-red-500 font-medium mb-5">
-                ⚠️ Tindakan ini tidak dapat dibatalkan.
+              <p className="text-xs text-red-500 font-medium mb-5 flex items-center gap-1.5">
+                <AlertTriangle className="w-3 h-3 shrink-0" /> Tindakan ini
+                tidak dapat dibatalkan.
               </p>
 
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-2.5 rounded-xl mb-4">
+                <div className="bg-red-50 border border-red-200 text-red-600 text-xs px-3 py-2.5 rounded-xl mb-4 font-medium">
                   {error}
                 </div>
               )}
 
-              {/* Actions */}
               <div className="flex gap-3">
                 <button
                   onClick={() => setOpen(false)}
                   disabled={loading}
-                  className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium disabled:opacity-50"
+                  className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors text-sm font-medium disabled:opacity-50"
                 >
                   Batal
                 </button>
                 <button
                   onClick={handleDelete}
                   disabled={loading}
-                  className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors text-sm font-medium disabled:opacity-60 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors text-sm font-semibold disabled:opacity-60 flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" /> Menghapus...
+                      <Loader2 className="w-4 h-4 animate-spin" /> Menghapus…
                     </>
                   ) : (
                     <>
-                      <Trash2 className="w-4 h-4" /> Ya, Hapus
+                      <Trash2 className="w-4 h-4" /> Hapus
                     </>
                   )}
                 </button>
               </div>
             </div>
           </div>
-
-          <style>{`
-            @keyframes scaleIn {
-              from { opacity: 0; transform: scale(0.92) translateY(12px); }
-              to   { opacity: 1; transform: scale(1) translateY(0); }
-            }
-          `}</style>
+          <style>{`@keyframes scaleIn { from{opacity:0;transform:scale(0.92) translateY(10px)} to{opacity:1;transform:scale(1) translateY(0)} }`}</style>
         </div>
       )}
     </>

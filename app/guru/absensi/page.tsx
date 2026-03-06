@@ -12,31 +12,128 @@ import {
   Loader2,
   CheckSquare,
   X,
-  Calendar,
   ChevronLeft,
   ChevronRight,
-  UserCheck,
-  UserX,
   MapPin,
   Image as ImageIcon,
   PenTool,
+  Search,
+  ClipboardList,
+  Eye,
+  Clock,
+  AlertCircle,
 } from "lucide-react";
+
+const STATUS_STYLES: Record<string, { pill: string; dot: string }> = {
+  Hadir: {
+    pill: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
+    dot: "bg-emerald-500",
+  },
+  Pulang: {
+    pill: "bg-sky-50 text-sky-700 ring-1 ring-sky-200",
+    dot: "bg-sky-500",
+  },
+  Izin: {
+    pill: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
+    dot: "bg-amber-400",
+  },
+  Sakit: {
+    pill: "bg-orange-50 text-orange-700 ring-1 ring-orange-200",
+    dot: "bg-orange-400",
+  },
+  Alfa: {
+    pill: "bg-red-50 text-red-700 ring-1 ring-red-200",
+    dot: "bg-red-500",
+  },
+  Libur: {
+    pill: "bg-slate-100 text-slate-500 ring-1 ring-slate-200",
+    dot: "bg-slate-400",
+  },
+};
+
+function StatusBadge({ status }: { status: string }) {
+  const s = STATUS_STYLES[status] ?? STATUS_STYLES.Libur;
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${s.pill}`}
+    >
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.dot}`} />
+      {status}
+    </span>
+  );
+}
+
+function SkeletonRows() {
+  return (
+    <>
+      {[...Array(5)].map((_, i) => (
+        <tr key={i} className="border-b border-slate-100">
+          <td className="px-5 py-3.5">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-slate-100 rounded-full animate-pulse" />
+              <div className="h-3.5 bg-slate-100 rounded-full w-28 animate-pulse" />
+            </div>
+          </td>
+          <td className="px-5 py-3.5 hidden sm:table-cell">
+            <div className="h-3.5 bg-slate-100 rounded-full w-24 animate-pulse" />
+          </td>
+          <td className="px-5 py-3.5">
+            <div className="h-5 bg-slate-100 rounded-full w-16 animate-pulse" />
+          </td>
+          <td className="px-5 py-3.5">
+            <div className="h-3.5 bg-slate-100 rounded-full w-14 animate-pulse" />
+          </td>
+          <td className="px-5 py-3.5 hidden md:table-cell">
+            <div className="h-3.5 bg-slate-100 rounded-full w-32 animate-pulse" />
+          </td>
+          <td className="px-5 py-3.5">
+            <div className="h-7 bg-slate-100 rounded-lg w-20 animate-pulse" />
+          </td>
+        </tr>
+      ))}
+    </>
+  );
+}
+
+function FilterSelect({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="px-3 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-300 transition-shadow"
+    >
+      {options.map((o) => (
+        <option key={o} value={o}>
+          {o}
+        </option>
+      ))}
+    </select>
+  );
+}
 
 export default function GuruAbsensi() {
   const { data: session, status } = useSession();
   const { exportPDF, exporting } = useExportPDF();
+
   const [selectedPKL, setSelectedPKL] = useState("Semua Tempat PKL");
   const [selectedPeriod, setSelectedPeriod] = useState("Bulan Ini");
   const [selectedSiswa, setSelectedSiswa] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("Semua");
-  const [showSiswaPresensi, setShowSiswaPresensi] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [presensiData, setPresensiData] = useState<any[]>([]);
-  const [siswaPresensiData, setSiswaPresensiData] = useState<
-    Record<string, any[]>
-  >({});
+  const [siswaMap, setSiswaMap] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [modalSiswa, setModalSiswa] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewType, setPreviewType] = useState<"foto" | "ttd">("foto");
   const itemsPerPage = 10;
@@ -44,592 +141,601 @@ export default function GuruAbsensi() {
   useEffect(() => {
     if (status === "loading") return;
     if (!session) {
-      setError("Unauthorized: Silakan login terlebih dahulu.");
+      setError("Unauthorized: Silakan login.");
       setLoading(false);
       return;
     }
 
-    const fetchAbsensi = async () => {
+    const load = async () => {
       try {
         setLoading(true);
         setError(null);
         const params = new URLSearchParams();
+        const now = new Date();
         if (selectedPeriod === "Hari Ini") {
-          const today = new Date().toISOString().split("T")[0];
-          params.append("startDate", today);
-          params.append("endDate", today);
+          const d = now.toISOString().split("T")[0];
+          params.append("startDate", d);
+          params.append("endDate", d);
         } else if (selectedPeriod === "Bulan Ini") {
-          const now = new Date();
-          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-            .toISOString()
-            .split("T")[0];
-          const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-            .toISOString()
-            .split("T")[0];
-          params.append("startDate", startOfMonth);
-          params.append("endDate", endOfMonth);
-        } else if (selectedPeriod === "Tahun Ini") {
-          const now = new Date();
-          const startOfYear = new Date(now.getFullYear(), 0, 1)
-            .toISOString()
-            .split("T")[0];
-          const endOfYear = new Date(now.getFullYear(), 11, 31)
-            .toISOString()
-            .split("T")[0];
-          params.append("startDate", startOfYear);
-          params.append("endDate", endOfYear);
-        }
-
-        const response = await fetch(`/api/absensi?${params.toString()}`);
-        if (!response.ok)
-          throw new Error(
-            `Gagal mengambil data absensi: ${await response.text()}`,
+          params.append(
+            "startDate",
+            new Date(now.getFullYear(), now.getMonth(), 1)
+              .toISOString()
+              .split("T")[0],
           );
-
-        const data = await response.json();
-        const transformedData = data.map((item: any) => ({
+          params.append(
+            "endDate",
+            new Date(now.getFullYear(), now.getMonth() + 1, 0)
+              .toISOString()
+              .split("T")[0],
+          );
+        } else if (selectedPeriod === "Tahun Ini") {
+          params.append(
+            "startDate",
+            new Date(now.getFullYear(), 0, 1).toISOString().split("T")[0],
+          );
+          params.append(
+            "endDate",
+            new Date(now.getFullYear(), 11, 31).toISOString().split("T")[0],
+          );
+        }
+        const res = await fetch(`/api/absensi?${params}`);
+        if (!res.ok) throw new Error(await res.text());
+        const raw: any[] = await res.json();
+        const data = raw.map((item) => ({
           id: item.id,
-          siswa: item.siswa || "Tidak Diketahui",
-          tempatPKL: item.tempatPKL || "Tidak Diketahui",
+          siswa: item.siswa || "—",
+          tempatPKL: item.tempatPKL || "—",
           status: item.status,
-          waktu: item.waktu || "-",
-          catatan: item.keterangan || "",
-          kegiatan: item.kegiatan || "",
+          waktu: item.waktu || "—",
+          catatan: item.keterangan || item.kegiatan || "",
           lokasi: item.lokasi || "",
           foto: item.foto || "",
           tandaTangan: item.tandaTangan || "",
-          bukti: item.bukti || "",
           tanggal: new Date(item.tanggal).toLocaleDateString("id-ID"),
         }));
-
-        setPresensiData(transformedData);
+        setPresensiData(data);
         const grouped: Record<string, any[]> = {};
-        transformedData.forEach((item: any) => {
-          if (!grouped[item.siswa]) grouped[item.siswa] = [];
-          grouped[item.siswa].push(item);
+        data.forEach((d) => {
+          if (!grouped[d.siswa]) grouped[d.siswa] = [];
+          grouped[d.siswa].push(d);
         });
-        setSiswaPresensiData(grouped);
-      } catch (err: any) {
-        setError(err.message);
+        setSiswaMap(grouped);
+      } catch (e: any) {
+        setError(e.message);
       } finally {
         setLoading(false);
       }
     };
-
-    fetchAbsensi();
+    load();
   }, [session, status, selectedPeriod]);
 
   const filteredData = presensiData.filter((item) => {
-    const matchesPKL =
-      selectedPKL === "Semua Tempat PKL" || item.tempatPKL === selectedPKL;
-    const matchesStatus =
-      selectedStatus === "Semua" ||
-      item.status.toLowerCase() === selectedStatus.toLowerCase();
-    const matchesSiswa = selectedSiswa === "" || item.siswa === selectedSiswa;
-    return matchesPKL && matchesStatus && matchesSiswa;
+    const q = searchQuery.toLowerCase();
+    return (
+      (!q ||
+        item.siswa.toLowerCase().includes(q) ||
+        item.tempatPKL.toLowerCase().includes(q)) &&
+      (selectedPKL === "Semua Tempat PKL" || item.tempatPKL === selectedPKL) &&
+      (selectedStatus === "Semua" ||
+        item.status.toLowerCase() === selectedStatus.toLowerCase()) &&
+      (selectedSiswa === "" || item.siswa === selectedSiswa)
+    );
   });
 
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / itemsPerPage));
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentData = filteredData.slice(startIndex, endIndex);
+  const currentData = filteredData.slice(startIndex, startIndex + itemsPerPage);
 
-  const openPreview = (url: string, type: "foto" | "ttd") => {
-    if (!url) return;
-    setPreviewUrl(url);
-    setPreviewType(type);
-  };
+  const statTotal = presensiData.length;
+  const statHadir = presensiData.filter((i) => i.status === "Hadir").length;
+  const statIzin = presensiData.filter((i) =>
+    ["Izin", "Sakit"].includes(i.status),
+  ).length;
+  const statAlfa = presensiData.filter((i) => i.status === "Alfa").length;
 
-  const handleExport = () => {
-    exportPDF(filteredData, "Laporan Absensi PKL — Guru");
-  };
-
-  const handleViewSiswaPresensi = (siswa: string) => {
-    setSelectedSiswa(siswa);
-    setShowSiswaPresensi(true);
-  };
-  const handlePrevious = () => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1);
-  };
-  const handleNext = () => {
-    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-  };
-
-  if (loading || error) {
+  if (error)
     return (
-      <div className="flex h-screen bg-gray-50 overflow-hidden">
+      <div className="flex h-screen bg-slate-50">
         <Sidebar />
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col">
           <TopBar />
-          <main className="flex-1 flex items-center justify-center p-6 sm:p-8 lg:p-12">
-            {loading ? (
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
-            ) : (
-              <p className="text-red-600">{error}</p>
-            )}
+          <main className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
+              <p className="text-red-500 font-medium">{error}</p>
+            </div>
           </main>
         </div>
       </div>
     );
-  }
-
-  const renderTableHeaders = () => (
-    <>
-      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 rounded-tl-xl text-xs sm:text-base">
-        Siswa
-      </th>
-      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base hidden sm:table-cell">
-        Tempat PKL
-      </th>
-      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base">
-        Status
-      </th>
-      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base">
-        Waktu
-      </th>
-      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base hidden md:table-cell">
-        Catatan
-      </th>
-      <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 rounded-tr-xl text-xs sm:text-base">
-        Aksi
-      </th>
-    </>
-  );
-
-  const renderTableRow = (item: any) => (
-    <tr
-      key={item.id}
-      className="border-b border-gray-100 hover:bg-indigo-50 transition-colors"
-    >
-      <td className="px-2 py-3 sm:px-6 sm:py-4 font-medium text-gray-900 text-xs sm:text-base break-words">
-        {item.siswa}
-        <div className="text-[10px] text-gray-500 sm:hidden mt-1">
-          {item.tempatPKL}
-        </div>
-      </td>
-      <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base hidden sm:table-cell">
-        {item.tempatPKL}
-      </td>
-      <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base">
-        <div className="flex items-center gap-1 sm:gap-2">
-          {item.status === "Hadir" && (
-            <CheckSquare className="w-3 h-3 sm:w-4 sm:h-4 text-green-600 shrink-0" />
-          )}
-          <span>{item.status}</span>
-        </div>
-      </td>
-      <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base whitespace-nowrap">
-        {item.waktu}
-      </td>
-      <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base hidden md:table-cell">
-        {item.catatan || "-"}
-      </td>
-      <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700">
-        <div className="flex flex-wrap gap-1 sm:gap-2">
-          <button
-            onClick={() => handleViewSiswaPresensi(item.siswa)}
-            className="flex items-center gap-1 px-3 py-1.5 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-xs sm:text-sm font-medium"
-          >
-            <UserCheck className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span>Lihat Presensi</span>
-          </button>
-        </div>
-      </td>
-    </tr>
-  );
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-50 overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar />
-        <main className="flex-1 p-4 sm:p-8 lg:p-12 overflow-y-auto overflow-x-hidden w-full max-w-full">
-          <div className="mb-6 sm:mb-8">
-            <h1 className="text-xl sm:text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2 sm:gap-3">
-              <Calendar className="w-8 h-8 sm:w-12 sm:h-12 text-indigo-600" />
-              Absensi
-            </h1>
-            <p className="text-gray-600 text-sm sm:text-lg">
-              Lihat presensi siswa bimbingan Anda.
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-7">
+          {/* Page Header */}
+          <div className="mb-7">
+            <div className="flex items-center gap-2.5 mb-1">
+              <span className="block w-1 h-6 bg-violet-600 rounded-full" />
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                Data Absensi
+              </h1>
+            </div>
+            <p className="text-slate-400 text-sm pl-3.5">
+              Pantau kehadiran siswa bimbingan Anda.
             </p>
           </div>
 
-          <div className="bg-white px-5 py-4 rounded-2xl shadow-sm border border-gray-100 mb-6 sm:mb-8 flex flex-wrap gap-3 items-center">
-            <SlidersHorizontal className="w-4 h-4 text-indigo-400 shrink-0" />
-            <div className="flex flex-wrap gap-3 flex-1">
-              <select
-                value={selectedPKL}
-                onChange={(e) => setSelectedPKL(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 min-w-[150px]"
+          {/* Stat Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {[
+              {
+                label: "Total",
+                val: statTotal,
+                color: "text-slate-700",
+                ring: "ring-slate-200",
+                bg: "bg-slate-50",
+                icon: <ClipboardList className="w-4 h-4 text-slate-400" />,
+              },
+              {
+                label: "Hadir",
+                val: statHadir,
+                color: "text-emerald-700",
+                ring: "ring-emerald-200",
+                bg: "bg-emerald-50",
+                icon: <CheckSquare className="w-4 h-4 text-emerald-500" />,
+              },
+              {
+                label: "Izin",
+                val: statIzin,
+                color: "text-amber-700",
+                ring: "ring-amber-200",
+                bg: "bg-amber-50",
+                icon: <Clock className="w-4 h-4 text-amber-500" />,
+              },
+              {
+                label: "Alfa",
+                val: statAlfa,
+                color: "text-red-700",
+                ring: "ring-red-200",
+                bg: "bg-red-50",
+                icon: <X className="w-4 h-4 text-red-500" />,
+              },
+            ].map((s) => (
+              <div
+                key={s.label}
+                className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4 flex items-center justify-between"
               >
-                <option>Semua Tempat PKL</option>
-                {[...new Set(presensiData.map((i) => i.tempatPKL))].map((o) => (
-                  <option key={o} value={o}>
-                    {o}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={selectedPeriod}
-                onChange={(e) => setSelectedPeriod(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 min-w-[130px]"
-              >
-                {["Hari Ini", "Bulan Ini", "Tahun Ini"].map((o) => (
-                  <option key={o}>{o}</option>
-                ))}
-              </select>
-              <select
-                value={selectedSiswa}
-                onChange={(e) => setSelectedSiswa(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 min-w-[150px]"
-              >
-                <option value="">Semua Siswa</option>
-                {[...new Set(presensiData.map((i) => i.siswa))].map((o) => (
-                  <option key={o} value={o}>
-                    {o}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 min-w-[120px]"
-              >
-                {["Semua", "Hadir", "Pulang", "Izin", "Libur"].map((o) => (
-                  <option key={o}>{o}</option>
-                ))}
-              </select>
-            </div>
-            <button
-              onClick={handleExport}
-              disabled={exporting}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed shrink-0"
-            >
-              {exporting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> PDF...
-                </>
-              ) : (
-                <>
-                  <Download className="w-4 h-4" /> PDF
-                </>
-              )}
-            </button>
+                <div>
+                  <p className="text-xs font-medium text-slate-400 mb-1">
+                    {s.label}
+                  </p>
+                  <p className={`text-2xl font-bold ${s.color}`}>
+                    {loading ? (
+                      <span className="inline-block w-8 h-6 bg-slate-100 rounded animate-pulse" />
+                    ) : (
+                      s.val
+                    )}
+                  </p>
+                </div>
+                <div className={`p-2.5 rounded-xl ring-1 ${s.ring} ${s.bg}`}>
+                  {s.icon}
+                </div>
+              </div>
+            ))}
           </div>
 
-          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-200 overflow-hidden">
-            <div className="p-4 sm:p-8 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-lg sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <CheckSquare className="w-5 h-5 sm:w-7 sm:h-7 text-green-600" />
-                Daftar Presensi
-              </h3>
+          {/* Filter Bar */}
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm px-4 py-3 mb-5 flex flex-wrap items-center gap-2.5">
+            <SlidersHorizontal className="w-4 h-4 text-slate-400 shrink-0" />
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Cari siswa..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-300 w-[155px]"
+              />
             </div>
-            <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300">
-              <table className="w-full table-auto min-w-full">
+            <span className="hidden sm:block w-px h-5 bg-slate-200" />
+            <FilterSelect
+              value={selectedPKL}
+              onChange={(v) => {
+                setSelectedPKL(v);
+                setCurrentPage(1);
+              }}
+              options={[
+                "Semua Tempat PKL",
+                ...new Set(presensiData.map((i) => i.tempatPKL)),
+              ]}
+            />
+            <FilterSelect
+              value={selectedPeriod}
+              onChange={(v) => {
+                setSelectedPeriod(v);
+                setCurrentPage(1);
+              }}
+              options={["Hari Ini", "Bulan Ini", "Tahun Ini"]}
+            />
+            <FilterSelect
+              value={selectedSiswa}
+              onChange={(v) => {
+                setSelectedSiswa(v);
+                setCurrentPage(1);
+              }}
+              options={[
+                "Semua Siswa",
+                ...new Set(presensiData.map((i) => i.siswa)),
+              ]}
+            />
+            <FilterSelect
+              value={selectedStatus}
+              onChange={(v) => {
+                setSelectedStatus(v);
+                setCurrentPage(1);
+              }}
+              options={[
+                "Semua",
+                "Hadir",
+                "Pulang",
+                "Izin",
+                "Sakit",
+                "Alfa",
+                "Libur",
+              ]}
+            />
+            <div className="ml-auto shrink-0">
+              <button
+                onClick={() =>
+                  exportPDF(filteredData, "Laporan Absensi PKL — Guru")
+                }
+                disabled={exporting}
+                className="flex items-center gap-2 px-4 py-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-60"
+              >
+                {exporting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Download className="w-3.5 h-3.5" />
+                )}
+                {exporting ? "Membuat…" : "Ekspor PDF"}
+              </button>
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mb-6">
+            <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="font-semibold text-slate-700 text-sm">
+                Daftar Presensi
+              </h2>
+              <span className="text-xs text-slate-400 bg-slate-50 border border-slate-200 px-2.5 py-0.5 rounded-full font-medium">
+                {loading ? "…" : `${filteredData.length} record`}
+              </span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[640px]">
                 <thead>
-                  <tr className="bg-gray-50 border-b border-gray-100">
-                    {renderTableHeaders()}
+                  <tr className="border-b border-slate-100 bg-slate-50/70">
+                    {[
+                      "Siswa",
+                      "Tempat PKL",
+                      "Status",
+                      "Waktu",
+                      "Catatan",
+                      "Aksi",
+                    ].map((h, idx) => (
+                      <th
+                        key={h}
+                        className={`px-5 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider
+                        ${idx === 1 ? "hidden sm:table-cell" : ""}
+                        ${idx === 4 ? "hidden md:table-cell" : ""}`}
+                      >
+                        {h}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {currentData.map((item) => renderTableRow(item))}
+                <tbody className="divide-y divide-slate-50">
+                  {loading ? (
+                    <SkeletonRows />
+                  ) : currentData.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-16 text-center">
+                        <div className="flex flex-col items-center gap-2 text-slate-400">
+                          <ClipboardList className="w-9 h-9 opacity-25" />
+                          <p className="text-sm font-medium">
+                            Tidak ada data ditemukan
+                          </p>
+                          <p className="text-xs opacity-60">
+                            Coba ubah filter atau periode
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    currentData.map((item) => (
+                      <tr
+                        key={item.id}
+                        className="hover:bg-slate-50/80 transition-colors"
+                      >
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-violet-100 text-violet-600 font-bold text-xs flex items-center justify-center shrink-0">
+                              {item.siswa.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-slate-800 truncate">
+                                {item.siswa}
+                              </p>
+                              <p className="text-xs text-slate-400 sm:hidden truncate">
+                                {item.tempatPKL}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-3.5 text-slate-500 hidden sm:table-cell">
+                          {item.tempatPKL}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <StatusBadge status={item.status} />
+                        </td>
+                        <td className="px-5 py-3.5 text-slate-500 font-mono text-xs whitespace-nowrap">
+                          {item.waktu}
+                        </td>
+                        <td className="px-5 py-3.5 text-slate-400 text-xs hidden md:table-cell max-w-[180px]">
+                          <span className="block truncate">
+                            {item.catatan || "—"}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <button
+                            onClick={() => setModalSiswa(item.siswa)}
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-violet-50 hover:bg-violet-100 text-violet-600 rounded-lg text-xs font-semibold transition-colors border border-violet-200"
+                          >
+                            <Eye className="w-3 h-3" /> Riwayat
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
-            {currentData.length === 0 && (
-              <div className="py-12 text-center text-gray-500 text-sm sm:text-base">
-                Data tidak ditemukan.
-              </div>
-            )}
-            <div className="p-4 sm:p-8 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-xs sm:text-sm text-gray-600 font-medium">
-                Menampilkan {startIndex + 1}-
-                {Math.min(endIndex, filteredData.length)} dari{" "}
-                {filteredData.length}
+            <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between gap-4">
+              <p className="text-xs text-slate-400">
+                {filteredData.length === 0
+                  ? "Tidak ada data"
+                  : `${startIndex + 1}–${Math.min(startIndex + itemsPerPage, filteredData.length)} dari ${filteredData.length}`}
               </p>
-              <div className="flex gap-2 w-full sm:w-auto">
+              <div className="flex items-center gap-1">
                 <button
                   disabled={currentPage === 1}
-                  onClick={handlePrevious}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm disabled:opacity-50"
+                  onClick={() => setCurrentPage((p) => p - 1)}
+                  className="flex items-center gap-1 px-3 py-1.5 border border-slate-200 bg-white rounded-lg text-xs hover:bg-slate-50 disabled:opacity-40 transition-colors"
                 >
-                  <ChevronLeft className="w-4 h-4" /> Prev
+                  <ChevronLeft className="w-3.5 h-3.5" /> Prev
                 </button>
+                <span className="px-2.5 py-1.5 text-xs text-slate-600 font-semibold">
+                  {currentPage}/{totalPages}
+                </span>
                 <button
-                  disabled={currentPage === totalPages}
-                  onClick={handleNext}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm disabled:opacity-50"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setCurrentPage((p) => p + 1)}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-xs disabled:opacity-40 transition-colors"
                 >
-                  Next <ChevronRight className="w-4 h-4" />
+                  Next <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* ── SECTION SISWA TIDAK HADIR ─────────────────────────── */}
           <TidakHadirSection period={selectedPeriod} role="guru" />
-
-          {showSiswaPresensi && selectedSiswa && (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4">
-              <div
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                onClick={() => setShowSiswaPresensi(false)}
-              />
-              <div className="relative bg-white w-full max-w-6xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-                <div className="p-4 sm:p-6 border-b flex items-center justify-between">
-                  <h3 className="font-bold text-lg sm:text-2xl truncate pr-4">
-                    Riwayat {selectedSiswa}
-                  </h3>
-                  <button
-                    onClick={() => setShowSiswaPresensi(false)}
-                    className="p-2 hover:bg-gray-100 rounded-full"
-                  >
-                    <X className="w-6 h-6" />
-                  </button>
-                </div>
-                <div className="flex-1 overflow-auto p-2 sm:p-6">
-                  <div className="w-full overflow-x-auto">
-                    <table className="w-full text-xs sm:text-base min-w-[800px] sm:min-w-full">
-                      <thead className="bg-gray-50 sticky top-0 z-10">
-                        <tr>
-                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">
-                            Tanggal
-                          </th>
-                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">
-                            Status
-                          </th>
-                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">
-                            Waktu
-                          </th>
-                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-left">
-                            Lokasi
-                          </th>
-                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-center w-24">
-                            Foto
-                          </th>
-                          <th className="px-2 py-2 sm:px-4 sm:py-3 text-center w-24">
-                            TTD
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(siswaPresensiData[selectedSiswa] || []).map(
-                          (item: any) => (
-                            <tr key={item.id} className="hover:bg-gray-50">
-                              <td className="px-2 py-2 sm:px-4 sm:py-3">
-                                {item.tanggal}
-                              </td>
-                              <td className="px-2 py-2 sm:px-4 sm:py-3">
-                                <span
-                                  className={`px-2 py-1 rounded text-xs font-medium ${item.status === "Hadir" ? "bg-green-100 text-green-800" : item.status === "Izin" ? "bg-yellow-100 text-yellow-800" : "bg-gray-100 text-gray-800"}`}
-                                >
-                                  {item.status}
-                                </span>
-                              </td>
-                              <td className="px-2 py-2 sm:px-4 sm:py-3">
-                                {item.waktu}
-                              </td>
-                              <td className="px-2 py-2 sm:px-4 sm:py-3">
-                                {item.lokasi ? (
-                                  <a
-                                    href={`https://www.google.com/maps?q=${item.lokasi}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 hover:underline flex items-center gap-1"
-                                  >
-                                    <MapPin className="w-3 h-3" /> Map
-                                  </a>
-                                ) : (
-                                  "-"
-                                )}
-                              </td>
-                              <td className="px-2 py-2 sm:px-4 sm:py-3 text-center">
-                                {item.foto ? (
-                                  <div
-                                    className="flex justify-center cursor-pointer group"
-                                    onClick={() =>
-                                      openPreview(item.foto, "foto")
-                                    }
-                                    title="Klik untuk memperbesar"
-                                  >
-                                    <div className="relative w-10 h-10 sm:w-12 sm:h-12 border rounded overflow-hidden shadow-sm hover:shadow-md transition-all">
-                                      <img
-                                        src={item.foto}
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                                        alt="Foto"
-                                        onError={(e) => {
-                                          (
-                                            e.target as HTMLImageElement
-                                          ).style.display = "none";
-                                        }}
-                                      />
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div className="flex justify-center text-gray-300">
-                                    <ImageIcon className="w-5 h-5" />
-                                  </div>
-                                )}
-                              </td>
-                              <td className="px-2 py-2 sm:px-4 sm:py-3 text-center">
-                                {item.tandaTangan ? (
-                                  <div
-                                    className="flex justify-center cursor-pointer group"
-                                    onClick={() =>
-                                      openPreview(item.tandaTangan, "ttd")
-                                    }
-                                    title="Klik untuk memperbesar"
-                                  >
-                                    <div className="relative w-10 h-10 sm:w-12 sm:h-12 border rounded bg-white overflow-hidden shadow-sm hover:shadow-md transition-all">
-                                      <img
-                                        src={item.tandaTangan}
-                                        className="w-full h-full object-contain group-hover:scale-110 transition-transform p-1"
-                                        alt="TTD"
-                                        onError={(e) => {
-                                          (
-                                            e.target as HTMLImageElement
-                                          ).style.display = "none";
-                                        }}
-                                      />
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div className="flex justify-center text-gray-300">
-                                    <PenTool className="w-5 h-5" />
-                                  </div>
-                                )}
-                              </td>
-                            </tr>
-                          ),
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </main>
       </div>
 
+      {/* Modal Riwayat */}
+      {modalSiswa && (
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            onClick={() => setModalSiswa(null)}
+          />
+          <div
+            className="relative bg-white w-full sm:max-w-5xl max-h-[90vh] sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col"
+            style={{ animation: "slideUp .25s cubic-bezier(.32,1.25,.6,1)" }}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-violet-100 text-violet-600 font-bold text-sm flex items-center justify-center">
+                  {modalSiswa.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-800">{modalSiswa}</p>
+                  <p className="text-xs text-slate-400">
+                    Riwayat Presensi Lengkap
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setModalSiswa(null)}
+                className="p-2 hover:bg-slate-100 rounded-xl transition-colors"
+              >
+                <X className="w-5 h-5 text-slate-400" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto">
+              <table className="w-full text-sm min-w-[640px]">
+                <thead className="sticky top-0 bg-slate-50 border-b border-slate-100 z-10">
+                  <tr>
+                    {[
+                      "Tanggal",
+                      "Status",
+                      "Waktu",
+                      "Lokasi",
+                      "Foto",
+                      "TTD",
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider"
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {(siswaMap[modalSiswa] || []).map((item) => (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-slate-50 transition-colors"
+                    >
+                      <td className="px-4 py-3 font-medium text-slate-700 text-sm">
+                        {item.tanggal}
+                      </td>
+                      <td className="px-4 py-3">
+                        <StatusBadge status={item.status} />
+                      </td>
+                      <td className="px-4 py-3 text-slate-500 font-mono text-xs">
+                        {item.waktu}
+                      </td>
+                      <td className="px-4 py-3">
+                        {item.lokasi ? (
+                          <a
+                            href={`https://www.google.com/maps?q=${item.lokasi}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-violet-600 bg-violet-50 hover:bg-violet-100 px-2 py-1 rounded-lg border border-violet-200 font-medium transition-colors"
+                          >
+                            <MapPin className="w-3 h-3" /> Maps
+                          </a>
+                        ) : (
+                          <span className="text-slate-300">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        {item.foto ? (
+                          <div
+                            onClick={() => {
+                              setPreviewUrl(item.foto);
+                              setPreviewType("foto");
+                            }}
+                            className="w-10 h-10 border-2 border-slate-200 rounded-xl overflow-hidden cursor-pointer hover:scale-105 hover:shadow-md transition-all"
+                          >
+                            <img
+                              src={item.foto}
+                              className="w-full h-full object-cover"
+                              alt="Foto"
+                              onError={(e) =>
+                                ((e.target as HTMLImageElement).style.display =
+                                  "none")
+                              }
+                            />
+                          </div>
+                        ) : (
+                          <ImageIcon className="w-5 h-5 text-slate-200" />
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        {item.tandaTangan ? (
+                          <div
+                            onClick={() => {
+                              setPreviewUrl(item.tandaTangan);
+                              setPreviewType("ttd");
+                            }}
+                            className="w-10 h-10 border-2 border-slate-200 rounded-xl overflow-hidden cursor-pointer bg-white p-0.5 hover:scale-105 hover:shadow-md transition-all"
+                          >
+                            <img
+                              src={item.tandaTangan}
+                              className="w-full h-full object-contain"
+                              alt="TTD"
+                              onError={(e) =>
+                                ((e.target as HTMLImageElement).style.display =
+                                  "none")
+                              }
+                            />
+                          </div>
+                        ) : (
+                          <PenTool className="w-5 h-5 text-slate-200" />
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {!siswaMap[modalSiswa]?.length && (
+                <div className="py-12 text-center text-slate-400 text-sm">
+                  Tidak ada riwayat.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Preview Modal */}
       {previewUrl && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center"
-          style={{ animation: "fadeIn 0.2s ease" }}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          style={{ animation: "fadeIn .15s ease" }}
           onClick={() => setPreviewUrl(null)}
         >
+          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md" />
           <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,27,75,0.95) 100%)",
-              backdropFilter: "blur(20px)",
-            }}
-          />
-          <div
-            className="absolute top-0 left-0 w-96 h-96 rounded-full opacity-10"
-            style={{
-              background: "radial-gradient(circle, #6366f1, transparent)",
-              filter: "blur(60px)",
-              transform: "translate(-30%, -30%)",
-            }}
-          />
-          <div
-            className="absolute bottom-0 right-0 w-96 h-96 rounded-full opacity-10"
-            style={{
-              background: "radial-gradient(circle, #8b5cf6, transparent)",
-              filter: "blur(60px)",
-              transform: "translate(30%, 30%)",
-            }}
-          />
-          <div
-            className="relative w-full mx-4 flex flex-col items-center"
-            style={{
-              maxWidth: previewType === "ttd" ? "480px" : "720px",
-              animation: "scaleIn 0.25s cubic-bezier(0.34,1.56,0.64,1)",
-            }}
+            className="relative max-w-2xl w-full flex flex-col"
             onClick={(e) => e.stopPropagation()}
+            style={{ animation: "scaleIn .2s cubic-bezier(0.34,1.56,0.64,1)" }}
           >
-            <div className="flex items-center gap-3 mb-4 self-start">
-              <div
-                className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase"
-                style={{
-                  background: "rgba(99,102,241,0.2)",
-                  border: "1px solid rgba(99,102,241,0.4)",
-                  color: "#a5b4fc",
-                }}
-              >
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
                 {previewType === "ttd" ? (
                   <PenTool className="w-3 h-3" />
                 ) : (
                   <ImageIcon className="w-3 h-3" />
                 )}
                 {previewType === "ttd" ? "Tanda Tangan" : "Foto Absensi"}
-              </div>
+              </span>
+              <button
+                onClick={() => setPreviewUrl(null)}
+                className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+              >
+                <X className="w-4 h-4 text-slate-400" />
+              </button>
             </div>
             <div
-              className="w-full rounded-2xl overflow-hidden relative"
-              style={{
-                background:
-                  previewType === "ttd"
-                    ? "rgba(255,255,255,0.98)"
-                    : "transparent",
-                boxShadow:
-                  "0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08)",
-                padding: previewType === "ttd" ? "32px" : "0",
-              }}
+              className={`rounded-2xl overflow-hidden shadow-2xl ${previewType === "ttd" ? "bg-white p-8" : ""}`}
             >
-              {previewType !== "ttd" && (
-                <div
-                  className="absolute inset-0 rounded-2xl"
-                  style={{
-                    background:
-                      "linear-gradient(to bottom, transparent 60%, rgba(15,23,42,0.8))",
-                    zIndex: 1,
-                    pointerEvents: "none",
-                  }}
-                />
-              )}
               <img
                 src={previewUrl}
-                alt={previewType === "foto" ? "Foto Absensi" : "Tanda Tangan"}
+                alt=""
                 className="w-full block"
                 style={{
-                  maxHeight: previewType === "ttd" ? "200px" : "70vh",
+                  maxHeight: "72vh",
                   objectFit: previewType === "ttd" ? "contain" : "cover",
-                  borderRadius: previewType === "ttd" ? "0" : "16px",
+                  borderRadius: previewType === "ttd" ? 0 : 16,
                 }}
               />
             </div>
-            <div className="flex items-center justify-between w-full mt-4 px-1">
-              <p className="text-xs" style={{ color: "rgba(165,180,252,0.6)" }}>
-                Klik di luar untuk menutup
-              </p>
-              <button
-                onClick={() => setPreviewUrl(null)}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
-                style={{
-                  background: "rgba(255,255,255,0.08)",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  color: "rgba(255,255,255,0.8)",
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.background = "rgba(255,255,255,0.15)")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = "rgba(255,255,255,0.08)")
-                }
-              >
-                <X className="w-4 h-4" /> Tutup
-              </button>
-            </div>
+            <p className="text-center text-xs text-slate-500 mt-3">
+              Klik di luar untuk menutup
+            </p>
           </div>
           <style>{`
-            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-            @keyframes scaleIn { from { opacity: 0; transform: scale(0.92) translateY(12px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+            @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
+            @keyframes scaleIn { from{opacity:0;transform:scale(0.94) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+            @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
           `}</style>
         </div>
       )}
+
+      <style>{`@keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }`}</style>
     </div>
   );
 }
