@@ -37,6 +37,46 @@ import {
   X,
 } from "lucide-react";
 
+// ── Status Badge (konsisten dengan admin) ─────────────────────────────────────
+const STATUS_STYLES: Record<string, { pill: string; dot: string }> = {
+  Hadir: {
+    pill: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
+    dot: "bg-emerald-500",
+  },
+  Pulang: {
+    pill: "bg-sky-50 text-sky-700 ring-1 ring-sky-200",
+    dot: "bg-sky-500",
+  },
+  Izin: {
+    pill: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
+    dot: "bg-amber-400",
+  },
+  Sakit: {
+    pill: "bg-orange-50 text-orange-700 ring-1 ring-orange-200",
+    dot: "bg-orange-400",
+  },
+  Alfa: {
+    pill: "bg-red-50 text-red-700 ring-1 ring-red-200",
+    dot: "bg-red-500",
+  },
+  Libur: {
+    pill: "bg-gray-100 text-gray-500 ring-1 ring-gray-200",
+    dot: "bg-gray-400",
+  },
+};
+
+function StatusBadge({ status }: { status: string }) {
+  const s = STATUS_STYLES[status] ?? STATUS_STYLES.Libur;
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${s.pill}`}
+    >
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.dot}`} />
+      {status}
+    </span>
+  );
+}
+
 export default function SiswaAbsensi() {
   const { data: session, status } = useSession();
   const [showAbsenModal, setShowAbsenModal] = useState(false);
@@ -149,17 +189,14 @@ export default function SiswaAbsensi() {
 
   const getCurrentLocation = () => {
     setGpsError(null);
-
     if (!navigator.geolocation) {
       setGpsError(
         "Browser tidak mendukung GPS. Gunakan Safari atau Chrome terbaru.",
       );
       return;
     }
-
     setGpsLoading(true);
     setAbsenForm((prev) => ({ ...prev, lokasi: "" }));
-
     const onSuccess = (position: GeolocationPosition) => {
       const { latitude, longitude } = position.coords;
       setAbsenForm((prev) => ({
@@ -169,7 +206,6 @@ export default function SiswaAbsensi() {
       setGpsError(null);
       setGpsLoading(false);
     };
-
     const onError = (error: GeolocationPositionError) => {
       setAbsenForm((prev) => ({ ...prev, lokasi: "" }));
       setGpsLoading(false);
@@ -187,7 +223,6 @@ export default function SiswaAbsensi() {
         );
       }
     };
-
     const tryLowAccuracy = () => {
       navigator.geolocation.getCurrentPosition(onSuccess, onError, {
         enableHighAccuracy: false,
@@ -195,7 +230,6 @@ export default function SiswaAbsensi() {
         maximumAge: 60000,
       });
     };
-
     navigator.geolocation.getCurrentPosition(
       onSuccess,
       (error) => {
@@ -237,7 +271,6 @@ export default function SiswaAbsensi() {
       alert("Mohon isi keterangan/kegiatan.");
       return;
     }
-
     setIsSubmitting(true);
     const formData = new FormData();
     formData.append("tipe", "absen");
@@ -252,7 +285,6 @@ export default function SiswaAbsensi() {
       .getTrimmedCanvas()
       .toDataURL("image/png");
     formData.append("tandaTangan", signatureDataURL);
-
     try {
       const response = await fetch("/api/absensi", {
         method: "POST",
@@ -303,77 +335,134 @@ export default function SiswaAbsensi() {
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentData = presensiData.slice(startIndex, startIndex + itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(presensiData.length / itemsPerPage));
+  const statHadir = presensiData.filter((i) => i.status === "Hadir").length;
+  const statPulang = presensiData.filter((i) => i.status === "Pulang").length;
+  const statIzin = presensiData.filter((i) =>
+    ["Izin", "Sakit"].includes(i.status),
+  ).length;
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar />
-        <main className="flex-1 p-6 sm:p-8 lg:p-12 overflow-y-auto w-full">
-          <div className="mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-              <Calendar className="w-10 h-10 text-indigo-600" /> Absensi
-            </h1>
-            <p className="text-gray-600">
-              Lakukan absen setiap hari dengan konsisten.
-            </p>
-          </div>
-
-          <div className="bg-white p-6 rounded-2xl shadow border border-gray-100 mb-8 flex justify-between items-center">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 px-4 sm:px-6 lg:px-8 py-7">
+          {/* ── Page Header ── */}
+          <div className="mb-7 flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-500 font-medium">
-                Tanggal Hari Ini
-              </p>
-              <p className="text-xl font-bold text-gray-900">
-                {new Date().toLocaleDateString("id-ID", {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
+              <div className="flex items-center gap-2.5 mb-1">
+                <span className="block w-1 h-6 bg-indigo-600 rounded-full" />
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+                  Absensi
+                </h1>
+              </div>
+              <p className="text-gray-500 text-sm pl-3.5">
+                Lakukan absen setiap hari dengan konsisten.
               </p>
             </div>
             <button
               onClick={() => setShowAbsenModal(true)}
-              className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl shadow hover:scale-105 transition-transform flex items-center gap-2"
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors"
             >
-              <CheckSquare className="w-5 h-5" /> Isi Absensi
+              <Edit className="w-4 h-4" /> Isi Absensi
             </button>
           </div>
 
-          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-200 overflow-hidden mb-8">
-            <div className="p-4 sm:p-8 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-lg sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <ClockIcon className="w-5 h-5 sm:w-7 sm:h-7 text-indigo-600" />
+          {/* ── Stat Cards ── */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {/* Tanggal */}
+            <div className="col-span-2 lg:col-span-1 bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex items-center gap-4">
+              <div className="p-2.5 rounded-xl bg-indigo-50 ring-1 ring-indigo-200 shrink-0">
+                <Calendar className="w-4 h-4 text-indigo-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-gray-500 mb-0.5">
+                  Hari Ini
+                </p>
+                <p className="text-sm font-bold text-gray-800 truncate">
+                  {new Date().toLocaleDateString("id-ID", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "short",
+                  })}
+                </p>
+              </div>
+            </div>
+            {/* Hadir */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-500 mb-1">Hadir</p>
+                <p className="text-2xl font-bold text-emerald-700">
+                  {statHadir}
+                </p>
+              </div>
+              <div className="p-2.5 rounded-xl ring-1 ring-emerald-200 bg-emerald-50">
+                <CheckSquare className="w-4 h-4 text-emerald-500" />
+              </div>
+            </div>
+            {/* Pulang */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-500 mb-1">Pulang</p>
+                <p className="text-2xl font-bold text-sky-700">{statPulang}</p>
+              </div>
+              <div className="p-2.5 rounded-xl ring-1 ring-sky-200 bg-sky-50">
+                <ClockIcon className="w-4 h-4 text-sky-500" />
+              </div>
+            </div>
+            {/* Izin/Sakit */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-500 mb-1">
+                  Izin/Sakit
+                </p>
+                <p className="text-2xl font-bold text-amber-700">{statIzin}</p>
+              </div>
+              <div className="p-2.5 rounded-xl ring-1 ring-amber-200 bg-amber-50">
+                <FileText className="w-4 h-4 text-amber-500" />
+              </div>
+            </div>
+          </div>
+
+          {/* ── Tabel Riwayat ── */}
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-6">
+            {/* Header bar */}
+            <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="font-semibold text-gray-700 text-sm flex items-center gap-2">
+                <ClockIcon className="w-4 h-4 text-indigo-500" />
                 Riwayat Hari Ini
-              </h3>
+              </h2>
+              <span className="text-xs text-gray-500 bg-gray-100 border border-gray-200 px-2.5 py-0.5 rounded-full font-medium">
+                {presensiData.length} record
+              </span>
             </div>
 
-            <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300">
-              <table className="w-full table-auto min-w-full">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[580px]">
                 <thead>
-                  <tr className="bg-gray-50 border-b border-gray-100">
-                    <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 rounded-tl-xl text-xs sm:text-base">
-                      Status
-                    </th>
-                    <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base">
-                      Waktu
-                    </th>
-                    <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 text-xs sm:text-base hidden sm:table-cell">
-                      Lokasi
-                    </th>
-                    <th className="px-2 py-3 sm:px-6 sm:py-4 text-center font-semibold text-gray-700 text-xs sm:text-base">
-                      Foto
-                    </th>
-                    <th className="px-2 py-3 sm:px-6 sm:py-4 text-center font-semibold text-gray-700 text-xs sm:text-base">
-                      TTD
-                    </th>
-                    <th className="px-2 py-3 sm:px-6 sm:py-4 text-left font-semibold text-gray-700 rounded-tr-xl text-xs sm:text-base hidden md:table-cell">
-                      Keterangan
-                    </th>
+                  <tr className="border-b border-gray-100 bg-gray-50">
+                    {[
+                      "Status",
+                      "Waktu",
+                      "Lokasi",
+                      "Foto",
+                      "TTD",
+                      "Keterangan",
+                    ].map((h, idx) => (
+                      <th
+                        key={h}
+                        className={`px-5 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider
+                          ${idx === 2 ? "hidden sm:table-cell" : ""}
+                          ${idx === 5 ? "hidden md:table-cell" : ""}
+                          ${idx === 3 || idx === 4 ? "text-center" : ""}`}
+                      >
+                        {h}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-gray-100">
                   {currentData.length === 0 ? (
                     <tr>
                       <td
@@ -389,43 +478,38 @@ export default function SiswaAbsensi() {
                         key={item.id}
                         className="border-b border-gray-100 hover:bg-indigo-50 transition-colors"
                       >
-                        <td className="px-2 py-3 sm:px-6 sm:py-4 text-xs sm:text-base">
-                          <div className="flex items-center gap-1 sm:gap-2">
-                            {item.status === "Hadir" && (
-                              <CheckSquare className="w-3 h-3 sm:w-4 sm:h-4 text-green-600 shrink-0" />
-                            )}
-                            <span
-                              className={`px-2 py-1 rounded text-xs font-semibold ${item.status === "Hadir" ? "bg-green-100 text-green-800" : item.status === "Pulang" ? "bg-blue-100 text-blue-800" : item.status === "Izin" ? "bg-yellow-100 text-yellow-800" : "bg-gray-100 text-gray-800"}`}
-                            >
-                              {item.status}
-                            </span>
-                          </div>
+                        {/* Status */}
+                        <td className="px-5 py-3.5">
+                          <StatusBadge status={item.status} />
                         </td>
-                        <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base whitespace-nowrap">
+                        {/* Waktu */}
+                        <td className="px-5 py-3.5 text-gray-700 text-xs whitespace-nowrap font-mono">
                           {item.waktu}
                         </td>
-                        <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base hidden sm:table-cell">
+                        {/* Lokasi */}
+                        <td className="px-5 py-3.5 hidden sm:table-cell">
                           {item.lokasi ? (
                             <a
                               href={`https://www.google.com/maps?q=${item.lokasi}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline flex items-center gap-1"
+                              className="inline-flex items-center gap-1 text-xs text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded-lg border border-indigo-200 font-medium transition-colors"
                             >
-                              <MapPin className="w-3 h-3" /> Map
+                              <MapPin className="w-3 h-3" /> Maps
                             </a>
                           ) : (
-                            "-"
+                            <span className="text-gray-300">-</span>
                           )}
                         </td>
-                        <td className="px-2 py-3 sm:px-6 sm:py-4 text-center">
+                        {/* Foto */}
+                        <td className="px-5 py-3.5 text-center">
                           {item.foto ? (
                             <div
                               className="flex justify-center cursor-pointer group"
                               onClick={() => openPreview(item.foto, "foto")}
                               title="Klik untuk memperbesar"
                             >
-                              <div className="relative w-10 h-10 sm:w-12 sm:h-12 border rounded overflow-hidden shadow-sm hover:shadow-md transition-all">
+                              <div className="w-10 h-10 border-2 border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:scale-105 transition-all">
                                 <img
                                   src={item.foto}
                                   className="w-full h-full object-cover group-hover:scale-110 transition-transform"
@@ -444,7 +528,8 @@ export default function SiswaAbsensi() {
                             </div>
                           )}
                         </td>
-                        <td className="px-2 py-3 sm:px-6 sm:py-4 text-center">
+                        {/* TTD */}
+                        <td className="px-5 py-3.5 text-center">
                           {item.tandaTangan ? (
                             <div
                               className="flex justify-center cursor-pointer group"
@@ -453,10 +538,10 @@ export default function SiswaAbsensi() {
                               }
                               title="Klik untuk memperbesar"
                             >
-                              <div className="relative w-10 h-10 sm:w-12 sm:h-12 border rounded bg-white overflow-hidden shadow-sm hover:shadow-md transition-all">
+                              <div className="w-10 h-10 border-2 border-gray-200 rounded-xl bg-white overflow-hidden shadow-sm hover:shadow-md hover:scale-105 transition-all p-0.5">
                                 <img
                                   src={item.tandaTangan}
-                                  className="w-full h-full object-contain group-hover:scale-110 transition-transform p-1"
+                                  className="w-full h-full object-contain group-hover:scale-110 transition-transform"
                                   alt="TTD"
                                   onError={(e) => {
                                     (
@@ -472,8 +557,11 @@ export default function SiswaAbsensi() {
                             </div>
                           )}
                         </td>
-                        <td className="px-2 py-3 sm:px-6 sm:py-4 text-gray-700 text-xs sm:text-base hidden md:table-cell">
-                          {item.catatan || item.kegiatan || "-"}
+                        {/* Keterangan */}
+                        <td className="px-5 py-3.5 text-gray-400 text-xs hidden md:table-cell max-w-[180px]">
+                          <span className="block truncate">
+                            {item.catatan || item.kegiatan || "—"}
+                          </span>
                         </td>
                       </tr>
                     ))
@@ -482,53 +570,83 @@ export default function SiswaAbsensi() {
               </table>
             </div>
 
-            <div className="p-4 sm:p-8 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-xs sm:text-sm text-gray-600 font-medium">
+            {/* Pagination */}
+            <div className="px-5 py-3 border-t border-gray-100 bg-gray-50 flex items-center justify-between gap-4">
+              <p className="text-xs text-gray-500 font-medium">
                 Menampilkan {presensiData.length === 0 ? 0 : startIndex + 1}–
                 {Math.min(startIndex + itemsPerPage, presensiData.length)} dari{" "}
                 {presensiData.length}
               </p>
-              <div className="flex gap-2 w-full sm:w-auto">
+              <div className="flex items-center gap-1">
                 <button
                   disabled={currentPage === 1}
                   onClick={handlePrevious}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm disabled:opacity-50"
+                  className="flex items-center gap-1 px-3 py-1.5 border border-gray-200 bg-white rounded-lg text-xs hover:bg-gray-50 disabled:opacity-40 transition-colors"
                 >
-                  <ChevronLeft className="w-4 h-4" /> Prev
+                  <ChevronLeft className="w-3.5 h-3.5" /> Prev
                 </button>
+                <span className="px-2.5 py-1.5 text-xs text-gray-600 font-semibold">
+                  {currentPage}/{totalPages}
+                </span>
                 <button
                   disabled={
                     currentPage >= Math.ceil(presensiData.length / itemsPerPage)
                   }
                   onClick={handleNext}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm disabled:opacity-50"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs disabled:opacity-40 transition-colors"
                 >
-                  Next <ChevronRight className="w-4 h-4" />
+                  Next <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
           </div>
 
+          {/* ══════════════════════════════════════════════════════════
+              MODAL FORM ABSENSI
+              ══════════════════════════════════════════════════════════ */}
           {showAbsenModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
               <div
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+                className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
                 onClick={() => !isSubmitting && setShowAbsenModal(false)}
-              ></div>
-              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl relative z-10 animate-fade-scale overflow-hidden flex flex-col max-h-[90vh]">
-                <div className="p-6 border-b flex justify-between items-center bg-gray-50">
-                  <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                    <Edit className="w-5 h-5 text-indigo-600" /> Form Absensi
-                  </h3>
+              />
+              <div
+                className="relative bg-white w-full sm:max-w-2xl max-h-[92vh] sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col"
+                style={{
+                  animation: "slideUp .25s cubic-bezier(.32,1.25,.6,1)",
+                }}
+              >
+                {/* Modal Header */}
+                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-indigo-50">
+                      <Edit className="w-4 h-4 text-indigo-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-800">
+                        Form Absensi
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {new Date().toLocaleDateString("id-ID", {
+                          weekday: "long",
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  </div>
                   <button
                     onClick={() => setShowAbsenModal(false)}
                     disabled={isSubmitting}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
                   >
-                    <XCircle className="w-8 h-8" />
+                    <XCircle className="w-5 h-5 text-gray-400" />
                   </button>
                 </div>
-                <div className="p-6 overflow-y-auto">
+
+                {/* Modal Body */}
+                <div className="flex-1 overflow-y-auto px-5 py-5">
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
@@ -536,9 +654,10 @@ export default function SiswaAbsensi() {
                     }}
                     className="space-y-5"
                   >
+                    {/* Data Diri */}
                     <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
-                      <h4 className="text-sm font-semibold text-indigo-700 mb-3 flex items-center gap-2">
-                        <User className="w-4 h-4" /> Data Diri
+                      <h4 className="text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5" /> Data Diri
                       </h4>
                       <div className="grid grid-cols-2 gap-3">
                         {[
@@ -564,7 +683,7 @@ export default function SiswaAbsensi() {
                           },
                         ].map((f) => (
                           <div key={f.label} className="flex flex-col gap-1">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1">
+                            <label className="text-xs font-semibold text-indigo-500 uppercase tracking-wide flex items-center gap-1">
                               {f.icon} {f.label}
                             </label>
                             <input
@@ -572,13 +691,14 @@ export default function SiswaAbsensi() {
                               value={f.val || "-"}
                               disabled
                               readOnly
-                              className="px-3 py-2 rounded-lg border border-gray-200 bg-gray-100 text-gray-700 text-sm cursor-not-allowed"
+                              className="px-3 py-2 rounded-lg border border-indigo-100 bg-white text-gray-700 text-sm cursor-not-allowed"
                             />
                           </div>
                         ))}
                       </div>
                     </div>
 
+                    {/* Status */}
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Status Kehadiran
@@ -592,7 +712,7 @@ export default function SiswaAbsensi() {
                           }))
                         }
                         disabled={isSubmitting}
-                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-700 focus:ring-2 focus:ring-indigo-300 outline-none transition-all"
                       >
                         <option value="Hadir">Hadir</option>
                         <option value="Pulang">Pulang</option>
@@ -602,6 +722,7 @@ export default function SiswaAbsensi() {
                       </select>
                     </div>
 
+                    {/* Waktu + GPS */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
@@ -611,7 +732,7 @@ export default function SiswaAbsensi() {
                           type="text"
                           value={absenForm.waktuLokasi}
                           readOnly
-                          className="w-full px-4 py-2.5 rounded-xl bg-gray-100 text-gray-600 cursor-not-allowed"
+                          className="w-full px-4 py-2.5 rounded-xl bg-gray-100 text-gray-600 cursor-not-allowed border border-gray-200 text-sm"
                         />
                       </div>
                       <div>
@@ -625,18 +746,18 @@ export default function SiswaAbsensi() {
                             value={absenForm.lokasi}
                             readOnly
                             placeholder="Koordinat..."
-                            className="w-full px-4 py-2.5 rounded-xl bg-gray-100 text-gray-600 text-sm"
+                            className="w-full px-4 py-2.5 rounded-xl bg-gray-100 text-gray-600 text-sm border border-gray-200"
                           />
                           <button
                             type="button"
                             onClick={getCurrentLocation}
                             disabled={isSubmitting || gpsLoading}
-                            className="px-3 bg-indigo-100 text-indigo-700 rounded-xl hover:bg-indigo-200 transition-colors flex items-center justify-center min-w-[44px]"
+                            className="px-3 bg-indigo-50 text-indigo-600 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors flex items-center justify-center min-w-[44px] disabled:opacity-50"
                           >
                             {gpsLoading ? (
-                              <Loader2 className="w-5 h-5 animate-spin" />
+                              <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
-                              <MapPin className="w-5 h-5" />
+                              <MapPin className="w-4 h-4" />
                             )}
                           </button>
                         </div>
@@ -653,30 +774,34 @@ export default function SiswaAbsensi() {
                       </div>
                     </div>
 
+                    {/* Foto */}
                     <div>
                       <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
                         <Camera className="w-4 h-4" /> Foto Selfie / Lokasi{" "}
                         <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        capture="user"
-                        disabled={isSubmitting}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0] || null;
-                          setAbsenForm((prev) => ({ ...prev, foto: file }));
-                        }}
-                        className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-                      />
+                      <div className="border-2 border-dashed border-gray-200 rounded-xl p-3 hover:border-indigo-300 transition-colors bg-gray-50">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="user"
+                          disabled={isSubmitting}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null;
+                            setAbsenForm((prev) => ({ ...prev, foto: file }));
+                          }}
+                          className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                        />
+                      </div>
                       <p className="text-xs text-gray-500 mt-1">
                         Wajib ambil foto selfie terbaru.
                       </p>
                     </div>
 
+                    {/* Bukti Izin/Sakit */}
                     {isStatusIzinOrSakit && (
-                      <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-100">
-                        <label className="text-sm font-semibold text-yellow-800 mb-2 flex items-center gap-1">
+                      <div className="bg-amber-50 p-4 rounded-xl border border-amber-100">
+                        <label className="text-sm font-semibold text-amber-800 mb-2 flex items-center gap-1">
                           <UploadCloud className="w-4 h-4" /> Upload Surat Bukti
                           (Dokter/Ortu)
                         </label>
@@ -688,11 +813,12 @@ export default function SiswaAbsensi() {
                             const file = e.target.files?.[0] || null;
                             setAbsenForm((prev) => ({ ...prev, bukti: file }));
                           }}
-                          className="w-full text-sm text-yellow-700"
+                          className="w-full text-sm text-amber-700"
                         />
                       </div>
                     )}
 
+                    {/* Keterangan / Kegiatan */}
                     <div>
                       <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
                         <FileText className="w-4 h-4" />{" "}
@@ -727,10 +853,11 @@ export default function SiswaAbsensi() {
                             }));
                           }
                         }}
-                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-700 focus:ring-2 focus:ring-indigo-300 outline-none resize-none"
                       />
                     </div>
 
+                    {/* Tanda Tangan */}
                     <div>
                       <div className="flex justify-between items-center mb-2">
                         <label className="text-sm font-semibold text-gray-700 flex items-center gap-1">
@@ -740,7 +867,7 @@ export default function SiswaAbsensi() {
                         <button
                           type="button"
                           onClick={clearSignature}
-                          className="text-xs text-red-500 flex items-center gap-1 hover:text-red-700 font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors"
+                          className="text-xs text-red-500 flex items-center gap-1 hover:text-red-700 font-medium px-2 py-1 rounded-lg hover:bg-red-50 transition-colors"
                         >
                           <Trash2 className="w-3 h-3" /> Hapus / Ulangi
                         </button>
@@ -761,23 +888,24 @@ export default function SiswaAbsensi() {
                       </p>
                     </div>
 
-                    <div className="pt-4 flex gap-3">
+                    {/* Buttons */}
+                    <div className="pt-2 flex gap-3">
                       <button
                         type="button"
                         onClick={() => setShowAbsenModal(false)}
                         disabled={isSubmitting}
-                        className="flex-1 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-colors"
+                        className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors text-sm font-medium disabled:opacity-50"
                       >
                         Batal
                       </button>
                       <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="flex-1 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 flex justify-center items-center gap-2"
+                        className="flex-1 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-60 flex justify-center items-center gap-2"
                       >
                         {isSubmitting ? (
                           <>
-                            <Loader2 className="w-5 h-5 animate-spin" />{" "}
+                            <Loader2 className="w-4 h-4 animate-spin" />{" "}
                             Mengirim...
                           </>
                         ) : (
@@ -788,11 +916,13 @@ export default function SiswaAbsensi() {
                   </form>
                 </div>
               </div>
+              <style>{`@keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }`}</style>
             </div>
           )}
         </main>
       </div>
 
+      {/* ── Preview Modal (pertahankan style asli yang sudah bagus) ── */}
       {previewUrl && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center"
