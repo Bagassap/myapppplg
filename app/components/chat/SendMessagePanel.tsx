@@ -1,4 +1,3 @@
-// components/chat/SendMessagePanel.tsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -19,14 +18,13 @@ import { useChatPolling, type ChatMessage } from "@/hooks/useChatPolling";
 import { useSession } from "next-auth/react";
 
 interface Recipient {
-  id: number; // Int — sesuai User.id
+  id: number;
   name: string;
-  username: string; // NIS
+  username: string;
   kelas: string;
   tempatPKL: string;
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
 function formatTime(iso: string) {
   const d = new Date(iso);
   const now = new Date();
@@ -41,20 +39,17 @@ function formatTime(iso: string) {
   return d.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
 }
 
-// ── Main Component ─────────────────────────────────────────────────────────────
 export default function SendMessagePanel({ role }: { role: "ADMIN" | "GURU" }) {
   const { data: session } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [panelMounted, setPanelMounted] = useState(false);
   const [view, setView] = useState<"list" | "thread">("list");
-
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRec, setSelectedRec] = useState<Recipient | null>(null);
   const [messageInput, setMessageInput] = useState("");
   const [sending, setSending] = useState(false);
   const [loadingRec, setLoadingRec] = useState(false);
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -63,7 +58,6 @@ export default function SendMessagePanel({ role }: { role: "ADMIN" | "GURU" }) {
     enabled: !!session?.user?.id,
   });
 
-  // Load daftar siswa saat panel dibuka
   useEffect(() => {
     if (!isOpen) return;
     setLoadingRec(true);
@@ -74,7 +68,6 @@ export default function SendMessagePanel({ role }: { role: "ADMIN" | "GURU" }) {
       .finally(() => setLoadingRec(false));
   }, [isOpen]);
 
-  // Auto-scroll
   useEffect(() => {
     if (view === "thread") {
       setTimeout(
@@ -130,12 +123,10 @@ export default function SendMessagePanel({ role }: { role: "ADMIN" | "GURU" }) {
     }
   };
 
-  // Pesan untuk thread yang dipilih
   const thread: ChatMessage[] = selectedRec
     ? messages.filter((m) => m.receiverId === selectedRec.id)
     : [];
 
-  // List dengan preview + status
   const recWithStats = recipients.map((r) => {
     const msgs = messages.filter((m) => m.receiverId === r.id);
     const lastMsg = msgs[msgs.length - 1];
@@ -151,20 +142,18 @@ export default function SendMessagePanel({ role }: { role: "ADMIN" | "GURU" }) {
       r.tempatPKL.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  // Warna aksen berdasarkan role
   const accent =
     role === "ADMIN"
-      ? { bg: "#4f46e5", hover: "#4338ca", shadow: "indigo-500/30" }
-      : { bg: "#7c3aed", hover: "#6d28d9", shadow: "violet-500/30" };
+      ? { bg: "#4f46e5", hover: "#4338ca" }
+      : { bg: "#7c3aed", hover: "#6d28d9" };
 
   if (!session?.user || session.user.role === "SISWA") return null;
 
   return (
     <>
-      {/* ── Floating Panel ── */}
       {panelMounted && (
         <div
-          className="fixed bottom-[88px] right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-[380px] max-w-[380px]"
+          className="fixed bottom-22 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-95 max-w-95"
           style={{
             transition:
               "opacity .28s, transform .28s cubic-bezier(.32,1.25,.6,1)",
@@ -225,10 +214,9 @@ export default function SendMessagePanel({ role }: { role: "ADMIN" | "GURU" }) {
               </button>
             </div>
 
-            {/* ── View: List ── */}
+            {/* View: List */}
             {view === "list" && (
               <>
-                {/* Search */}
                 <div className="shrink-0 px-3 py-2.5 border-b border-gray-100">
                   <div className="relative">
                     <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -242,7 +230,6 @@ export default function SendMessagePanel({ role }: { role: "ADMIN" | "GURU" }) {
                   </div>
                 </div>
 
-                {/* Recipient list */}
                 <div className="flex-1 overflow-y-auto">
                   {loadingRec ? (
                     <div className="flex items-center justify-center h-full gap-2 text-gray-400">
@@ -262,14 +249,12 @@ export default function SendMessagePanel({ role }: { role: "ADMIN" | "GURU" }) {
                           onClick={() => selectRecipient(r)}
                           className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
                         >
-                          {/* Avatar */}
                           <div
                             className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
                             style={{ background: accent.bg }}
                           >
                             {r.name.slice(0, 2).toUpperCase()}
                           </div>
-
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-1">
                               <p className="font-semibold text-gray-800 text-sm truncate">
@@ -298,7 +283,6 @@ export default function SendMessagePanel({ role }: { role: "ADMIN" | "GURU" }) {
                                 </>
                               )}
                             </div>
-                            {/* Last message preview */}
                             {r.lastMsg && (
                               <div className="flex items-center gap-1 mt-0.5">
                                 {r.unread > 0 ? (
@@ -328,10 +312,9 @@ export default function SendMessagePanel({ role }: { role: "ADMIN" | "GURU" }) {
               </>
             )}
 
-            {/* ── View: Thread ── */}
+            {/* View: Thread */}
             {view === "thread" && selectedRec && (
               <>
-                {/* Messages */}
                 <div className="flex-1 overflow-y-auto px-3 py-3 bg-gray-50/60 space-y-1">
                   {thread.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full gap-3 text-gray-400">
@@ -357,7 +340,6 @@ export default function SendMessagePanel({ role }: { role: "ADMIN" | "GURU" }) {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Input */}
                 <div className="shrink-0 px-3 py-3 border-t border-gray-100 bg-white">
                   <div className="flex items-end gap-2">
                     <textarea
@@ -405,7 +387,7 @@ export default function SendMessagePanel({ role }: { role: "ADMIN" | "GURU" }) {
         </div>
       )}
 
-      {/* ── FAB ── */}
+      {/* FAB */}
       <button
         onClick={toggle}
         aria-label="Buka panel kirim pesan"
@@ -433,7 +415,7 @@ export default function SendMessagePanel({ role }: { role: "ADMIN" | "GURU" }) {
   );
 }
 
-// ── Sent Bubble ────────────────────────────────────────────────────────────────
+// ── Sent Bubble ──
 function SentBubble({
   message,
   accentColor,
@@ -457,12 +439,9 @@ function SentBubble({
             {formatTime(message.createdAt)}
           </span>
           {message.isRead ? (
-            <CheckCheck
-              className="w-3 h-3 text-indigo-500"
-              title="Sudah dibaca"
-            />
+            <CheckCheck className="w-3 h-3 text-indigo-500" />
           ) : (
-            <Check className="w-3 h-3 text-gray-300" title="Belum dibaca" />
+            <Check className="w-3 h-3 text-gray-300" />
           )}
         </div>
       </div>

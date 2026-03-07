@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { authOptions } from "../auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
@@ -66,6 +66,7 @@ export async function POST(req: NextRequest) {
                 receiverId,
                 senderName: session.user.name ?? "Admin",
                 senderRole: role,
+                content,
                 isRead: false,
             },
         });
