@@ -5,7 +5,6 @@ import TopBar from "@/components/layout/TopBar";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useExportPDF } from "@/hooks/useExportPDF";
-import TidakHadirSection from "@/components/absensi/TidakHadirSection";
 import DeleteAbsensiModal from "@/components/absensi/DeleteAbsensiModal";
 import {
   SlidersHorizontal,
@@ -25,7 +24,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-// ── Status Badge ─────────────────────────────────────────────────────────────
+// ── Status Badge ──────────────────────────────────────────────────────────────
 const STATUS_STYLES: Record<string, { pill: string; dot: string }> = {
   Hadir: {
     pill: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
@@ -98,7 +97,6 @@ function SkeletonRows() {
   );
 }
 
-// ── Select helper ─────────────────────────────────────────────────────────────
 function FilterSelect({
   value,
   onChange,
@@ -123,6 +121,24 @@ function FilterSelect({
   );
 }
 
+// ── Virtual Alfa row type ─────────────────────────────────────────────────────
+// Siswa belum absen direpresentasikan sebagai row virtual dengan id negatif
+// sehingga tidak ada conflict dengan ID database dan tidak ada tombol delete
+interface AbsensiRow {
+  id: number;
+  siswa: string;
+  tempatPKL: string;
+  status: string;
+  waktu: string;
+  catatan: string;
+  kegiatan: string; // required by useExportPDF
+  lokasi: string;
+  foto: string;
+  tandaTangan: string;
+  tanggal: string;
+  isVirtualAlfa?: boolean; // true = belum absen, bukan dari DB
+}
+
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function AdminAbsensi() {
   const { data: session, status } = useSession();
@@ -133,9 +149,15 @@ export default function AdminAbsensi() {
   const [selectedSiswa, setSelectedSiswa] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState("");
-  const [presensiData, setPresensiData] = useState<any[]>([]);
-  const [siswaMap, setSiswaMap] = useState<Record<string, any[]>>({});
+
+  // Data dari DB (absensi yang sudah tercatat)
+  const [presensiData, setPresensiData] = useState<AbsensiRow[]>([]);
+  // Data siswa yang BELUM absen hari ini (akan jadi virtual Alfa)
+  const [alfaVirtual, setAlfaVirtual] = useState<AbsensiRow[]>([]);
+
+  const [siswaMap, setSiswaMap] = useState<Record<string, AbsensiRow[]>>({});
   const [loading, setLoading] = useState(true);
+  const [loadingAlfa, setLoadingAlfa] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [modalSiswa, setModalSiswa] = useState<string | null>(null);
@@ -143,6 +165,7 @@ export default function AdminAbsensi() {
   const [previewType, setPreviewType] = useState<"foto" | "ttd">("foto");
   const itemsPerPage = 10;
 
+  // ── Fetch absensi dari DB ─────────────────────────────────────────────────
   useEffect(() => {
     if (status === "loading") return;
     if (!session) {
@@ -184,23 +207,27 @@ export default function AdminAbsensi() {
             new Date(now.getFullYear(), 11, 31).toISOString().split("T")[0],
           );
         }
+
         const res = await fetch(`/api/absensi?${params}`);
         if (!res.ok) throw new Error(await res.text());
         const raw: any[] = await res.json();
-        const data = raw.map((item) => ({
+
+        const data: AbsensiRow[] = raw.map((item) => ({
           id: item.id,
           siswa: item.siswa || "—",
           tempatPKL: item.tempatPKL || "—",
           status: item.status,
           waktu: item.waktu || "—",
-          catatan: item.keterangan || item.kegiatan || "",
+          catatan: item.keterangan || "",
+          kegiatan: item.kegiatan || "",
           lokasi: item.lokasi || "",
           foto: item.foto || "",
           tandaTangan: item.tandaTangan || "",
           tanggal: new Date(item.tanggal).toLocaleDateString("id-ID"),
         }));
+
         setPresensiData(data);
-        const grouped: Record<string, any[]> = {};
+        const grouped: Record<string, AbsensiRow[]> = {};
         data.forEach((d) => {
           if (!grouped[d.siswa]) grouped[d.siswa] = [];
           grouped[d.siswa].push(d);
@@ -215,8 +242,69 @@ export default function AdminAbsensi() {
     load();
   }, [session, status, selectedPeriod]);
 
-  // Filter
-  const filteredData = presensiData.filter((item) => {
+  // ── Fetch siswa belum absen (hanya untuk "Hari Ini") ─────────────────────
+  // Hasilnya dikonversi menjadi virtual Alfa rows
+  useEffect(() => {
+    if (selectedPeriod !== "Hari Ini") {
+      setAlfaVirtual([]);
+      return;
+    }
+    const fetchBelumAbsen = async () => {
+      setLoadingAlfa(true);
+      try {
+        const date = new Date().toISOString().split("T")[0];
+        const res = await fetch(`/api/absensi/tidak-hadir?date=${date}`);
+        if (!res.ok) throw new Error();
+        const list: {
+          userId: string;
+          nama: string;
+          kelas: string;
+          tempatPKL: string;
+          guruPembimbing: string;
+        }[] = await res.json();
+
+        // Konversi ke virtual Alfa rows dengan id negatif (tidak ada di DB)
+        const today = new Date().toLocaleDateString("id-ID");
+        const virtual: AbsensiRow[] = list.map((s, idx) => ({
+          id: -(idx + 1), // negatif = virtual, bukan dari DB
+          siswa: s.nama,
+          tempatPKL: s.tempatPKL || "—",
+          status: "Alfa",
+          waktu: "—",
+          catatan: "Belum absen",
+          kegiatan: "",
+          lokasi: "",
+          foto: "",
+          tandaTangan: "",
+          tanggal: today,
+          isVirtualAlfa: true,
+        }));
+        setAlfaVirtual(virtual);
+      } catch {
+        setAlfaVirtual([]);
+      } finally {
+        setLoadingAlfa(false);
+      }
+    };
+    fetchBelumAbsen();
+  }, [selectedPeriod]);
+
+  // ── Gabungkan data DB + virtual Alfa ─────────────────────────────────────
+  // Virtual Alfa hanya ditampilkan jika filter tidak mengecualikan "Alfa"
+  const combinedData: AbsensiRow[] = [
+    ...presensiData,
+    // Hanya tambahkan virtual Alfa jika siswa belum tercatat di DB hari ini
+    // (hindari duplikat jika siswa absen Alfa secara manual)
+    ...alfaVirtual.filter(
+      (v) =>
+        !presensiData.some(
+          (p) => p.siswa === v.siswa && p.tanggal === v.tanggal,
+        ),
+    ),
+  ];
+
+  // ── Filter ────────────────────────────────────────────────────────────────
+  const filteredData = combinedData.filter((item) => {
     const q = searchQuery.toLowerCase();
     return (
       (!q ||
@@ -233,13 +321,13 @@ export default function AdminAbsensi() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentData = filteredData.slice(startIndex, startIndex + itemsPerPage);
 
-  // Stat counters
-  const statTotal = presensiData.length;
-  const statHadir = presensiData.filter((i) => i.status === "Hadir").length;
-  const statIzin = presensiData.filter((i) =>
+  // ── Stat counters (termasuk virtual Alfa) ─────────────────────────────────
+  const statTotal = combinedData.length;
+  const statHadir = combinedData.filter((i) => i.status === "Hadir").length;
+  const statIzin = combinedData.filter((i) =>
     ["Izin", "Sakit"].includes(i.status),
   ).length;
-  const statAlfa = presensiData.filter((i) => i.status === "Alfa").length;
+  const statAlfa = combinedData.filter((i) => i.status === "Alfa").length; // DB Alfa + virtual
 
   if (error)
     return (
@@ -312,8 +400,13 @@ export default function AdminAbsensi() {
                 ring: "ring-red-200",
                 bg: "bg-red-50",
                 icon: <X className="w-4 h-4 text-red-500" />,
+                // Tampilkan badge kecil jika ada virtual Alfa (siswa belum absen)
+                badge:
+                  alfaVirtual.length > 0 && selectedPeriod === "Hari Ini"
+                    ? `${alfaVirtual.length} belum absen`
+                    : null,
               },
-            ].map((s) => (
+            ].map((s: any) => (
               <div
                 key={s.label}
                 className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex items-center justify-between"
@@ -323,12 +416,17 @@ export default function AdminAbsensi() {
                     {s.label}
                   </p>
                   <p className={`text-2xl font-bold ${s.color}`}>
-                    {loading ? (
+                    {loading || (s.label === "Alfa" && loadingAlfa) ? (
                       <span className="inline-block w-8 h-6 bg-gray-100 rounded animate-pulse" />
                     ) : (
                       s.val
                     )}
                   </p>
+                  {s.badge && !loading && !loadingAlfa && (
+                    <p className="text-[10px] text-red-400 mt-0.5 font-medium">
+                      {s.badge}
+                    </p>
+                  )}
                 </div>
                 <div className={`p-2.5 rounded-xl ring-1 ${s.ring} ${s.bg}`}>
                   {s.icon}
@@ -340,8 +438,6 @@ export default function AdminAbsensi() {
           {/* ── Filter Bar ── */}
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-4 py-3 mb-5 flex flex-wrap items-center gap-2.5">
             <SlidersHorizontal className="w-4 h-4 text-gray-400 shrink-0" />
-
-            {/* Search */}
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
@@ -355,9 +451,7 @@ export default function AdminAbsensi() {
                 className="pl-8 pr-3 py-1.5 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 w-[155px]"
               />
             </div>
-
             <span className="hidden sm:block w-px h-5 bg-gray-200" />
-
             <FilterSelect
               value={selectedPKL}
               onChange={(v) => {
@@ -366,7 +460,7 @@ export default function AdminAbsensi() {
               }}
               options={[
                 "Semua Tempat PKL",
-                ...new Set(presensiData.map((i) => i.tempatPKL)),
+                ...new Set(combinedData.map((i) => i.tempatPKL)),
               ]}
             />
             <FilterSelect
@@ -383,7 +477,7 @@ export default function AdminAbsensi() {
                 setSelectedSiswa(v);
                 setCurrentPage(1);
               }}
-              options={["", ...new Set(presensiData.map((i) => i.siswa))].map(
+              options={["", ...new Set(combinedData.map((i) => i.siswa))].map(
                 (v, i) => (i === 0 ? "Semua Siswa" : (v as string)),
               )}
             />
@@ -403,7 +497,6 @@ export default function AdminAbsensi() {
                 "Libur",
               ]}
             />
-
             <div className="ml-auto shrink-0">
               <button
                 onClick={() =>
@@ -424,14 +517,22 @@ export default function AdminAbsensi() {
 
           {/* ── Table ── */}
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-6">
-            {/* Table header bar */}
             <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
               <h2 className="font-semibold text-gray-700 text-sm">
                 Daftar Presensi
               </h2>
-              <span className="text-xs text-gray-400 bg-gray-50 border border-gray-200 px-2.5 py-0.5 rounded-full font-medium">
-                {loading ? "…" : `${filteredData.length} record`}
-              </span>
+              <div className="flex items-center gap-2">
+                {selectedPeriod === "Hari Ini" &&
+                  alfaVirtual.length > 0 &&
+                  !loadingAlfa && (
+                    <span className="text-[10px] font-semibold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+                      {alfaVirtual.length} siswa belum absen → Alfa
+                    </span>
+                  )}
+                <span className="text-xs text-gray-400 bg-gray-50 border border-gray-200 px-2.5 py-0.5 rounded-full font-medium">
+                  {loading ? "…" : `${filteredData.length} record`}
+                </span>
+              </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -448,9 +549,7 @@ export default function AdminAbsensi() {
                     ].map((h, idx) => (
                       <th
                         key={h}
-                        className={`px-5 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider
- ${idx === 1 ? "hidden sm:table-cell" : ""}
- ${idx === 4 ? "hidden md:table-cell" : ""}`}
+                        className={`px-5 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider ${idx === 1 ? "hidden sm:table-cell" : ""} ${idx === 4 ? "hidden md:table-cell" : ""}`}
                       >
                         {h}
                       </th>
@@ -458,7 +557,7 @@ export default function AdminAbsensi() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {loading ? (
+                  {loading || loadingAlfa ? (
                     <SkeletonRows />
                   ) : currentData.length === 0 ? (
                     <tr>
@@ -477,13 +576,15 @@ export default function AdminAbsensi() {
                   ) : (
                     currentData.map((item) => (
                       <tr
-                        key={item.id}
-                        className="hover:bg-gray-50 transition-colors"
+                        key={`${item.id}-${item.siswa}`}
+                        className={`transition-colors ${item.isVirtualAlfa ? "bg-red-50/30 hover:bg-red-50/60" : "hover:bg-gray-50"}`}
                       >
                         {/* Siswa */}
                         <td className="px-5 py-3.5">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 font-bold text-xs flex items-center justify-center shrink-0 select-none">
+                            <div
+                              className={`w-8 h-8 rounded-full font-bold text-xs flex items-center justify-center shrink-0 select-none ${item.isVirtualAlfa ? "bg-red-100 text-red-600" : "bg-indigo-100 text-indigo-600"}`}
+                            >
                               {item.siswa.charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0">
@@ -510,31 +611,40 @@ export default function AdminAbsensi() {
                         </td>
                         {/* Catatan */}
                         <td className="px-5 py-3.5 text-gray-400 text-xs hidden md:table-cell max-w-[180px]">
-                          <span className="block truncate">
+                          <span
+                            className={`block truncate ${item.isVirtualAlfa ? "text-red-400 italic" : ""}`}
+                          >
                             {item.catatan || "—"}
                           </span>
                         </td>
                         {/* Aksi */}
                         <td className="px-5 py-3.5">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => setModalSiswa(item.siswa)}
-                              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-xs font-semibold transition-colors border border-indigo-200"
-                            >
-                              <Eye className="w-3 h-3" /> Riwayat
-                            </button>
-                            <DeleteAbsensiModal
-                              absensiId={item.id}
-                              namaSiswa={item.siswa}
-                              tanggal={item.tanggal}
-                              status={item.status}
-                              onSuccess={(id) =>
-                                setPresensiData((p) =>
-                                  p.filter((x) => x.id !== id),
-                                )
-                              }
-                            />
-                          </div>
+                          {item.isVirtualAlfa ? (
+                            // Virtual Alfa: tidak ada tombol aksi (belum ada record di DB)
+                            <span className="text-xs text-red-400 italic px-2">
+                              —
+                            </span>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => setModalSiswa(item.siswa)}
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-xs font-semibold transition-colors border border-indigo-200"
+                              >
+                                <Eye className="w-3 h-3" /> Riwayat
+                              </button>
+                              <DeleteAbsensiModal
+                                absensiId={item.id}
+                                namaSiswa={item.siswa}
+                                tanggal={item.tanggal}
+                                status={item.status}
+                                onSuccess={(id) =>
+                                  setPresensiData((p) =>
+                                    p.filter((x) => x.id !== id),
+                                  )
+                                }
+                              />
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -572,8 +682,7 @@ export default function AdminAbsensi() {
             </div>
           </div>
 
-          {/* ── Tidak Hadir Section ── */}
-          <TidakHadirSection period={selectedPeriod} role="admin" />
+          {/* TidakHadirSection dihapus — datanya sudah masuk tabel sebagai Alfa */}
         </main>
       </div>
 
@@ -588,7 +697,6 @@ export default function AdminAbsensi() {
             className="relative bg-white w-full sm:max-w-5xl max-h-[90vh] sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col"
             style={{ animation: "slideUp .25s cubic-bezier(.32,1.25,.6,1)" }}
           >
-            {/* Modal header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-white sticky top-0 z-10">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-600 font-bold text-sm flex items-center justify-center">
@@ -608,7 +716,6 @@ export default function AdminAbsensi() {
                 <X className="w-5 h-5 text-slate-400" />
               </button>
             </div>
-            {/* Modal body */}
             <div className="flex-1 overflow-auto">
               <table className="w-full text-sm min-w-[640px]">
                 <thead className="sticky top-0 bg-gray-50 border-b border-gray-100 z-10">
@@ -767,16 +874,14 @@ export default function AdminAbsensi() {
             </p>
           </div>
           <style>{`
- @keyframes fadeIn { from{opacity:0} to{opacity:1} }
- @keyframes scaleIn { from{opacity:0;transform:scale(0.94) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
- @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
- `}</style>
+            @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+            @keyframes scaleIn { from{opacity:0;transform:scale(0.94) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+            @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+          `}</style>
         </div>
       )}
 
-      <style>{`
- @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
- `}</style>
+      <style>{`@keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }`}</style>
     </div>
   );
 }

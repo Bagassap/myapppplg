@@ -5,7 +5,6 @@ import TopBar from "@/components/layout/TopBar";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useExportPDF } from "@/hooks/useExportPDF";
-import TidakHadirSection from "@/components/absensi/TidakHadirSection";
 import {
   SlidersHorizontal,
   Download,
@@ -119,6 +118,21 @@ function FilterSelect({
   );
 }
 
+interface AbsensiRow {
+  id: number;
+  siswa: string;
+  tempatPKL: string;
+  status: string;
+  waktu: string;
+  catatan: string;
+  kegiatan: string; // required by useExportPDF
+  lokasi: string;
+  foto: string;
+  tandaTangan: string;
+  tanggal: string;
+  isVirtualAlfa?: boolean;
+}
+
 export default function GuruAbsensi() {
   const { data: session, status } = useSession();
   const { exportPDF, exporting } = useExportPDF();
@@ -128,9 +142,11 @@ export default function GuruAbsensi() {
   const [selectedSiswa, setSelectedSiswa] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState("");
-  const [presensiData, setPresensiData] = useState<any[]>([]);
-  const [siswaMap, setSiswaMap] = useState<Record<string, any[]>>({});
+  const [presensiData, setPresensiData] = useState<AbsensiRow[]>([]);
+  const [alfaVirtual, setAlfaVirtual] = useState<AbsensiRow[]>([]);
+  const [siswaMap, setSiswaMap] = useState<Record<string, AbsensiRow[]>>({});
   const [loading, setLoading] = useState(true);
+  const [loadingAlfa, setLoadingAlfa] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [modalSiswa, setModalSiswa] = useState<string | null>(null);
@@ -182,20 +198,21 @@ export default function GuruAbsensi() {
         const res = await fetch(`/api/absensi?${params}`);
         if (!res.ok) throw new Error(await res.text());
         const raw: any[] = await res.json();
-        const data = raw.map((item) => ({
+        const data: AbsensiRow[] = raw.map((item) => ({
           id: item.id,
           siswa: item.siswa || "—",
           tempatPKL: item.tempatPKL || "—",
           status: item.status,
           waktu: item.waktu || "—",
-          catatan: item.keterangan || item.kegiatan || "",
+          catatan: item.keterangan || "",
+          kegiatan: item.kegiatan || "",
           lokasi: item.lokasi || "",
           foto: item.foto || "",
           tandaTangan: item.tandaTangan || "",
           tanggal: new Date(item.tanggal).toLocaleDateString("id-ID"),
         }));
         setPresensiData(data);
-        const grouped: Record<string, any[]> = {};
+        const grouped: Record<string, AbsensiRow[]> = {};
         data.forEach((d) => {
           if (!grouped[d.siswa]) grouped[d.siswa] = [];
           grouped[d.siswa].push(d);
@@ -210,7 +227,62 @@ export default function GuruAbsensi() {
     load();
   }, [session, status, selectedPeriod]);
 
-  const filteredData = presensiData.filter((item) => {
+  // Fetch belum absen → virtual Alfa (hanya Hari Ini)
+  useEffect(() => {
+    if (selectedPeriod !== "Hari Ini") {
+      setAlfaVirtual([]);
+      return;
+    }
+    const fetchBelumAbsen = async () => {
+      setLoadingAlfa(true);
+      try {
+        const date = new Date().toISOString().split("T")[0];
+        const res = await fetch(`/api/absensi/tidak-hadir?date=${date}`);
+        if (!res.ok) throw new Error();
+        const list: {
+          userId: string;
+          nama: string;
+          kelas: string;
+          tempatPKL: string;
+          guruPembimbing: string;
+        }[] = await res.json();
+        const today = new Date().toLocaleDateString("id-ID");
+        setAlfaVirtual(
+          list.map((s, idx) => ({
+            id: -(idx + 1),
+            siswa: s.nama,
+            tempatPKL: s.tempatPKL || "—",
+            status: "Alfa",
+            waktu: "—",
+            catatan: "Belum absen",
+            kegiatan: "",
+            lokasi: "",
+            foto: "",
+            tandaTangan: "",
+            tanggal: today,
+            isVirtualAlfa: true,
+          })),
+        );
+      } catch {
+        setAlfaVirtual([]);
+      } finally {
+        setLoadingAlfa(false);
+      }
+    };
+    fetchBelumAbsen();
+  }, [selectedPeriod]);
+
+  const combinedData: AbsensiRow[] = [
+    ...presensiData,
+    ...alfaVirtual.filter(
+      (v) =>
+        !presensiData.some(
+          (p) => p.siswa === v.siswa && p.tanggal === v.tanggal,
+        ),
+    ),
+  ];
+
+  const filteredData = combinedData.filter((item) => {
     const q = searchQuery.toLowerCase();
     return (
       (!q ||
@@ -227,12 +299,12 @@ export default function GuruAbsensi() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentData = filteredData.slice(startIndex, startIndex + itemsPerPage);
 
-  const statTotal = presensiData.length;
-  const statHadir = presensiData.filter((i) => i.status === "Hadir").length;
-  const statIzin = presensiData.filter((i) =>
+  const statTotal = combinedData.length;
+  const statHadir = combinedData.filter((i) => i.status === "Hadir").length;
+  const statIzin = combinedData.filter((i) =>
     ["Izin", "Sakit"].includes(i.status),
   ).length;
-  const statAlfa = presensiData.filter((i) => i.status === "Alfa").length;
+  const statAlfa = combinedData.filter((i) => i.status === "Alfa").length;
 
   if (error)
     return (
@@ -256,7 +328,6 @@ export default function GuruAbsensi() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar />
         <main className="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 px-4 sm:px-6 lg:px-8 py-7">
-          {/* Page Header */}
           <div className="mb-7">
             <div className="flex items-center gap-2.5 mb-1">
               <span className="block w-1 h-6 bg-violet-600 rounded-full" />
@@ -303,8 +374,12 @@ export default function GuruAbsensi() {
                 ring: "ring-red-200",
                 bg: "bg-red-50",
                 icon: <X className="w-4 h-4 text-red-500" />,
+                badge:
+                  alfaVirtual.length > 0 && selectedPeriod === "Hari Ini"
+                    ? `${alfaVirtual.length} belum absen`
+                    : null,
               },
-            ].map((s) => (
+            ].map((s: any) => (
               <div
                 key={s.label}
                 className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex items-center justify-between"
@@ -314,12 +389,17 @@ export default function GuruAbsensi() {
                     {s.label}
                   </p>
                   <p className={`text-2xl font-bold ${s.color}`}>
-                    {loading ? (
+                    {loading || (s.label === "Alfa" && loadingAlfa) ? (
                       <span className="inline-block w-8 h-6 bg-gray-100 rounded animate-pulse" />
                     ) : (
                       s.val
                     )}
                   </p>
+                  {s.badge && !loading && !loadingAlfa && (
+                    <p className="text-[10px] text-red-400 mt-0.5 font-medium">
+                      {s.badge}
+                    </p>
+                  )}
                 </div>
                 <div className={`p-2.5 rounded-xl ring-1 ${s.ring} ${s.bg}`}>
                   {s.icon}
@@ -353,7 +433,7 @@ export default function GuruAbsensi() {
               }}
               options={[
                 "Semua Tempat PKL",
-                ...new Set(presensiData.map((i) => i.tempatPKL)),
+                ...new Set(combinedData.map((i) => i.tempatPKL)),
               ]}
             />
             <FilterSelect
@@ -372,7 +452,7 @@ export default function GuruAbsensi() {
               }}
               options={[
                 "Semua Siswa",
-                ...new Set(presensiData.map((i) => i.siswa)),
+                ...new Set(combinedData.map((i) => i.siswa)),
               ]}
             />
             <FilterSelect
@@ -415,9 +495,18 @@ export default function GuruAbsensi() {
               <h2 className="font-semibold text-gray-700 text-sm">
                 Daftar Presensi
               </h2>
-              <span className="text-xs text-gray-400 bg-gray-50 border border-gray-200 px-2.5 py-0.5 rounded-full font-medium">
-                {loading ? "…" : `${filteredData.length} record`}
-              </span>
+              <div className="flex items-center gap-2">
+                {selectedPeriod === "Hari Ini" &&
+                  alfaVirtual.length > 0 &&
+                  !loadingAlfa && (
+                    <span className="text-[10px] font-semibold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+                      {alfaVirtual.length} siswa belum absen → Alfa
+                    </span>
+                  )}
+                <span className="text-xs text-gray-400 bg-gray-50 border border-gray-200 px-2.5 py-0.5 rounded-full font-medium">
+                  {loading ? "…" : `${filteredData.length} record`}
+                </span>
+              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm min-w-[640px]">
@@ -433,9 +522,7 @@ export default function GuruAbsensi() {
                     ].map((h, idx) => (
                       <th
                         key={h}
-                        className={`px-5 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider
- ${idx === 1 ? "hidden sm:table-cell" : ""}
- ${idx === 4 ? "hidden md:table-cell" : ""}`}
+                        className={`px-5 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider ${idx === 1 ? "hidden sm:table-cell" : ""} ${idx === 4 ? "hidden md:table-cell" : ""}`}
                       >
                         {h}
                       </th>
@@ -443,7 +530,7 @@ export default function GuruAbsensi() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {loading ? (
+                  {loading || loadingAlfa ? (
                     <SkeletonRows />
                   ) : currentData.length === 0 ? (
                     <tr>
@@ -462,12 +549,14 @@ export default function GuruAbsensi() {
                   ) : (
                     currentData.map((item) => (
                       <tr
-                        key={item.id}
-                        className="hover:bg-gray-50 transition-colors"
+                        key={`${item.id}-${item.siswa}`}
+                        className={`transition-colors ${item.isVirtualAlfa ? "bg-red-50/30 hover:bg-red-50/60" : "hover:bg-gray-50"}`}
                       >
                         <td className="px-5 py-3.5">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-violet-100 text-violet-600 font-bold text-xs flex items-center justify-center shrink-0">
+                            <div
+                              className={`w-8 h-8 rounded-full font-bold text-xs flex items-center justify-center shrink-0 select-none ${item.isVirtualAlfa ? "bg-red-100 text-red-600" : "bg-violet-100 text-violet-600"}`}
+                            >
                               {item.siswa.charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0">
@@ -490,17 +579,25 @@ export default function GuruAbsensi() {
                           {item.waktu}
                         </td>
                         <td className="px-5 py-3.5 text-gray-400 text-xs hidden md:table-cell max-w-[180px]">
-                          <span className="block truncate">
+                          <span
+                            className={`block truncate ${item.isVirtualAlfa ? "text-red-400 italic" : ""}`}
+                          >
                             {item.catatan || "—"}
                           </span>
                         </td>
                         <td className="px-5 py-3.5">
-                          <button
-                            onClick={() => setModalSiswa(item.siswa)}
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-violet-50 hover:bg-violet-100 text-violet-600 rounded-lg text-xs font-semibold transition-colors border border-violet-200"
-                          >
-                            <Eye className="w-3 h-3" /> Riwayat
-                          </button>
+                          {item.isVirtualAlfa ? (
+                            <span className="text-xs text-red-400 italic px-2">
+                              —
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => setModalSiswa(item.siswa)}
+                              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-violet-50 hover:bg-violet-100 text-violet-600 rounded-lg text-xs font-semibold transition-colors border border-violet-200"
+                            >
+                              <Eye className="w-3 h-3" /> Riwayat
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -536,7 +633,7 @@ export default function GuruAbsensi() {
             </div>
           </div>
 
-          <TidakHadirSection period={selectedPeriod} role="guru" />
+          {/* TidakHadirSection dihapus — data sudah masuk tabel sebagai Alfa */}
         </main>
       </div>
 
@@ -680,7 +777,6 @@ export default function GuruAbsensi() {
         </div>
       )}
 
-      {/* Preview Modal */}
       {previewUrl && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-4"
@@ -728,13 +824,12 @@ export default function GuruAbsensi() {
             </p>
           </div>
           <style>{`
- @keyframes fadeIn { from{opacity:0} to{opacity:1} }
- @keyframes scaleIn { from{opacity:0;transform:scale(0.94) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
- @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
- `}</style>
+            @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+            @keyframes scaleIn { from{opacity:0;transform:scale(0.94) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+            @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+          `}</style>
         </div>
       )}
-
       <style>{`@keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }`}</style>
     </div>
   );
