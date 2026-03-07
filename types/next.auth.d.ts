@@ -15,7 +15,6 @@ declare module "next-auth" {
         role: "ADMIN" | "GURU" | "SISWA";
         name: string;
         email: string;
-        username: string | null;
     }
 }
 
