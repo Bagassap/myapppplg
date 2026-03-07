@@ -13,7 +13,8 @@ model User {
   role     Role    @default(SISWA)
   name     String?
   username String? @unique
-    sentMessages     ChatMessage[] @relation("SentMessages")
+
+  sentMessages     ChatMessage[] @relation("SentMessages")
   receivedMessages ChatMessage[] @relation("ReceivedMessages")
 }
 
