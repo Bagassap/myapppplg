@@ -25,6 +25,40 @@ interface Informasi {
   createdAt: string;
 }
 
+// ── Tipe badge config (logic asli dipertahankan) ──────────────────────────────
+const getTipeConfig = (tipe: string) => {
+  switch (tipe?.toLowerCase()) {
+    case "pengumuman":
+      return {
+        icon: <Megaphone className="w-3.5 h-3.5" />,
+        pill: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
+        iconBg: "bg-amber-50 ring-1 ring-amber-200",
+        iconText: "text-amber-600",
+      };
+    case "peringatan":
+      return {
+        icon: <AlertCircle className="w-3.5 h-3.5" />,
+        pill: "bg-red-50 text-red-700 ring-1 ring-red-200",
+        iconBg: "bg-red-50 ring-1 ring-red-200",
+        iconText: "text-red-600",
+      };
+    default:
+      return {
+        icon: <Info className="w-3.5 h-3.5" />,
+        pill: "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200",
+        iconBg: "bg-indigo-50 ring-1 ring-indigo-200",
+        iconText: "text-indigo-600",
+      };
+  }
+};
+
+const formatTanggal = (tanggal: string) =>
+  new Date(tanggal).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
 export default function SiswaDashboard() {
   const [loading, setLoading] = useState(true);
   const [loadingInfo, setLoadingInfo] = useState(true);
@@ -78,138 +112,183 @@ export default function SiswaDashboard() {
     fetchInformasi();
   }, []);
 
-  const getTipeConfig = (tipe: string) => {
-    switch (tipe?.toLowerCase()) {
-      case "pengumuman":
-        return {
-          icon: <Megaphone className="w-4 h-4" />,
-          bg: "bg-yellow-100",
-          text: "text-yellow-700",
-          border: "border-yellow-200",
-          dot: "bg-yellow-400",
-        };
-      case "peringatan":
-        return {
-          icon: <AlertCircle className="w-4 h-4" />,
-          bg: "bg-red-100",
-          text: "text-red-700",
-          border: "border-red-200",
-          dot: "bg-red-400",
-        };
-      default:
-        return {
-          icon: <Info className="w-4 h-4" />,
-          bg: "bg-blue-100",
-          text: "text-blue-700",
-          border: "border-blue-200",
-          dot: "bg-blue-400",
-        };
-    }
-  };
-
-  const formatTanggal = (tanggal: string) => {
-    return new Date(tanggal).toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-  };
+  // ── Stat card definitions (sama persis dengan admin style) ───────────────────
+  const statCards = [
+    {
+      icon: <Calendar className="w-5 h-5 text-blue-600" />,
+      label: "Total Hari Kerja",
+      value: stats.totalHariBulanIni,
+      suffix: "",
+      bg: "from-blue-50 to-blue-100",
+      border: "border-blue-200",
+      iconBg: "bg-blue-50 ring-1 ring-blue-200",
+      text: "text-blue-600",
+      badgeLabel: "Bulan Ini",
+      badge: "text-blue-400",
+    },
+    {
+      icon: <CheckCircle className="w-5 h-5 text-emerald-600" />,
+      label: "Hari Hadir",
+      value: stats.hadirBulanIni,
+      suffix: "",
+      bg: "from-emerald-50 to-emerald-100",
+      border: "border-emerald-200",
+      iconBg: "bg-emerald-50 ring-1 ring-emerald-200",
+      text: "text-emerald-600",
+      badgeLabel: "Hadir",
+      badge: "text-emerald-400",
+    },
+    {
+      icon: <XCircle className="w-5 h-5 text-red-500" />,
+      label: "Hari Tidak Hadir",
+      value: stats.tidakHadirBulanIni,
+      suffix: "",
+      bg: "from-red-50 to-red-100",
+      border: "border-red-200",
+      iconBg: "bg-red-50 ring-1 ring-red-200",
+      text: "text-red-500",
+      badgeLabel: "Absen",
+      badge: "text-red-400",
+    },
+    {
+      icon: <TrendingUp className="w-5 h-5 text-indigo-600" />,
+      label: "Persentase Kehadiran",
+      value: stats.persentaseKehadiran,
+      suffix: "%",
+      bg: "from-indigo-50 to-blue-100",
+      border: "border-indigo-200",
+      iconBg: "bg-indigo-50 ring-1 ring-indigo-200",
+      text: "text-indigo-600",
+      badgeLabel: "Persentase",
+      badge: "text-indigo-400",
+    },
+  ];
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar />
-        <main className="flex-1 p-6 sm:p-8 lg:p-12 overflow-y-auto overflow-x-hidden">
-          {/* ✅ Greeting Banner */}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 px-4 sm:px-6 lg:px-8 py-7">
+          {/* ── Greeting + subtitle ── */}
           <GreetingBanner />
-          <p className="text-gray-600 text-sm sm:text-base md:text-lg -mt-4 mb-6 sm:mb-8">
+          <p className="text-gray-500 text-sm sm:text-base -mt-4 mb-7">
             Pantau ringkasan kehadiran pribadi Anda di tempat PKL.
           </p>
 
-          {/* Statistik Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-            <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-blue-200">
-              <div className="flex items-center justify-between mb-4">
-                <Calendar className="w-8 h-8 text-blue-600" />
-                <span className="text-sm font-medium text-blue-700">Total</span>
+          {/* ── Statistik Cards (identik dengan admin) ── */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
+            {statCards.map((card, i) => (
+              <div
+                key={i}
+                className={`bg-gradient-to-br ${card.bg} p-5 rounded-2xl border ${card.border} shadow-sm`}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className={`p-2 rounded-xl ${card.iconBg}`}>
+                    {card.icon}
+                  </div>
+                  <span className={`text-xs font-medium ${card.badge}`}>
+                    {card.badgeLabel}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mb-1">{card.label}</p>
+                <p className={`text-2xl sm:text-3xl font-bold ${card.text}`}>
+                  {loading ? (
+                    <span className="text-gray-300 animate-pulse">—</span>
+                  ) : (
+                    `${card.value}${card.suffix}`
+                  )}
+                </p>
               </div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                Total Hari Kerja
-              </h3>
-              <p className="text-3xl font-bold text-blue-600">
-                {loading ? "..." : stats?.totalHariBulanIni || 0}
-              </p>
-            </div>
+            ))}
+          </div>
 
-            <div className="bg-gradient-to-br from-green-100 to-green-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-green-200">
-              <div className="flex items-center justify-between mb-4">
-                <CheckCircle className="w-8 h-8 text-green-600" />
-                <span className="text-sm font-medium text-green-700">
-                  Hadir
-                </span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                Hari Hadir
+          {/* ── Progress Kehadiran ── */}
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-indigo-500" />
+                Progres Kehadiran Bulan Ini
               </h3>
-              <p className="text-3xl font-bold text-green-600">
-                {loading ? "..." : stats?.hadirBulanIni || 0}
-              </p>
+              <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 rounded-full">
+                {loading ? "—" : `${stats.persentaseKehadiran}%`}
+              </span>
             </div>
-
-            <div className="bg-gradient-to-br from-red-100 to-red-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-red-200">
-              <div className="flex items-center justify-between mb-4">
-                <XCircle className="w-8 h-8 text-red-600" />
-                <span className="text-sm font-medium text-red-700">Absen</span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                Hari Tidak Hadir
-              </h3>
-              <p className="text-3xl font-bold text-red-600">
-                {loading ? "..." : stats?.tidakHadirBulanIni || 0}
-              </p>
+            {/* Progress bar */}
+            <div className="w-full bg-gray-100 rounded-full h-2 mb-3">
+              <div
+                className="bg-indigo-500 h-2 rounded-full transition-all duration-700"
+                style={{
+                  width: loading
+                    ? "0%"
+                    : `${Math.min(stats.persentaseKehadiran, 100)}%`,
+                }}
+              />
             </div>
-
-            <div className="bg-gradient-to-br from-indigo-100 to-blue-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-indigo-200">
-              <div className="flex items-center justify-between mb-4">
-                <TrendingUp className="w-8 h-8 text-indigo-600" />
-                <span className="text-sm font-medium text-indigo-700">
-                  Persentase
-                </span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                Persentase Kehadiran
-              </h3>
-              <p className="text-3xl font-bold text-indigo-600">
-                {loading ? "..." : stats?.persentaseKehadiran || 0}%
-              </p>
+            {/* Mini stat row */}
+            <div className="grid grid-cols-3 gap-3 mt-3">
+              {[
+                {
+                  label: "Total Hari",
+                  val: stats.totalHariBulanIni,
+                  color: "text-blue-600",
+                },
+                {
+                  label: "Hadir",
+                  val: stats.hadirBulanIni,
+                  color: "text-emerald-600",
+                },
+                {
+                  label: "Tidak Hadir",
+                  val: stats.tidakHadirBulanIni,
+                  color: "text-red-500",
+                },
+              ].map((s) => (
+                <div
+                  key={s.label}
+                  className="text-center p-2.5 bg-gray-50 rounded-xl border border-gray-100"
+                >
+                  <p className={`text-lg font-bold ${s.color}`}>
+                    {loading ? <span className="text-gray-300">—</span> : s.val}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">{s.label}</p>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Card Notifikasi Informasi */}
-          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-200 overflow-hidden">
-            <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-lg sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <Bell className="w-5 h-5 sm:w-7 sm:h-7 text-indigo-600" />
+          {/* ── Informasi Terbaru ── */}
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+            {/* Header bar */}
+            <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="font-semibold text-gray-700 text-sm flex items-center gap-2">
+                <Bell className="w-4 h-4 text-indigo-500" />
                 Informasi Terbaru
               </h3>
               <a
                 href="/siswa/informasi"
-                className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+                className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-full"
               >
-                Lihat Semua <ChevronRight className="w-4 h-4" />
+                Lihat Semua <ChevronRight className="w-3.5 h-3.5" />
               </a>
             </div>
 
             <div className="divide-y divide-gray-50">
               {loadingInfo ? (
                 <div className="p-8 flex justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+                  <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-indigo-500" />
                 </div>
               ) : informasiList.length === 0 ? (
-                <div className="p-8 text-center text-gray-400">
-                  <Bell className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Belum ada informasi terbaru.</p>
+                <div className="py-14 flex flex-col items-center text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mb-3">
+                    <Bell className="w-5 h-5 text-gray-400" />
+                  </div>
+                  <p className="text-sm text-gray-500 font-medium">
+                    Belum ada informasi terbaru.
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Pengumuman baru akan muncul di sini.
+                  </p>
                 </div>
               ) : (
                 informasiList.map((item) => {
@@ -218,19 +297,21 @@ export default function SiswaDashboard() {
                   return (
                     <div
                       key={item.id}
-                      className="p-4 sm:p-5 hover:bg-gray-50 transition-colors cursor-pointer"
+                      className="px-5 py-4 hover:bg-gray-50 transition-colors cursor-pointer group"
                       onClick={() => setExpandedId(isExpanded ? null : item.id)}
                     >
                       <div className="flex items-start gap-3">
+                        {/* Icon */}
                         <div
-                          className={`mt-0.5 shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${config.bg} ${config.text}`}
+                          className={`shrink-0 mt-0.5 w-8 h-8 rounded-xl flex items-center justify-center ${config.iconBg} ${config.iconText}`}
                         >
                           {config.icon}
                         </div>
+                        {/* Content */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap mb-1">
                             <span
-                              className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${config.bg} ${config.text} ${config.border}`}
+                              className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${config.pill}`}
                             >
                               {item.tipe || "Umum"}
                             </span>
@@ -243,21 +324,22 @@ export default function SiswaDashboard() {
                               {formatTanggal(item.tanggal)}
                             </span>
                           </div>
-                          <p className="font-semibold text-gray-900 text-sm sm:text-base truncate">
+                          <p className="font-semibold text-gray-800 text-sm truncate">
                             {item.judul}
                           </p>
                           {isExpanded ? (
-                            <p className="text-sm text-gray-600 mt-1 leading-relaxed whitespace-pre-line">
+                            <p className="text-sm text-gray-600 mt-1.5 leading-relaxed whitespace-pre-line">
                               {item.isi}
                             </p>
                           ) : (
-                            <p className="text-sm text-gray-500 mt-0.5 truncate">
+                            <p className="text-xs text-gray-500 mt-0.5 truncate">
                               {item.isi}
                             </p>
                           )}
                         </div>
+                        {/* Chevron */}
                         <ChevronRight
-                          className={`w-4 h-4 text-gray-300 shrink-0 mt-1 transition-transform ${isExpanded ? "rotate-90" : ""}`}
+                          className={`w-4 h-4 text-gray-300 shrink-0 mt-1 transition-transform group-hover:text-gray-400 ${isExpanded ? "rotate-90" : ""}`}
                         />
                       </div>
                     </div>
