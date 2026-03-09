@@ -1,6 +1,4 @@
 "use client";
-// components/chat/ChatWidget.tsx
-// Widget floating chat — mirip WhatsApp Web, muncul dari icon di TopBar
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
@@ -447,13 +445,21 @@ export default function ChatWidget({
 
   const grouped = groupByDate(messages);
 
-  // Sync FAB badge dengan total unread dari conversations
+  // Poll unread langsung dari API setiap 5 detik — tidak tunggu widget dibuka
   useEffect(() => {
-    if (!isOpen) {
-      const total = conversations.reduce((sum, c) => sum + c.unreadCount, 0);
-      setUnreadFAB(total);
-    }
-  }, [conversations, isOpen]);
+    const poll = async () => {
+      try {
+        const r = await fetch("/api/chat/unread");
+        if (r.ok) {
+          const { count } = await r.json();
+          if (!isOpen) setUnreadFAB(count);
+        }
+      } catch {}
+    };
+    poll(); // langsung poll pertama kali
+    const id = setInterval(poll, 5000);
+    return () => clearInterval(id);
+  }, [isOpen]);
 
   if (!mounted && !showFAB && toasts.length === 0) return null;
 
@@ -477,19 +483,22 @@ export default function ChatWidget({
                   : handleOpen
             }
             aria-label="Chat"
-            className="fixed bottom-5 right-4 sm:right-6 z-50 w-14 h-14 rounded-2xl shadow-lg flex items-center justify-center transition-all duration-200 select-none hover:scale-105 active:scale-95"
+            className="fixed bottom-5 right-4 sm:right-6 z-50 h-14 px-5 rounded-2xl shadow-lg flex items-center gap-2.5 transition-all duration-200 select-none hover:scale-105 active:scale-95"
             style={{
               background: isOpen ? "#374151" : "#4f46e5",
               boxShadow: isOpen ? undefined : "0 8px 25px -5px #4f46e555",
             }}
           >
             {isOpen ? (
-              <X className="w-5 h-5 text-white" />
+              <X className="w-6 h-6 text-white" />
             ) : (
-              <MessageCircle className="w-5 h-5 text-white" />
+              <MessageCircle className="w-6 h-6 text-white" />
             )}
+            <span className="text-white text-sm font-semibold tracking-wide">
+              {isOpen ? "Tutup" : "Chat"}
+            </span>
             {unreadFAB > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5 border-2 border-white animate-bounce">
+              <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 border-2 border-white animate-bounce">
                 {unreadFAB > 99 ? "99+" : unreadFAB}
               </span>
             )}
