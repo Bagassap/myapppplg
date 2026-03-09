@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -16,7 +17,7 @@ import {
   MoreVertical,
 } from "lucide-react";
 
-// ─── Types ───
+// ─── Types ────────────────────────────────────────────────────────────────────
 interface OtherUser {
   id: number;
   name: string | null;
@@ -53,7 +54,7 @@ interface Recipient {
   tempatPKL: string;
 }
 
-// ─── Helpers ───
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatTime(iso: string) {
   const d = new Date(iso);
   const now = new Date();
@@ -133,7 +134,7 @@ function groupByDate(messages: Message[]) {
   return groups;
 }
 
-// ─── Main Widget ───
+// ─── Main Widget ──────────────────────────────────────────────────────────────
 export default function ChatWidget({
   isOpen: isOpenProp,
   onClose: onCloseProp,
@@ -352,7 +353,13 @@ export default function ChatWidget({
       {/* FAB */}
       {showFAB && (
         <button
-          onClick={isOpen ? handleClose : handleOpen}
+          onClick={
+            isOpen
+              ? (onCloseProp ?? handleClose)
+              : isOpenProp !== undefined
+                ? () => {}
+                : handleOpen
+          }
           aria-label="Chat"
           className="fixed bottom-5 right-4 sm:right-6 z-50 w-14 h-14 rounded-2xl shadow-lg flex items-center justify-center transition-all duration-200 select-none hover:scale-105 active:scale-95"
           style={{
@@ -371,6 +378,19 @@ export default function ChatWidget({
             </span>
           )}
         </button>
+      )}
+      {/* Backdrop blur overlay */}
+      {mounted && (
+        <div
+          className="fixed inset-0 z-40"
+          style={{
+            backdropFilter: visible ? "blur(4px)" : "blur(0px)",
+            backgroundColor: visible ? "rgba(0,0,0,0.3)" : "rgba(0,0,0,0)",
+            transition: "backdrop-filter .28s, background-color .28s",
+            pointerEvents: visible ? "auto" : "none",
+          }}
+          onClick={handleClose}
+        />
       )}
       {mounted && (
         <div
@@ -707,7 +727,7 @@ export default function ChatWidget({
   );
 }
 
-// ─── Conversation Item ───
+// ─── Conversation Item ────────────────────────────────────────────────────────
 function ConvItem({
   conv,
   isActive,
@@ -777,7 +797,7 @@ function ConvItem({
   );
 }
 
-// ─── Message Bubble ───
+// ─── Message Bubble ───────────────────────────────────────────────────────────
 function MsgBubble({
   message,
   isOwn,

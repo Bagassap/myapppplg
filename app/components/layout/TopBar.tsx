@@ -1,16 +1,8 @@
 // components/layout/TopBar.tsx
 "use client";
 
-import { useState, useEffect } from "react";
-import {
-  Search,
-  Sun,
-  Moon,
-  Loader,
-  Menu,
-  User,
-  MessageCircle,
-} from "lucide-react";
+import { useState } from "react";
+import { Search, Sun, Moon, Loader, Menu, User } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -23,34 +15,7 @@ export default function TopBar() {
   const { data: session, status } = useSession();
   const { toggleMobileSidebar } = useSidebar();
 
-  const [chatOpen, setChatOpen] = useState(false);
-  const [unread, setUnread] = useState(0);
-
   const toggleTheme = () => setTheme(theme === "Dark" ? "Light" : "Dark");
-
-  // Poll unread count saat widget tertutup
-  useEffect(() => {
-    if (chatOpen || status !== "authenticated") return;
-    const fetchUnread = async () => {
-      try {
-        const r = await fetch("/api/chat/unread");
-        if (r.ok) {
-          const { count } = await r.json();
-          setUnread(count);
-        }
-      } catch {}
-    };
-    fetchUnread();
-    const id = setInterval(fetchUnread, 10000);
-    return () => clearInterval(id);
-  }, [chatOpen, status]);
-
-  // Reset badge saat widget dibuka
-  const openChat = () => {
-    setChatOpen(true);
-    setUnread(0);
-  };
-  const closeChat = () => setChatOpen(false);
 
   if (status === "loading") {
     return (
@@ -97,24 +62,6 @@ export default function TopBar() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Chat Icon + Badge */}
-            <button
-              onClick={chatOpen ? closeChat : openChat}
-              aria-label="Chat"
-              className={`relative p-2 rounded-xl transition-colors cursor-pointer ${
-                chatOpen
-                  ? "bg-indigo-50 text-indigo-600"
-                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <MessageCircle className="w-5 h-5" />
-              {unread > 0 && !chatOpen && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-rose-500 rounded-full border-2 border-white text-white text-[9px] font-bold flex items-center justify-center px-0.5">
-                  {unread > 9 ? "9+" : unread}
-                </span>
-              )}
-            </button>
-
             {/* Theme toggle */}
             <button
               onClick={toggleTheme}
@@ -150,9 +97,7 @@ export default function TopBar() {
           </div>
         </div>
       </header>
-
-      {/* Chat Widget — floating */}
-      <ChatWidget isOpen={chatOpen} onClose={closeChat} showFAB={false} />
+      <ChatWidget />
     </>
   );
 }
