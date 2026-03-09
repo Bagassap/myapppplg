@@ -152,7 +152,7 @@ export default function TopBar() {
       </header>
 
       {/* Chat Widget — floating */}
-      <ChatWidget isOpen={chatOpen} onClose={closeChat} />
+      <ChatWidget isOpen={chatOpen} onClose={closeChat} showFAB={false} />
     </>
   );
 }

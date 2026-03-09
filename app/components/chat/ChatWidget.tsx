@@ -1,4 +1,6 @@
 "use client";
+// components/chat/ChatWidget.tsx
+// Widget floating chat — mirip WhatsApp Web, muncul dari icon di TopBar
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
@@ -16,7 +18,7 @@ import {
   MoreVertical,
 } from "lucide-react";
 
-// ─── Types ───
+// ─── Types ────────────────────────────────────────────────────────────────────
 interface OtherUser {
   id: number;
   name: string | null;
@@ -53,7 +55,7 @@ interface Recipient {
   tempatPKL: string;
 }
 
-// ─── Helpers ───
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatTime(iso: string) {
   const d = new Date(iso);
   const now = new Date();
@@ -133,15 +135,25 @@ function groupByDate(messages: Message[]) {
   return groups;
 }
 
-// ─── Main Widget ───
+// ─── Main Widget ──────────────────────────────────────────────────────────────
 export default function ChatWidget({
-  isOpen,
-  onClose,
+  isOpen: isOpenProp,
+  onClose: onCloseProp,
+  showFAB = true,
 }: {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  showFAB?: boolean;
 }) {
   const { data: session } = useSession();
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = isOpenProp !== undefined ? isOpenProp : internalOpen;
+  const handleClose = onCloseProp ?? (() => setInternalOpen(false));
+  const handleOpen = () => {
+    setInternalOpen(true);
+    setUnreadFAB(0);
+  };
+  const [unreadFAB, setUnreadFAB] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
 
@@ -333,333 +345,362 @@ export default function ChatWidget({
 
   const grouped = groupByDate(messages);
 
-  if (!mounted) return null;
+  if (!mounted && !showFAB) return null;
 
   return (
-    <div
-      className="fixed bottom-20 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-[740px] max-w-[740px]"
-      style={{
-        transition: "opacity .28s, transform .28s cubic-bezier(.32,1.25,.6,1)",
-        opacity: visible ? 1 : 0,
-        transform: visible
-          ? "translateY(0) scale(1)"
-          : "translateY(16px) scale(.97)",
-        pointerEvents: visible ? "auto" : "none",
-      }}
-    >
-      <div
-        className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden flex"
-        style={{ height: "520px" }}
-      >
-        {/* ── SIDEBAR KIRI ── */}
+    <>
+      {/* FAB */}
+      {showFAB && (
+        <button
+          onClick={isOpen ? handleClose : handleOpen}
+          aria-label="Chat"
+          className="fixed bottom-5 right-4 sm:right-6 z-50 w-14 h-14 rounded-2xl shadow-lg flex items-center justify-center transition-all duration-200 select-none hover:scale-105 active:scale-95"
+          style={{
+            background: isOpen ? "#374151" : "#4f46e5",
+            boxShadow: isOpen ? undefined : "0 8px 25px -5px #4f46e555",
+          }}
+        >
+          {isOpen ? (
+            <X className="w-5 h-5 text-white" />
+          ) : (
+            <MessageCircle className="w-5 h-5 text-white" />
+          )}
+          {unreadFAB > 0 && !isOpen && (
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5 border-2 border-white">
+              {unreadFAB > 9 ? "9+" : unreadFAB}
+            </span>
+          )}
+        </button>
+      )}
+      {mounted && (
         <div
-          className={`
+          className="fixed bottom-20 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-[740px] max-w-[740px]"
+          style={{
+            transition:
+              "opacity .28s, transform .28s cubic-bezier(.32,1.25,.6,1)",
+            opacity: visible ? 1 : 0,
+            transform: visible
+              ? "translateY(0) scale(1)"
+              : "translateY(16px) scale(.97)",
+            pointerEvents: visible ? "auto" : "none",
+          }}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden flex"
+            style={{ height: "520px" }}
+          >
+            {/* ── SIDEBAR KIRI ── */}
+            <div
+              className={`
           flex flex-col border-r border-gray-100
           w-full sm:w-[260px] shrink-0
           ${view === "thread" ? "hidden sm:flex" : "flex"}
         `}
-        >
-          {/* Sidebar Header */}
-          <div className="px-4 pt-4 pb-3 border-b border-gray-100">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2.5">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                  style={{
-                    background: getAvatarColor(session?.user?.name ?? null),
-                  }}
-                >
-                  {getInitials(session?.user?.name ?? null)}
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-800 leading-tight truncate max-w-[110px]">
-                    {session?.user?.name ?? "Pengguna"}
-                  </p>
-                  <span
-                    className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${getRoleBadge(role).cls}`}
-                  >
-                    {getRoleBadge(role).label}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                {canStartChat && (
-                  <button
-                    onClick={openNewChat}
-                    className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-                    title="Chat baru"
-                  >
-                    <Plus className="w-4 h-4 text-indigo-600" />
-                  </button>
-                )}
-                <button
-                  onClick={onClose}
-                  className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  <X className="w-4 h-4 text-gray-500" />
-                </button>
-              </div>
-            </div>
-            {/* Search */}
-            {view !== "new" && (
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  placeholder="Cari..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-gray-50 border border-gray-200 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* ── View: New Chat ── */}
-          {view === "new" && (
-            <>
-              <div className="px-3 py-2 border-b border-gray-100 flex items-center gap-2">
-                <button
-                  onClick={goBack}
-                  className="p-1 rounded-lg hover:bg-gray-100"
-                >
-                  <ChevronLeft className="w-4 h-4 text-gray-500" />
-                </button>
-                <span className="text-xs font-semibold text-gray-600">
-                  Pilih Siswa
-                </span>
-              </div>
-              <div className="px-3 py-2 border-b border-gray-100">
-                <div className="relative">
-                  <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    type="text"
-                    placeholder="Cari nama, NIS, kelas..."
-                    value={recipientSearch}
-                    onChange={(e) => setRecipientSearch(e.target.value)}
-                    autoFocus
-                    className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-gray-50 border border-gray-200 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                  />
-                </div>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                {loadingRec ? (
-                  <div className="flex items-center justify-center h-24 gap-2 text-gray-400">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span className="text-xs">Memuat...</span>
-                  </div>
-                ) : filteredRecipients.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-24 gap-2 text-gray-400">
-                    <Users className="w-6 h-6 opacity-30" />
-                    <p className="text-xs">Tidak ada siswa</p>
-                  </div>
-                ) : (
-                  filteredRecipients.map((r) => (
-                    <button
-                      key={r.id}
-                      onClick={() => startChat(r.id)}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-indigo-50 transition-colors text-left"
+            >
+              {/* Sidebar Header */}
+              <div className="px-4 pt-4 pb-3 border-b border-gray-100">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                      style={{
+                        background: getAvatarColor(session?.user?.name ?? null),
+                      }}
                     >
-                      <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                        style={{ background: getAvatarColor(r.name) }}
+                      {getInitials(session?.user?.name ?? null)}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800 leading-tight truncate max-w-[110px]">
+                        {session?.user?.name ?? "Pengguna"}
+                      </p>
+                      <span
+                        className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${getRoleBadge(role).cls}`}
                       >
-                        {getInitials(r.name)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-800 truncate">
-                          {r.name}
-                        </p>
-                        <p className="text-[10px] text-gray-400 truncate">
-                          {r.kelas} · NIS {r.username}
-                        </p>
-                      </div>
+                        {getRoleBadge(role).label}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {canStartChat && (
+                      <button
+                        onClick={openNewChat}
+                        className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                        title="Chat baru"
+                      >
+                        <Plus className="w-4 h-4 text-indigo-600" />
+                      </button>
+                    )}
+                    <button
+                      onClick={handleClose}
+                      className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <X className="w-4 h-4 text-gray-500" />
                     </button>
-                  ))
+                  </div>
+                </div>
+                {/* Search */}
+                {view !== "new" && (
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      placeholder="Cari..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-gray-50 border border-gray-200 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                    />
+                  </div>
                 )}
               </div>
-            </>
-          )}
 
-          {/* ── View: List ── */}
-          {view !== "new" && (
-            <div className="flex-1 overflow-y-auto">
-              {loadingConvs ? (
-                <div className="flex items-center justify-center h-24 gap-2 text-gray-400">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span className="text-xs">Memuat...</span>
-                </div>
-              ) : filteredConvs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-32 gap-2 text-gray-400 text-center px-4">
-                  <MessageCircle className="w-8 h-8 opacity-20" />
-                  <p className="text-xs font-medium text-gray-500">
-                    Belum ada percakapan
-                  </p>
-                  {canStartChat && (
-                    <p className="text-[10px] text-gray-400">
-                      Klik + untuk chat baru
-                    </p>
+              {/* ── View: New Chat ── */}
+              {view === "new" && (
+                <>
+                  <div className="px-3 py-2 border-b border-gray-100 flex items-center gap-2">
+                    <button
+                      onClick={goBack}
+                      className="p-1 rounded-lg hover:bg-gray-100"
+                    >
+                      <ChevronLeft className="w-4 h-4 text-gray-500" />
+                    </button>
+                    <span className="text-xs font-semibold text-gray-600">
+                      Pilih Siswa
+                    </span>
+                  </div>
+                  <div className="px-3 py-2 border-b border-gray-100">
+                    <div className="relative">
+                      <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <input
+                        type="text"
+                        placeholder="Cari nama, NIS, kelas..."
+                        value={recipientSearch}
+                        onChange={(e) => setRecipientSearch(e.target.value)}
+                        autoFocus
+                        className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-gray-50 border border-gray-200 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex-1 overflow-y-auto">
+                    {loadingRec ? (
+                      <div className="flex items-center justify-center h-24 gap-2 text-gray-400">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span className="text-xs">Memuat...</span>
+                      </div>
+                    ) : filteredRecipients.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-24 gap-2 text-gray-400">
+                        <Users className="w-6 h-6 opacity-30" />
+                        <p className="text-xs">Tidak ada siswa</p>
+                      </div>
+                    ) : (
+                      filteredRecipients.map((r) => (
+                        <button
+                          key={r.id}
+                          onClick={() => startChat(r.id)}
+                          className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-indigo-50 transition-colors text-left"
+                        >
+                          <div
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                            style={{ background: getAvatarColor(r.name) }}
+                          >
+                            {getInitials(r.name)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-800 truncate">
+                              {r.name}
+                            </p>
+                            <p className="text-[10px] text-gray-400 truncate">
+                              {r.kelas} · NIS {r.username}
+                            </p>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* ── View: List ── */}
+              {view !== "new" && (
+                <div className="flex-1 overflow-y-auto">
+                  {loadingConvs ? (
+                    <div className="flex items-center justify-center h-24 gap-2 text-gray-400">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-xs">Memuat...</span>
+                    </div>
+                  ) : filteredConvs.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-32 gap-2 text-gray-400 text-center px-4">
+                      <MessageCircle className="w-8 h-8 opacity-20" />
+                      <p className="text-xs font-medium text-gray-500">
+                        Belum ada percakapan
+                      </p>
+                      {canStartChat && (
+                        <p className="text-[10px] text-gray-400">
+                          Klik + untuk chat baru
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    filteredConvs.map((conv) => (
+                      <ConvItem
+                        key={conv.id}
+                        conv={conv}
+                        isActive={activeConv?.id === conv.id}
+                        currentUserId={userId}
+                        onClick={() => selectConversation(conv)}
+                      />
+                    ))
                   )}
                 </div>
-              ) : (
-                filteredConvs.map((conv) => (
-                  <ConvItem
-                    key={conv.id}
-                    conv={conv}
-                    isActive={activeConv?.id === conv.id}
-                    currentUserId={userId}
-                    onClick={() => selectConversation(conv)}
-                  />
-                ))
               )}
             </div>
-          )}
-        </div>
 
-        {/* ── AREA CHAT KANAN ── */}
-        <div
-          className={`
+            {/* ── AREA CHAT KANAN ── */}
+            <div
+              className={`
           flex-1 flex flex-col min-w-0
           ${view !== "thread" ? "hidden sm:flex" : "flex"}
         `}
-        >
-          {activeConv ? (
-            <>
-              {/* Chat Header */}
-              <div className="shrink-0 px-4 py-3 border-b border-gray-100 flex items-center gap-3 bg-white">
-                <button
-                  onClick={goBack}
-                  className="sm:hidden p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4 text-gray-600" />
-                </button>
-                <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
-                  style={{
-                    background: getAvatarColor(
-                      activeConv.otherUser?.name ?? null,
-                    ),
-                  }}
-                >
-                  {getInitials(activeConv.otherUser?.name ?? null)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-800 text-sm truncate">
-                    {activeConv.otherUser?.name ?? "Pengguna"}
-                  </p>
-                  <span
-                    className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${getRoleBadge(activeConv.otherUser?.role ?? "").cls}`}
-                  >
-                    {getRoleBadge(activeConv.otherUser?.role ?? "").label}
-                  </span>
-                </div>
-              </div>
-
-              {/* Messages */}
-              <div
-                className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%)",
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23e0e7ff' fill-opacity='0.25'%3E%3Cpath d='M20 20.5V18H0v5h20v-2.5zM20 0H0v5h20V0zm0 12H0v5h20v-5zm0-6H0v3h20V6zm0 24H0v5h20v-5zm20-24H20v5h20V6z'/%3E%3C/g%3E%3C/svg%3E")`,
-                }}
-              >
-                {loadingMsgs ? (
-                  <div className="flex items-center justify-center h-full">
-                    <Loader2 className="w-5 h-5 animate-spin text-indigo-400" />
-                  </div>
-                ) : messages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-400">
-                    <MessageCircle className="w-8 h-8 opacity-20" />
-                    <p className="text-sm text-gray-500">Mulai percakapan</p>
-                  </div>
-                ) : (
-                  grouped.map((group, gi) => (
-                    <div key={gi}>
-                      <div className="flex items-center justify-center my-3">
-                        <span className="px-2.5 py-0.5 bg-white/80 rounded-full text-[10px] text-gray-400 shadow-sm border border-gray-100">
-                          {formatDateDivider(group.date)}
-                        </span>
-                      </div>
-                      {group.messages.map((msg, mi) => (
-                        <MsgBubble
-                          key={msg.id}
-                          message={msg}
-                          isOwn={msg.senderId === userId}
-                          showName={
-                            !msg.senderId &&
-                            (mi === 0 ||
-                              group.messages[mi - 1]?.senderId !== msg.senderId)
-                          }
-                        />
-                      ))}
+            >
+              {activeConv ? (
+                <>
+                  {/* Chat Header */}
+                  <div className="shrink-0 px-4 py-3 border-b border-gray-100 flex items-center gap-3 bg-white">
+                    <button
+                      onClick={goBack}
+                      className="sm:hidden p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <ChevronLeft className="w-4 h-4 text-gray-600" />
+                    </button>
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
+                      style={{
+                        background: getAvatarColor(
+                          activeConv.otherUser?.name ?? null,
+                        ),
+                      }}
+                    >
+                      {getInitials(activeConv.otherUser?.name ?? null)}
                     </div>
-                  ))
-                )}
-                <div ref={messagesEndRef} />
-              </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-800 text-sm truncate">
+                        {activeConv.otherUser?.name ?? "Pengguna"}
+                      </p>
+                      <span
+                        className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${getRoleBadge(activeConv.otherUser?.role ?? "").cls}`}
+                      >
+                        {getRoleBadge(activeConv.otherUser?.role ?? "").label}
+                      </span>
+                    </div>
+                  </div>
 
-              {/* Input */}
-              <div className="shrink-0 px-3 py-2.5 border-t border-gray-100 bg-white">
-                <div className="flex items-end gap-2">
-                  <textarea
-                    ref={inputRef}
-                    value={messageInput}
-                    onChange={(e) => setMessageInput(e.target.value)}
-                    onKeyDown={handleKey}
-                    placeholder={`Pesan ke ${activeConv.otherUser?.name ?? ""}...`}
-                    rows={1}
-                    className="flex-1 resize-none px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-200 leading-relaxed max-h-24 overflow-y-auto"
-                    onInput={(e) => {
-                      const t = e.currentTarget;
-                      t.style.height = "auto";
-                      t.style.height = Math.min(t.scrollHeight, 96) + "px";
+                  {/* Messages */}
+                  <div
+                    className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5"
+                    style={{
+                      background: "#f1f5f9",
                     }}
-                  />
-                  <button
-                    onClick={handleSend}
-                    disabled={!messageInput.trim() || sending}
-                    className="w-9 h-9 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 disabled:cursor-not-allowed flex items-center justify-center transition-all shrink-0"
                   >
-                    {sending ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                    {loadingMsgs ? (
+                      <div className="flex items-center justify-center h-full">
+                        <Loader2 className="w-5 h-5 animate-spin text-indigo-400" />
+                      </div>
+                    ) : messages.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-400">
+                        <MessageCircle className="w-8 h-8 opacity-20" />
+                        <p className="text-sm text-gray-500">
+                          Mulai percakapan
+                        </p>
+                      </div>
                     ) : (
-                      <Send
-                        className={`w-3.5 h-3.5 ${messageInput.trim() ? "text-white" : "text-gray-400"}`}
-                      />
+                      grouped.map((group, gi) => (
+                        <div key={gi}>
+                          <div className="flex items-center justify-center my-3">
+                            <span className="px-2.5 py-0.5 bg-white/80 rounded-full text-[10px] text-gray-400 shadow-sm border border-gray-100">
+                              {formatDateDivider(group.date)}
+                            </span>
+                          </div>
+                          {group.messages.map((msg, mi) => (
+                            <MsgBubble
+                              key={msg.id}
+                              message={msg}
+                              isOwn={msg.senderId === userId}
+                              showName={
+                                !msg.senderId &&
+                                (mi === 0 ||
+                                  group.messages[mi - 1]?.senderId !==
+                                    msg.senderId)
+                              }
+                            />
+                          ))}
+                        </div>
+                      ))
                     )}
-                  </button>
+                    <div ref={messagesEndRef} />
+                  </div>
+
+                  {/* Input */}
+                  <div className="shrink-0 px-3 py-2.5 border-t border-gray-100 bg-white">
+                    <div className="flex items-end gap-2">
+                      <textarea
+                        ref={inputRef}
+                        value={messageInput}
+                        onChange={(e) => setMessageInput(e.target.value)}
+                        onKeyDown={handleKey}
+                        placeholder={`Pesan ke ${activeConv.otherUser?.name ?? ""}...`}
+                        rows={1}
+                        className="flex-1 resize-none px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-200 leading-relaxed max-h-24 overflow-y-auto"
+                        onInput={(e) => {
+                          const t = e.currentTarget;
+                          t.style.height = "auto";
+                          t.style.height = Math.min(t.scrollHeight, 96) + "px";
+                        }}
+                      />
+                      <button
+                        onClick={handleSend}
+                        disabled={!messageInput.trim() || sending}
+                        className="w-9 h-9 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 disabled:cursor-not-allowed flex items-center justify-center transition-all shrink-0"
+                      >
+                        {sending ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                        ) : (
+                          <Send
+                            className={`w-3.5 h-3.5 ${messageInput.trim() ? "text-white" : "text-gray-400"}`}
+                          />
+                        )}
+                      </button>
+                    </div>
+                    <p className="text-[9px] text-gray-400 mt-1 text-right">
+                      Enter kirim · Shift+Enter baris baru
+                    </p>
+                  </div>
+                </>
+              ) : (
+                // Empty state kanan
+                <div className="flex-1 flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-gray-50 to-indigo-50/20">
+                  <div className="w-14 h-14 rounded-2xl bg-white shadow-md flex items-center justify-center">
+                    <MessageCircle className="w-7 h-7 text-indigo-400" />
+                  </div>
+                  <div className="text-center px-4">
+                    <p className="text-sm font-semibold text-gray-600">
+                      Pilih Percakapan
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {canStartChat
+                        ? "Atau klik + untuk mulai chat baru"
+                        : "Pilih untuk membaca pesan"}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-[9px] text-gray-400 mt-1 text-right">
-                  Enter kirim · Shift+Enter baris baru
-                </p>
-              </div>
-            </>
-          ) : (
-            // Empty state kanan
-            <div className="flex-1 flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-gray-50 to-indigo-50/20">
-              <div className="w-14 h-14 rounded-2xl bg-white shadow-md flex items-center justify-center">
-                <MessageCircle className="w-7 h-7 text-indigo-400" />
-              </div>
-              <div className="text-center px-4">
-                <p className="text-sm font-semibold text-gray-600">
-                  Pilih Percakapan
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  {canStartChat
-                    ? "Atau klik + untuk mulai chat baru"
-                    : "Pilih untuk membaca pesan"}
-                </p>
-              </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 }
 
-// ─── Conversation Item ───
+// ─── Conversation Item ────────────────────────────────────────────────────────
 function ConvItem({
   conv,
   isActive,
@@ -729,7 +770,7 @@ function ConvItem({
   );
 }
 
-// ─── Message Bubble ───
+// ─── Message Bubble ───────────────────────────────────────────────────────────
 function MsgBubble({
   message,
   isOwn,
