@@ -215,7 +215,6 @@ export default function ChatWidget({
   const handleClose = onCloseProp ?? (() => setInternalOpen(false));
   const handleOpen = () => {
     setInternalOpen(true);
-    setUnreadFAB(0);
   };
   const [unreadFAB, setUnreadFAB] = useState(0); // synced below
   const [toasts, setToasts] = useState<
@@ -264,6 +263,11 @@ export default function ChatWidget({
         const fresh: Conversation[] = await r.json();
         setConversations(fresh);
         setLoadingConvs(false);
+        // Reset badge jika widget terbuka (user sedang aktif lihat chat)
+        if (isOpen) {
+          const total = fresh.reduce((sum, c) => sum + c.unreadCount, 0);
+          setUnreadFAB(total);
+        }
 
         // Detect new unread messages — show toast if widget closed
         if (!isOpen) {
@@ -302,25 +306,29 @@ export default function ChatWidget({
   }, [isOpen, loadConversations]);
 
   // Load messages
-  const loadMessages = useCallback(async (convId: number) => {
-    setLoadingMsgs(true);
+  const loadMessages = useCallback(async (convId: number, markRead = false) => {
+    if (markRead) setLoadingMsgs(true);
     try {
-      const r = await fetch(`/api/chat/messages?conversationId=${convId}`);
+      const r = await fetch(
+        `/api/chat/messages?conversationId=${convId}&markRead=${markRead}`,
+      );
       if (r.ok) {
         setMessages(await r.json());
-        setConversations((prev) =>
-          prev.map((c) => (c.id === convId ? { ...c, unreadCount: 0 } : c)),
-        );
+        if (markRead) {
+          setConversations((prev) =>
+            prev.map((c) => (c.id === convId ? { ...c, unreadCount: 0 } : c)),
+          );
+        }
       }
     } finally {
-      setLoadingMsgs(false);
+      if (markRead) setLoadingMsgs(false);
     }
   }, []);
 
   // Polling messages
   useEffect(() => {
     if (!activeConv || view !== "thread") return;
-    const id = setInterval(() => loadMessages(activeConv.id), 3000);
+    const id = setInterval(() => loadMessages(activeConv.id, false), 3000);
     return () => clearInterval(id);
   }, [activeConv, view, loadMessages]);
 
@@ -335,7 +343,7 @@ export default function ChatWidget({
   const selectConversation = (conv: Conversation) => {
     setActiveConv(conv);
     setView("thread");
-    loadMessages(conv.id);
+    loadMessages(conv.id, true);
     setTimeout(() => inputRef.current?.focus(), 150);
   };
 
@@ -414,8 +422,10 @@ export default function ChatWidget({
 
   const openFromToast = (convId: number) => {
     handleOpen();
-    const conv = conversations.find((c) => c.id === convId);
-    if (conv) selectConversation(conv);
+    setTimeout(() => {
+      const conv = conversations.find((c) => c.id === convId);
+      if (conv) selectConversation(conv);
+    }, 100);
   };
 
   const dismissToast = (id: number) =>
@@ -452,7 +462,7 @@ export default function ChatWidget({
         const r = await fetch("/api/chat/unread");
         if (r.ok) {
           const { count } = await r.json();
-          if (!isOpen) setUnreadFAB(count);
+          setUnreadFAB(count);
         }
       } catch {}
     };

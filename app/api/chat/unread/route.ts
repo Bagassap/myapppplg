@@ -20,8 +20,7 @@ export async function GET() {
             where: {
                 conversationId: p.conversationId,
                 senderId: { not: userId },
-                isRead: false,
-                ...(p.lastReadAt ? { createdAt: { gt: p.lastReadAt } } : {}),
+                createdAt: p.lastReadAt ? { gt: p.lastReadAt } : undefined,
             },
         });
         total += count;

@@ -9,6 +9,8 @@ export async function GET(req: NextRequest) {
 
     const userId = Number(session.user.id);
     const convId = Number(req.nextUrl.searchParams.get("conversationId"));
+    const markRead = req.nextUrl.searchParams.get("markRead") === "true";
+
     if (!convId) return NextResponse.json({ error: "conversationId wajib" }, { status: 400 });
 
     const participant = await prisma.conversationParticipant.findUnique({
@@ -22,19 +24,20 @@ export async function GET(req: NextRequest) {
         orderBy: { createdAt: "asc" },
     });
 
-    await prisma.conversationParticipant.update({
-        where: { conversationId_userId: { conversationId: convId, userId } },
-        data: { lastReadAt: new Date() },
-    });
-
-    await prisma.chatMessage.updateMany({
-        where: {
-            conversationId: convId,
-            senderId: { not: userId },
-            isRead: false,
-        },
-        data: { isRead: true, readAt: new Date() },
-    });
+    if (markRead) {
+        await prisma.conversationParticipant.update({
+            where: { conversationId_userId: { conversationId: convId, userId } },
+            data: { lastReadAt: new Date() },
+        });
+        await prisma.chatMessage.updateMany({
+            where: {
+                conversationId: convId,
+                senderId: { not: userId },
+                isRead: false,
+            },
+            data: { isRead: true, readAt: new Date() },
+        });
+    }
 
     return NextResponse.json(messages);
 }
