@@ -1,4 +1,6 @@
 "use client";
+// components/chat/ChatWidget.tsx
+// Widget floating chat — mirip WhatsApp Web, muncul dari icon di TopBar
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
