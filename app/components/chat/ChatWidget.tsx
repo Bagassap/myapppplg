@@ -1,9 +1,7 @@
 "use client";
-// components/chat/ChatWidget.tsx
-// Widget floating chat — mirip WhatsApp Web, muncul dari icon di TopBar
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useTheme } from "@/contexts/ThemeContext";
 import {
   MessageCircle,
   X,
@@ -18,7 +16,7 @@ import {
   MoreVertical,
 } from "lucide-react";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Types ───
 interface OtherUser {
   id: number;
   name: string | null;
@@ -55,7 +53,7 @@ interface Recipient {
   tempatPKL: string;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Helpers ───
 function formatTime(iso: string) {
   const d = new Date(iso);
   const now = new Date();
@@ -135,7 +133,7 @@ function groupByDate(messages: Message[]) {
   return groups;
 }
 
-// ─── Main Widget ──────────────────────────────────────────────────────────────
+// ─── Main Widget ───
 export default function ChatWidget({
   isOpen: isOpenProp,
   onClose: onCloseProp,
@@ -146,6 +144,8 @@ export default function ChatWidget({
   showFAB?: boolean;
 }) {
   const { data: session } = useSession();
+  const { theme } = useTheme();
+  const isDark = theme === "Dark";
   const [internalOpen, setInternalOpen] = useState(false);
   const isOpen = isOpenProp !== undefined ? isOpenProp : internalOpen;
   const handleClose = onCloseProp ?? (() => setInternalOpen(false));
@@ -386,19 +386,25 @@ export default function ChatWidget({
           }}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden flex"
-            style={{ height: "520px" }}
+            className="rounded-2xl shadow-2xl border overflow-hidden flex"
+            style={{
+              background: isDark ? "#1e293b" : "white",
+              borderColor: isDark ? "#374151" : "#e5e7eb",
+              height: "520px",
+            }}
           >
             {/* ── SIDEBAR KIRI ── */}
             <div
               className={`
-          flex flex-col border-r border-gray-100
-          w-full sm:w-[260px] shrink-0
+          flex flex-col border-r w-full sm:w-[260px] shrink-0
           ${view === "thread" ? "hidden sm:flex" : "flex"}
         `}
             >
               {/* Sidebar Header */}
-              <div className="px-4 pt-4 pb-3 border-b border-gray-100">
+              <div
+                className="px-4 pt-4 pb-3 border-b"
+                style={{ borderColor: isDark ? "#374151" : "#f3f4f6" }}
+              >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2.5">
                     <div
@@ -597,7 +603,7 @@ export default function ChatWidget({
                   <div
                     className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5"
                     style={{
-                      background: "#f1f5f9",
+                      background: isDark ? "#0f172a" : "#f1f5f9",
                     }}
                   >
                     {loadingMsgs ? (
@@ -630,6 +636,7 @@ export default function ChatWidget({
                                   group.messages[mi - 1]?.senderId !==
                                     msg.senderId)
                               }
+                              isDark={isDark}
                             />
                           ))}
                         </div>
@@ -700,7 +707,7 @@ export default function ChatWidget({
   );
 }
 
-// ─── Conversation Item ────────────────────────────────────────────────────────
+// ─── Conversation Item ───
 function ConvItem({
   conv,
   isActive,
@@ -770,15 +777,17 @@ function ConvItem({
   );
 }
 
-// ─── Message Bubble ───────────────────────────────────────────────────────────
+// ─── Message Bubble ───
 function MsgBubble({
   message,
   isOwn,
   showName,
+  isDark,
 }: {
   message: Message;
   isOwn: boolean;
   showName: boolean;
+  isDark: boolean;
 }) {
   return (
     <div
@@ -802,7 +811,7 @@ function MsgBubble({
           className={`px-3 py-2 shadow-sm ${
             isOwn
               ? "bg-indigo-600 text-white rounded-2xl rounded-br-sm"
-              : "bg-white text-gray-800 rounded-2xl rounded-bl-sm border border-gray-100"
+              : `${isDark ? "bg-gray-700 text-gray-100 border-gray-600" : "bg-white text-gray-800 border-gray-100"} rounded-2xl rounded-bl-sm border`
           }`}
         >
           <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
