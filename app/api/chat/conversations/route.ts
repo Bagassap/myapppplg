@@ -1,4 +1,3 @@
-// app/api/chat/conversations/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/route";
@@ -71,8 +70,6 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Siswa tidak bisa memulai chat" }, { status: 403 });
     }
 
-    // Guru: hanya bisa chat ke siswa yang dibimbing
-    // DataSiswa.userId = NIS (= User.username), bukan User.id
     if (role === "GURU") {
         const targetUser = await prisma.user.findUnique({
             where: { id: targetId },
@@ -92,7 +89,6 @@ export async function POST(req: Request) {
         }
     }
 
-    // Cari conversation yang sudah ada antara 2 user ini
     const existing = await prisma.conversation.findFirst({
         where: {
             AND: [
@@ -104,7 +100,6 @@ export async function POST(req: Request) {
 
     if (existing) return NextResponse.json({ conversationId: existing.id });
 
-    // Buat baru
     const conv = await prisma.conversation.create({
         data: {
             participants: {
