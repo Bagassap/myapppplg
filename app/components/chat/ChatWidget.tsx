@@ -15,6 +15,7 @@ import {
   Users,
   Plus,
   MoreVertical,
+  Megaphone,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -236,6 +237,13 @@ export default function ChatWidget({
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [recipientSearch, setRecipientSearch] = useState("");
   const [loadingRec, setLoadingRec] = useState(false);
+  const [showBroadcast, setShowBroadcast] = useState(false);
+  const [broadcastMsg, setBroadcastMsg] = useState("");
+  const [broadcasting, setBroadcasting] = useState(false);
+  const [broadcastResult, setBroadcastResult] = useState<{
+    sent: number;
+    total: number;
+  } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -431,6 +439,32 @@ export default function ChatWidget({
   const dismissToast = (id: number) =>
     setToasts((t) => t.filter((x) => x.id !== id));
 
+  const handleBroadcast = async () => {
+    if (!broadcastMsg.trim() || broadcasting) return;
+    setBroadcasting(true);
+    try {
+      const r = await fetch("/api/chat/broadcast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: broadcastMsg.trim() }),
+      });
+      if (r.ok) {
+        const result = await r.json();
+        setBroadcastResult(result);
+        setBroadcastMsg("");
+        setTimeout(() => {
+          setBroadcastResult(null);
+          setShowBroadcast(false);
+          loadConversations();
+        }, 2500);
+      }
+    } catch {
+      alert("Gagal mengirim broadcast");
+    } finally {
+      setBroadcasting(false);
+    }
+  };
+
   const goBack = () => {
     setView("list");
     setActiveConv(null);
@@ -531,6 +565,111 @@ export default function ChatWidget({
           ))}
         </div>
 
+        {/* Broadcast Modal */}
+        {showBroadcast && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              onClick={() => {
+                setShowBroadcast(false);
+                setBroadcastMsg("");
+                setBroadcastResult(null);
+              }}
+            />
+            <div
+              className="relative rounded-2xl shadow-2xl border w-full max-w-md overflow-hidden z-10"
+              style={{
+                background: isDark ? "#1e293b" : "white",
+                borderColor: isDark ? "#374151" : "#e5e7eb",
+              }}
+            >
+              {/* Modal Header */}
+              <div
+                className="px-5 py-4 border-b flex items-center gap-3"
+                style={{ borderColor: isDark ? "#374151" : "#f3f4f6" }}
+              >
+                <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+                  <Megaphone className="w-5 h-5 text-amber-500" />
+                </div>
+                <div className="flex-1">
+                  <p
+                    className={`font-semibold text-sm ${isDark ? "text-gray-100" : "text-gray-800"}`}
+                  >
+                    Broadcast ke Semua Siswa
+                  </p>
+                  <p
+                    className={`text-xs mt-0.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                  >
+                    Pesan akan dikirim ke seluruh siswa sekaligus
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowBroadcast(false);
+                    setBroadcastMsg("");
+                    setBroadcastResult(null);
+                  }}
+                  className="p-1.5 rounded-lg hover:bg-gray-100"
+                >
+                  <X className="w-4 h-4 text-gray-400" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="px-5 py-4">
+                {broadcastResult ? (
+                  <div className="flex flex-col items-center gap-3 py-4">
+                    <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                      <CheckCheck className="w-6 h-6 text-green-600" />
+                    </div>
+                    <p
+                      className={`font-semibold text-sm ${isDark ? "text-gray-100" : "text-gray-800"}`}
+                    >
+                      Berhasil dikirim ke {broadcastResult.sent} dari{" "}
+                      {broadcastResult.total} siswa
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <textarea
+                      value={broadcastMsg}
+                      onChange={(e) => setBroadcastMsg(e.target.value)}
+                      placeholder="Tulis pesan broadcast..."
+                      rows={4}
+                      autoFocus
+                      className={`w-full px-3 py-2.5 rounded-xl border text-sm resize-none focus:outline-none focus:ring-2 focus:ring-amber-300 leading-relaxed ${isDark ? "bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400" : "bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-400"}`}
+                    />
+                    <div className="flex items-center justify-between mt-3">
+                      <p
+                        className={`text-xs ${isDark ? "text-gray-400" : "text-gray-400"}`}
+                      >
+                        Akan dikirim ke semua siswa terdaftar
+                      </p>
+                      <button
+                        onClick={handleBroadcast}
+                        disabled={!broadcastMsg.trim() || broadcasting}
+                        className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-gray-200 disabled:cursor-not-allowed text-white rounded-xl text-sm font-medium transition-colors"
+                      >
+                        {broadcasting ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />{" "}
+                            Mengirim...
+                          </>
+                        ) : (
+                          <>
+                            <Megaphone className="w-3.5 h-3.5" /> Kirim
+                            Broadcast
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Backdrop blur overlay */}
         {mounted && (
           <div
@@ -608,6 +747,15 @@ export default function ChatWidget({
                           title="Chat baru"
                         >
                           <Plus className="w-4 h-4 text-indigo-600" />
+                        </button>
+                      )}
+                      {role === "ADMIN" && (
+                        <button
+                          onClick={() => setShowBroadcast(true)}
+                          className="p-1.5 rounded-lg hover:bg-amber-50 transition-colors"
+                          title="Broadcast ke semua siswa"
+                        >
+                          <Megaphone className="w-4 h-4 text-amber-500" />
                         </button>
                       )}
                       <button
