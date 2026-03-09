@@ -5,7 +5,7 @@ declare module "next-auth" {
         user: {
             id: string;
             role: "ADMIN" | "GURU" | "SISWA";
-            name: string;
+            name: string | null;
             email: string;
         } & DefaultSession["user"];
     }
@@ -13,7 +13,7 @@ declare module "next-auth" {
     interface User {
         id: string;
         role: "ADMIN" | "GURU" | "SISWA";
-        name: string;
+        name: string | null;
         email: string;
     }
 }
