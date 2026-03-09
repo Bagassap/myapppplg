@@ -1,4 +1,6 @@
 "use client";
+// components/chat/ChatWidget.tsx
+// Widget floating chat — mirip WhatsApp Web, muncul dari icon di TopBar
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
@@ -217,7 +219,7 @@ export default function ChatWidget({
     setInternalOpen(true);
     setUnreadFAB(0);
   };
-  const [unreadFAB, setUnreadFAB] = useState(0);
+  const [unreadFAB, setUnreadFAB] = useState(0); // synced below
   const [toasts, setToasts] = useState<
     { id: number; name: string; content: string; convId: number }[]
   >([]);
@@ -281,7 +283,7 @@ export default function ChatWidget({
                   convId: conv.id,
                 },
               ]);
-              setUnreadFAB((n) => n + (conv.unreadCount - prevUnread));
+              // unreadFAB is derived from conversations, no manual increment needed
             }
           }
         }
@@ -445,6 +447,14 @@ export default function ChatWidget({
 
   const grouped = groupByDate(messages);
 
+  // Sync FAB badge dengan total unread dari conversations
+  useEffect(() => {
+    if (!isOpen) {
+      const total = conversations.reduce((sum, c) => sum + c.unreadCount, 0);
+      setUnreadFAB(total);
+    }
+  }, [conversations, isOpen]);
+
   if (!mounted && !showFAB && toasts.length === 0) return null;
 
   return (
@@ -478,9 +488,9 @@ export default function ChatWidget({
             ) : (
               <MessageCircle className="w-5 h-5 text-white" />
             )}
-            {unreadFAB > 0 && !isOpen && (
-              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5 border-2 border-white">
-                {unreadFAB > 9 ? "9+" : unreadFAB}
+            {unreadFAB > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5 border-2 border-white animate-bounce">
+                {unreadFAB > 99 ? "99+" : unreadFAB}
               </span>
             )}
           </button>
