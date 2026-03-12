@@ -18,7 +18,7 @@ import {
   Megaphone,
 } from "lucide-react";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Types ───
 interface OtherUser {
   id: number;
   name: string | null;
@@ -55,7 +55,7 @@ interface Recipient {
   tempatPKL: string;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Helpers ──
 function formatTime(iso: string) {
   const d = new Date(iso);
   const now = new Date();
@@ -135,7 +135,7 @@ function groupByDate(messages: Message[]) {
   return groups;
 }
 
-// ─── Toast Notification ──────────────────────────────────────────────────────
+// ─── Toast Notification ───
 function ToastNotif({
   toast,
   onClose,
@@ -198,7 +198,7 @@ function ToastNotif({
   );
 }
 
-// ─── Main Widget ──────────────────────────────────────────────────────────────
+// ─── Main Widget ───
 export default function ChatWidget({
   isOpen: isOpenProp,
   onClose: onCloseProp,
@@ -217,7 +217,7 @@ export default function ChatWidget({
   const handleOpen = () => {
     setInternalOpen(true);
   };
-  const [unreadFAB, setUnreadFAB] = useState(0); // synced below
+  const [unreadFAB, setUnreadFAB] = useState(0);
   const [toasts, setToasts] = useState<
     { id: number; name: string; content: string; convId: number }[]
   >([]);
@@ -252,7 +252,6 @@ export default function ChatWidget({
   const role = session?.user?.role as string;
   const canStartChat = role === "ADMIN" || role === "GURU";
 
-  // Animate open/close
   useEffect(() => {
     if (isOpen) {
       setMounted(true);
@@ -263,7 +262,6 @@ export default function ChatWidget({
     }
   }, [isOpen]);
 
-  // Load conversations + detect new messages for toast
   const loadConversations = useCallback(async () => {
     try {
       const r = await fetch("/api/chat/conversations");
@@ -271,13 +269,11 @@ export default function ChatWidget({
         const fresh: Conversation[] = await r.json();
         setConversations(fresh);
         setLoadingConvs(false);
-        // Reset badge jika widget terbuka (user sedang aktif lihat chat)
         if (isOpen) {
           const total = fresh.reduce((sum, c) => sum + c.unreadCount, 0);
           setUnreadFAB(total);
         }
 
-        // Detect new unread messages — show toast if widget closed
         if (!isOpen) {
           for (const conv of fresh) {
             const prev = prevConvsRef.current.find((c) => c.id === conv.id);
@@ -293,7 +289,6 @@ export default function ChatWidget({
                   convId: conv.id,
                 },
               ]);
-              // unreadFAB is derived from conversations, no manual increment needed
             }
           }
         }
@@ -306,14 +301,12 @@ export default function ChatWidget({
     if (isOpen) loadConversations();
   }, [isOpen, loadConversations]);
 
-  // Polling conversations
   useEffect(() => {
     if (!isOpen) return;
     const id = setInterval(loadConversations, 5000);
     return () => clearInterval(id);
   }, [isOpen, loadConversations]);
 
-  // Load messages
   const loadMessages = useCallback(async (convId: number, markRead = false) => {
     if (markRead) setLoadingMsgs(true);
     try {
@@ -333,14 +326,12 @@ export default function ChatWidget({
     }
   }, []);
 
-  // Polling messages
   useEffect(() => {
     if (!activeConv || view !== "thread") return;
     const id = setInterval(() => loadMessages(activeConv.id, false), 3000);
     return () => clearInterval(id);
   }, [activeConv, view, loadMessages]);
 
-  // Auto scroll
   useEffect(() => {
     setTimeout(
       () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }),
@@ -418,7 +409,6 @@ export default function ChatWidget({
     const { conversationId } = await r.json();
     setRecipientSearch("");
     await loadConversations();
-    // Reload conversations and select
     const res = await fetch("/api/chat/conversations");
     if (res.ok) {
       const convs: Conversation[] = await res.json();
@@ -488,8 +478,6 @@ export default function ChatWidget({
   );
 
   const grouped = groupByDate(messages);
-
-  // Poll unread langsung dari API setiap 5 detik — tidak tunggu widget dibuka
   useEffect(() => {
     const poll = async () => {
       try {
@@ -500,7 +488,7 @@ export default function ChatWidget({
         }
       } catch {}
     };
-    poll(); // langsung poll pertama kali
+    poll();
     const id = setInterval(poll, 5000);
     return () => clearInterval(id);
   }, [isOpen]);
@@ -1031,7 +1019,7 @@ export default function ChatWidget({
   );
 }
 
-// ─── Conversation Item ────────────────────────────────────────────────────────
+// ─── Conversation Item ───
 function ConvItem({
   conv,
   isActive,
@@ -1101,7 +1089,7 @@ function ConvItem({
   );
 }
 
-// ─── Message Bubble ───────────────────────────────────────────────────────────
+// ─── Message Bubble ───
 function MsgBubble({
   message,
   isOwn,

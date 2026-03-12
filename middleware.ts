@@ -3,36 +3,37 @@ import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 export async function middleware(req: NextRequest) {
+    const { pathname } = req.nextUrl;
 
     const token = await getToken({
         req,
         secret: process.env.NEXTAUTH_SECRET,
+        cookieName: "next-auth.session-token",
     });
 
     const url = req.nextUrl.clone();
-    const { pathname } = url;
 
     if (!token) {
         url.pathname = "/login";
         return NextResponse.redirect(url);
     }
 
-    const userRole = token.role ? (token.role as string).toUpperCase() : "";
+    const role = token.role ? String(token.role).toUpperCase() : "";
 
     if (
         (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) &&
-        userRole !== "ADMIN"
+        role !== "ADMIN"
     ) {
         url.pathname = "/login";
         return NextResponse.redirect(url);
     }
 
-    if (pathname.startsWith("/guru") && userRole !== "GURU") {
+    if (pathname.startsWith("/guru") && role !== "GURU") {
         url.pathname = "/login";
         return NextResponse.redirect(url);
     }
 
-    if (pathname.startsWith("/siswa") && userRole !== "SISWA") {
+    if (pathname.startsWith("/siswa") && role !== "SISWA") {
         url.pathname = "/login";
         return NextResponse.redirect(url);
     }

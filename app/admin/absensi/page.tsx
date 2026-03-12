@@ -681,8 +681,6 @@ export default function AdminAbsensi() {
               </div>
             </div>
           </div>
-
-          {/* TidakHadirSection dihapus — datanya sudah masuk tabel sebagai Alfa */}
         </main>
       </div>
 
