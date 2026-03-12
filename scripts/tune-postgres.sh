@@ -1,8 +1,3 @@
-#!/bin/bash
-# scripts/tune-postgres.sh
-# Jalankan SEKALI di server Proxmox untuk optimasi PostgreSQL
-# Usage: sudo bash scripts/tune-postgres.sh
-
 set -e
 
 PGPASSWORD=pplguyeuye909090
@@ -10,14 +5,11 @@ PG_CONN="PGPASSWORD=$PGPASSWORD psql -h localhost -U postgres -d absensi_db"
 
 echo "=== Tuning PostgreSQL untuk 114 concurrent users ==="
 
-# ── 1. PostgreSQL config ──────────────────────────────────────────────────────
 PG_CONF=$(sudo -u postgres psql -t -c "SHOW config_file;" | tr -d ' ')
 echo "Config file: $PG_CONF"
 
-# Backup config
 sudo cp "$PG_CONF" "${PG_CONF}.backup.$(date +%Y%m%d)"
 
-# Apply settings
 sudo tee -a "$PG_CONF" > /dev/null << 'PGEOF'
 
 # ── Optimasi untuk absensipkl (114 concurrent users) ──────────────────────────
@@ -50,7 +42,6 @@ sudo systemctl restart postgresql
 sleep 2
 echo "PostgreSQL restarted."
 
-# ── 2. Tambah index yang krusial untuk query absensi ─────────────────────────
 echo "=== Menambahkan index database ==="
 
 PGPASSWORD=pplguyeuye909090 psql -h localhost -U postgres -d absensi_db << 'SQLEOF'
