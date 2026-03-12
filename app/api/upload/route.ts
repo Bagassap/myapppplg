@@ -1,49 +1,68 @@
 import { NextRequest, NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import path from "path";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]/route";
+import {
+    processAndSaveImage,
+    parseImageFromRequest,
+    deleteOldImage,
+    type ImageType,
+} from "@/lib/image-processor";
 
-export async function GET(
-    req: NextRequest,
-    { params }: { params: Promise<{ filename: string[] }> }
-) {
-    const { filename } = await params;
-    const filePath_segments = filename ?? [];
+export const dynamic = "force-dynamic";
 
-    for (const segment of filePath_segments) {
-        if (!segment || segment.includes("..") || segment.includes("\\")) {
-            return new NextResponse("Bad Request", { status: 400 });
-        }
+export async function POST(req: NextRequest) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const relativePath = filePath_segments.join(path.sep);
-    const filePath = path.join(process.cwd(), "public", "uploads", relativePath);
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
-    if (!filePath.startsWith(uploadsDir)) {
-        return new NextResponse("Forbidden", { status: 403 });
-    }
+    const userId = (session.user as any).id as string;
 
     try {
-        const fileBuffer = await fs.readFile(filePath);
+        const type = (req.nextUrl.searchParams.get("type") ?? "foto") as ImageType;
+        const validTypes: ImageType[] = ["foto", "ttd", "bukti"];
+        if (!validTypes.includes(type)) {
+            return NextResponse.json(
+                { error: "Type tidak valid. Gunakan: foto, ttd, atau bukti" },
+                { status: 400 }
+            );
+        }
 
-        const ext = path.extname(relativePath).toLowerCase();
-        const mimeTypes: Record<string, string> = {
-            ".jpg": "image/jpeg",
-            ".jpeg": "image/jpeg",
-            ".png": "image/png",
-            ".gif": "image/gif",
-            ".webp": "image/webp",
-            ".pdf": "application/pdf",
+        const fieldMap: Record<ImageType, string> = {
+            foto: "foto",
+            ttd: "tandaTangan",
+            bukti: "bukti",
         };
-        const contentType = mimeTypes[ext] || "application/octet-stream";
 
-        return new NextResponse(fileBuffer, {
-            status: 200,
-            headers: {
-                "Content-Type": contentType,
-                "Cache-Control": "public, max-age=31536000",
-            },
+        const buffer = await parseImageFromRequest(req, fieldMap[type]);
+        if (!buffer) {
+            return NextResponse.json(
+                { error: `Field '${fieldMap[type]}' tidak ditemukan` },
+                { status: 400 }
+            );
+        }
+
+        const oldUrl = req.nextUrl.searchParams.get("oldUrl");
+        if (oldUrl) await deleteOldImage(oldUrl);
+
+        const result = await processAndSaveImage(buffer, userId, type);
+
+        return NextResponse.json({
+            success: true,
+            url: result.url,
+            filename: result.filename,
+            sizeKB: result.sizeKB,
+            width: result.width,
+            height: result.height,
+            message: `Upload berhasil. Ukuran: ${result.sizeKB} KB`,
         });
-    } catch {
-        return new NextResponse("File not found", { status: 404 });
+    } catch (err: any) {
+        const isUserError =
+            err.message?.includes("Tipe file") ||
+            err.message?.includes("terlalu besar");
+        return NextResponse.json(
+            { error: err.message ?? "Gagal upload gambar" },
+            { status: isUserError ? 400 : 500 }
+        );
     }
 }
