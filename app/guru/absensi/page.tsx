@@ -2,7 +2,7 @@
 
 import Sidebar from "@/components/layout/SidebarGuru";
 import TopBar from "@/components/layout/TopBar";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useExportPDF } from "@/hooks/useExportPDF";
 import {
@@ -21,6 +21,8 @@ import {
   Eye,
   Clock,
   AlertCircle,
+  CheckCircle2,
+  Users,
 } from "lucide-react";
 
 const STATUS_STYLES: Record<string, { pill: string; dot: string }> = {
@@ -125,7 +127,7 @@ interface AbsensiRow {
   status: string;
   waktu: string;
   catatan: string;
-  kegiatan: string; // required by useExportPDF
+  kegiatan: string;
   lokasi: string;
   foto: string;
   tandaTangan: string;
@@ -133,6 +135,358 @@ interface AbsensiRow {
   isVirtualAlfa?: boolean;
 }
 
+// ── Animated Counter ──────────────────────────────────────────────────────────
+function useCountUp(target: number, duration = 800, delay = 0) {
+  const [value, setValue] = useState(0);
+  const raf = useRef<number>(0);
+  useEffect(() => {
+    if (target === 0) {
+      setValue(0);
+      return;
+    }
+    const timeout = setTimeout(() => {
+      const start = performance.now();
+      const step = (now: number) => {
+        const t = Math.min((now - start) / duration, 1);
+        const ease = t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+        setValue(Math.round(ease * target));
+        if (t < 1) raf.current = requestAnimationFrame(step);
+      };
+      raf.current = requestAnimationFrame(step);
+    }, delay);
+    return () => {
+      clearTimeout(timeout);
+      cancelAnimationFrame(raf.current);
+    };
+  }, [target, duration, delay]);
+  return value;
+}
+
+function ProgressRing({
+  pct,
+  color,
+  size = 52,
+  stroke = 4,
+}: {
+  pct: number;
+  color: string;
+  size?: number;
+  stroke?: number;
+}) {
+  const r = (size - stroke * 2) / 2;
+  const circ = 2 * Math.PI * r;
+  const [dash, setDash] = useState(circ);
+  useEffect(() => {
+    const t = setTimeout(() => setDash(circ - (pct / 100) * circ), 150);
+    return () => clearTimeout(t);
+  }, [pct, circ]);
+  return (
+    <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        stroke="rgba(255,255,255,0.2)"
+        strokeWidth={stroke}
+      />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        stroke={color}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        strokeDasharray={circ}
+        strokeDashoffset={dash}
+        style={{
+          transition: "stroke-dashoffset 1s cubic-bezier(0.16,1,0.3,1)",
+        }}
+      />
+    </svg>
+  );
+}
+
+// Guru menggunakan warna violet sebagai aksen utama
+const STAT_CARD_CONFIGS = [
+  {
+    key: "total",
+    label: "Total Absensi",
+    Icon: ClipboardList,
+    grad: ["#7c3aed", "#6d28d9"],
+  },
+  {
+    key: "hadir",
+    label: "Hadir",
+    Icon: CheckCircle2,
+    grad: ["#10b981", "#0d9488"],
+  },
+  {
+    key: "izin",
+    label: "Izin / Sakit",
+    Icon: Clock,
+    grad: ["#f59e0b", "#f97316"],
+  },
+  {
+    key: "alfa",
+    label: "Alfa",
+    Icon: AlertCircle,
+    grad: ["#f43f5e", "#e11d48"],
+  },
+];
+
+function StatCard({
+  cfg,
+  value,
+  total,
+  badge,
+  loading,
+  delay,
+}: {
+  cfg: (typeof STAT_CARD_CONFIGS)[0];
+  value: number;
+  total: number;
+  badge?: string | null;
+  loading: boolean;
+  delay: number;
+}) {
+  const [visible, setVisible] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const count = useCountUp(visible && !loading ? value : 0, 800, delay);
+  const pct = total > 0 ? Math.round((value / total) * 100) : 0;
+  const Icon = cfg.Icon;
+
+  useEffect(() => {
+    if (!loading) {
+      const t = setTimeout(() => setVisible(true), delay);
+      return () => clearTimeout(t);
+    }
+  }, [loading, delay]);
+
+  if (loading) {
+    return (
+      <div
+        className="rounded-2xl h-[108px] animate-pulse"
+        style={{
+          background: `linear-gradient(135deg, ${cfg.grad[0]}55, ${cfg.grad[1]}55)`,
+        }}
+      />
+    );
+  }
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="relative overflow-hidden rounded-2xl p-4 cursor-default select-none"
+      style={{
+        background: `linear-gradient(135deg, ${cfg.grad[0]}, ${cfg.grad[1]})`,
+        boxShadow: hovered
+          ? `0 16px 32px -8px ${cfg.grad[0]}70`
+          : `0 6px 20px -4px ${cfg.grad[0]}50`,
+        opacity: visible ? 1 : 0,
+        transform: visible
+          ? hovered
+            ? "translateY(-3px) scale(1.025)"
+            : "translateY(0) scale(1)"
+          : "translateY(12px)",
+        transition: `opacity .45s ease ${delay}ms, transform .45s ease ${delay}ms, box-shadow .2s ease`,
+      }}
+    >
+      <div
+        className="absolute -right-5 -top-5 w-20 h-20 rounded-full bg-white/10 transition-transform duration-500"
+        style={{ transform: hovered ? "scale(1.4)" : "scale(1)" }}
+      />
+      <div className="absolute right-1 -bottom-6 w-14 h-14 rounded-full bg-black/[0.06]" />
+
+      <div className="relative flex items-start justify-between mb-3">
+        <div>
+          <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mb-1">
+            {cfg.label}
+          </p>
+          <div className="flex items-end gap-1.5">
+            <span className="text-[2.2rem] font-black text-white leading-none tabular-nums">
+              {count}
+            </span>
+            {cfg.key !== "total" && total > 0 && (
+              <span className="text-white/50 text-xs font-semibold mb-0.5">
+                /{total}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="relative flex-shrink-0">
+          <ProgressRing
+            pct={cfg.key === "total" ? 100 : visible ? pct : 0}
+            color="rgba(255,255,255,0.9)"
+          />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Icon className="w-4 h-4 text-white/90" />
+          </div>
+        </div>
+      </div>
+
+      {cfg.key !== "total" && (
+        <div className="h-1 rounded-full bg-white/20 overflow-hidden mb-2">
+          <div
+            className="h-full rounded-full bg-white/80 transition-all duration-1000"
+            style={{
+              width: visible ? `${pct}%` : "0%",
+              transitionDelay: `${delay + 250}ms`,
+            }}
+          />
+        </div>
+      )}
+
+      <div className="flex items-center justify-between">
+        {cfg.key !== "total" ? (
+          <span className="text-white/75 text-[11px] font-semibold">
+            {pct}% dari total
+          </span>
+        ) : (
+          <span className="text-white/75 text-[11px] font-semibold">
+            semua record
+          </span>
+        )}
+        {badge && (
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-white/25 text-white">
+            {badge}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SummaryCard({
+  total,
+  hadir,
+  izin,
+  alfa,
+  loading,
+  selectedPeriod,
+}: {
+  total: number;
+  hadir: number;
+  izin: number;
+  alfa: number;
+  loading: boolean;
+  selectedPeriod: string;
+}) {
+  const [visible, setVisible] = useState(false);
+  const hadirPct = total > 0 ? Math.round((hadir / total) * 100) : 0;
+
+  useEffect(() => {
+    if (!loading) {
+      const t = setTimeout(() => setVisible(true), 0);
+      return () => clearTimeout(t);
+    } else setVisible(false);
+  }, [loading]);
+
+  const breakdown = [
+    { val: hadir, color: "#10b981", label: "Hadir" },
+    { val: izin, color: "#f59e0b", label: "Izin/Sakit" },
+    { val: alfa, color: "#f43f5e", label: "Alfa" },
+  ];
+
+  return (
+    <div
+      className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 p-5 shadow-xl mb-4"
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(12px)",
+        transition: "opacity .4s ease, transform .4s ease",
+      }}
+    >
+      <div className="absolute right-0 top-0 w-48 h-48 rounded-full bg-violet-500/8 -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+      <div className="absolute right-12 bottom-0 w-28 h-28 rounded-full bg-emerald-500/8 translate-y-1/2 pointer-events-none" />
+
+      <div className="relative flex items-center justify-between gap-4 flex-wrap">
+        <div className="min-w-0">
+          <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2">
+            Ringkasan — {selectedPeriod}
+          </p>
+          {loading ? (
+            <div className="h-10 w-28 bg-white/10 rounded-xl animate-pulse mb-3" />
+          ) : (
+            <div className="flex items-end gap-3 mb-3">
+              <span className="text-5xl font-black text-white leading-none">
+                {total}
+              </span>
+              <span
+                className={`mb-1 px-2.5 py-0.5 rounded-full text-xs font-bold
+                ${
+                  hadirPct >= 80
+                    ? "bg-emerald-500/20 text-emerald-400"
+                    : hadirPct >= 60
+                      ? "bg-amber-500/20 text-amber-400"
+                      : "bg-rose-500/20 text-rose-400"
+                }`}
+              >
+                {hadirPct}% hadir
+              </span>
+            </div>
+          )}
+          <div className="flex h-2 rounded-full overflow-hidden gap-0.5 w-64 max-w-full">
+            {breakdown.map((b, i) => (
+              <div
+                key={i}
+                className="h-full rounded-full transition-all duration-1000"
+                style={{
+                  background: b.color,
+                  width:
+                    !loading && total > 0 && visible
+                      ? `${(b.val / total) * 100}%`
+                      : "0%",
+                  minWidth: b.val > 0 && !loading && visible ? 4 : 0,
+                  transitionDelay: `${200 + i * 80}ms`,
+                }}
+              />
+            ))}
+          </div>
+          <div className="flex gap-4 mt-2 flex-wrap">
+            {breakdown.map((b) => (
+              <div key={b.label} className="flex items-center gap-1.5">
+                <div
+                  className="w-2 h-2 rounded-full"
+                  style={{ background: b.color }}
+                />
+                <span className="text-slate-500 text-[11px]">
+                  {b.label} ({b.val})
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+        {!loading && (
+          <div className="relative flex-shrink-0">
+            <ProgressRing
+              pct={visible ? hadirPct : 0}
+              color={
+                hadirPct >= 80
+                  ? "#34d399"
+                  : hadirPct >= 60
+                    ? "#fbbf24"
+                    : "#f87171"
+              }
+              size={88}
+              stroke={7}
+            />
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <Users className="w-5 h-5 text-slate-400" />
+              <span className="text-white text-[11px] font-black mt-0.5">
+                {hadirPct}%
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Main Component ────────────────────────────────────────────────────────────
 export default function GuruAbsensi() {
   const { data: session, status } = useSession();
   const { exportPDF, exporting } = useExportPDF();
@@ -161,7 +515,6 @@ export default function GuruAbsensi() {
       setLoading(false);
       return;
     }
-
     const load = async () => {
       try {
         setLoading(true);
@@ -227,7 +580,6 @@ export default function GuruAbsensi() {
     load();
   }, [session, status, selectedPeriod]);
 
-  // Fetch belum absen → virtual Alfa (hanya Hari Ini)
   useEffect(() => {
     if (selectedPeriod !== "Hari Ini") {
       setAlfaVirtual([]);
@@ -305,6 +657,7 @@ export default function GuruAbsensi() {
     ["Izin", "Sakit"].includes(i.status),
   ).length;
   const statAlfa = combinedData.filter((i) => i.status === "Alfa").length;
+  const isLoading = loading || loadingAlfa;
 
   if (error)
     return (
@@ -328,7 +681,7 @@ export default function GuruAbsensi() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar />
         <main className="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 px-4 sm:px-6 lg:px-8 py-7">
-          <div className="mb-7">
+          <div className="mb-6">
             <div className="flex items-center gap-2.5 mb-1">
               <span className="block w-1 h-6 bg-violet-600 rounded-full" />
               <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
@@ -340,75 +693,47 @@ export default function GuruAbsensi() {
             </p>
           </div>
 
-          {/* Stat Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {[
-              {
-                label: "Total",
-                val: statTotal,
-                color: "text-gray-700",
-                ring: "ring-slate-200",
-                bg: "bg-slate-50",
-                icon: <ClipboardList className="w-4 h-4 text-slate-400" />,
-              },
-              {
-                label: "Hadir",
-                val: statHadir,
-                color: "text-emerald-700",
-                ring: "ring-emerald-200",
-                bg: "bg-emerald-50",
-                icon: <CheckSquare className="w-4 h-4 text-emerald-500" />,
-              },
-              {
-                label: "Izin",
-                val: statIzin,
-                color: "text-amber-700",
-                ring: "ring-amber-200",
-                bg: "bg-amber-50",
-                icon: <Clock className="w-4 h-4 text-amber-500" />,
-              },
-              {
-                label: "Alfa",
-                val: statAlfa,
-                color: "text-red-700",
-                ring: "ring-red-200",
-                bg: "bg-red-50",
-                icon: <X className="w-4 h-4 text-red-500" />,
-                badge:
-                  alfaVirtual.length > 0 && selectedPeriod === "Hari Ini"
-                    ? `${alfaVirtual.length} belum absen`
-                    : null,
-              },
-            ].map((s: any) => (
-              <div
-                key={s.label}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex items-center justify-between"
-              >
-                <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1">
-                    {s.label}
-                  </p>
-                  <p className={`text-2xl font-bold ${s.color}`}>
-                    {loading || (s.label === "Alfa" && loadingAlfa) ? (
-                      <span className="inline-block w-8 h-6 bg-gray-100 rounded animate-pulse" />
-                    ) : (
-                      s.val
-                    )}
-                  </p>
-                  {s.badge && !loading && !loadingAlfa && (
-                    <p className="text-[10px] text-red-400 mt-0.5 font-medium">
-                      {s.badge}
-                    </p>
-                  )}
-                </div>
-                <div className={`p-2.5 rounded-xl ring-1 ${s.ring} ${s.bg}`}>
-                  {s.icon}
-                </div>
-              </div>
-            ))}
+          {/* ── STAT CARDS ── */}
+          <SummaryCard
+            total={statTotal}
+            hadir={statHadir}
+            izin={statIzin}
+            alfa={statAlfa}
+            loading={isLoading}
+            selectedPeriod={selectedPeriod}
+          />
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+            {STAT_CARD_CONFIGS.map((cfg, i) => {
+              const val =
+                cfg.key === "total"
+                  ? statTotal
+                  : cfg.key === "hadir"
+                    ? statHadir
+                    : cfg.key === "izin"
+                      ? statIzin
+                      : statAlfa;
+              const badge =
+                cfg.key === "alfa" &&
+                alfaVirtual.length > 0 &&
+                selectedPeriod === "Hari Ini"
+                  ? `${alfaVirtual.length} belum absen`
+                  : null;
+              return (
+                <StatCard
+                  key={cfg.key}
+                  cfg={cfg}
+                  value={val}
+                  total={statTotal}
+                  badge={badge}
+                  loading={isLoading}
+                  delay={i * 70}
+                />
+              );
+            })}
           </div>
 
-          {/* Filter Bar */}
+          {/* ── Filter Bar ── */}
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-4 py-3 mb-5 flex flex-wrap items-center gap-2.5">
             <SlidersHorizontal className="w-4 h-4 text-gray-400 shrink-0" />
             <div className="relative">
@@ -489,7 +814,7 @@ export default function GuruAbsensi() {
             </div>
           </div>
 
-          {/* Table */}
+          {/* ── Table ── */}
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-6">
             <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
               <h2 className="font-semibold text-gray-700 text-sm">
@@ -632,12 +957,10 @@ export default function GuruAbsensi() {
               </div>
             </div>
           </div>
-
-          {/* TidakHadirSection dihapus — data sudah masuk tabel sebagai Alfa */}
         </main>
       </div>
 
-      {/* Modal Riwayat */}
+      {/* ── Modal Riwayat ── */}
       {modalSiswa && (
         <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div
@@ -824,7 +1147,7 @@ export default function GuruAbsensi() {
             </p>
           </div>
           <style>{`
-            @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+            @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
             @keyframes scaleIn { from{opacity:0;transform:scale(0.94) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
             @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
           `}</style>
