@@ -721,7 +721,7 @@ export default function AdminAbsensi() {
             </div>
           </div>
 
-          {/* ── STAT CARDS ── */}
+          {/* ── STAT CARDS BARU ── */}
           {/* Summary header */}
           <SummaryCard
             total={statTotal}

@@ -693,7 +693,7 @@ export default function GuruAbsensi() {
             </p>
           </div>
 
-          {/* ── STAT CARDS ── */}
+          {/* ── STAT CARDS BARU ── */}
           <SummaryCard
             total={statTotal}
             hadir={statHadir}
