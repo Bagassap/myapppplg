@@ -1,10 +1,11 @@
+import "server-only";
 import sharp from "sharp";
 import path from "path";
 import fs from "fs/promises";
 import { existsSync, mkdirSync } from "fs";
 
 const CONFIG = {
-    MAX_FILE_SIZE_BYTES: 1 * 1024 * 1024,  // 1 MB
+    MAX_FILE_SIZE_BYTES: 1 * 1024 * 1024,
     UPLOAD_DIR: path.join(process.cwd(), "public", "uploads"),
 
     FOTO: {
@@ -61,6 +62,7 @@ export async function processAndSaveImage(
     const originalSizeKB = Math.round(buffer.length / 1024);
 
     console.log(`[ImageProcessor] ${type} asli: ${originalSizeKB} KB, ${metadata.width}x${metadata.height}`);
+
     let pipeline = sharp(buffer)
         .rotate()
         .resize({
@@ -94,7 +96,6 @@ export async function processAndSaveImage(
             quality -= 10;
         }
     }
-
 
     const subDir = type === "foto" ? "absensi" : type === "ttd" ? "ttd" : "bukti";
     const uploadDir = ensureUploadDir(subDir);
@@ -154,28 +155,4 @@ export async function deleteOldImage(urlPath: string | null): Promise<void> {
         console.log(`[ImageProcessor] Hapus file lama: ${urlPath}`);
     } catch {
     }
-}
-
-export async function cleanupOldFiles(daysOld = 365): Promise<number> {
-    const dirs = ["absensi", "ttd", "bukti"];
-    const cutoff = Date.now() - daysOld * 24 * 60 * 60 * 1000;
-    let deleted = 0;
-
-    for (const dir of dirs) {
-        const dirPath = path.join(CONFIG.UPLOAD_DIR, dir);
-        if (!existsSync(dirPath)) continue;
-
-        const files = await fs.readdir(dirPath);
-        for (const file of files) {
-            const filePath = path.join(dirPath, file);
-            const stat = await fs.stat(filePath);
-            if (stat.mtimeMs < cutoff) {
-                await fs.unlink(filePath);
-                deleted++;
-            }
-        }
-    }
-
-    console.log(`[Cleanup] Hapus ${deleted} file lama (>${daysOld} hari)`);
-    return deleted;
 }
