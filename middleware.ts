@@ -5,17 +5,29 @@ import { getToken } from "next-auth/jwt";
 export async function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl;
 
-    const token = await getToken({
-        req,
-        secret: process.env.NEXTAUTH_SECRET,
-        cookieName: "next-auth.session-token",
-    });
+    let token = null;
+    try {
+        token = await getToken({
+            req,
+            secret: process.env.NEXTAUTH_SECRET,
+            cookieName: "next-auth.session-token",
+        });
+    } catch {
+        const response = NextResponse.redirect(new URL("/login", req.url));
+        response.cookies.delete("next-auth.session-token");
+        response.cookies.delete("__Secure-next-auth.session-token");
+        response.cookies.delete("next-auth.csrf-token");
+        response.cookies.delete("next-auth.callback-url");
+        return response;
+    }
 
     const url = req.nextUrl.clone();
 
     if (!token) {
-        url.pathname = "/login";
-        return NextResponse.redirect(url);
+        const response = NextResponse.redirect(new URL("/login", req.url));
+        response.cookies.delete("next-auth.session-token");
+        response.cookies.delete("next-auth.csrf-token");
+        return response;
     }
 
     const role = token.role ? String(token.role).toUpperCase() : "";
