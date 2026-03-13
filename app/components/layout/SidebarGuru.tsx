@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-// 1. Import signOut
 import { signOut } from "next-auth/react";
 import {
   LayoutDashboard,
@@ -25,7 +24,6 @@ interface MenuItem {
 export default function SidebarGuru() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(true);
-
   const { isMobileOpen, closeMobileSidebar } = useSidebar();
 
   const menu: MenuItem[] = [
@@ -35,34 +33,29 @@ export default function SidebarGuru() {
     { name: "Data Siswa", href: "/guru/data-siswa", icon: <Users /> },
   ];
 
-  // 2. LOGOUT YANG BENAR
   const handleLogout = () => {
     signOut({ callbackUrl: "/login" });
   };
 
   return (
     <>
-      {/* Mobile Overlay */}
       {isMobileOpen && (
         <div
           onClick={closeMobileSidebar}
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden glass"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"
         />
       )}
 
       <aside
         className={`
           bg-gradient-to-b from-indigo-700 via-indigo-600 to-blue-600 text-white flex flex-col justify-between shadow-2xl min-h-screen transition-all duration-300
-          ${isOpen ? "w-80" : "w-20"} 
+          ${isOpen ? "w-80" : "w-20"}
           rounded-r-2xl
-
-          /* --- RESPONSIVE CLASSES --- */
           fixed inset-y-0 left-0 z-50
           lg:static lg:translate-x-0
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
-        {/* Header */}
         <div className="shrink-0 flex flex-col gap-6 p-6">
           <div className="flex items-center justify-between">
             {isOpen && (
@@ -78,7 +71,7 @@ export default function SidebarGuru() {
             )}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="p-2 hover:bg-white/20 rounded-md transition-all duration-300 hover:rotate-180"
+              className="p-2 hover:bg-white/20 rounded-md transition-all duration-300 hover:rotate-180 hidden lg:block"
               aria-label="Toggle sidebar"
             >
               {isOpen ? (
@@ -87,10 +80,15 @@ export default function SidebarGuru() {
                 <Menu className="text-white w-6 h-6" />
               )}
             </button>
+            <button
+              onClick={closeMobileSidebar}
+              className="p-2 hover:bg-white/20 rounded-md transition-all duration-300 lg:hidden"
+              aria-label="Close mobile sidebar"
+            >
+              <ChevronLeft className="text-white w-6 h-6" />
+            </button>
           </div>
-          {/* Garis Pemisah */}
           <div className="border-b border-white/30"></div>
-
           {isOpen && (
             <div className="flex flex-col gap-1 animate-fade-in">
               <span className="text-white text-base">Main Menu</span>
@@ -98,7 +96,6 @@ export default function SidebarGuru() {
           )}
         </div>
 
-        {/* Menu Navigasi */}
         <nav className="flex-1 flex flex-col gap-6 px-4 overflow-y-auto">
           {menu.map((item, idx) => {
             const active = pathname === item.href;
@@ -116,7 +113,7 @@ export default function SidebarGuru() {
                 <span
                   className={`flex items-center justify-center w-6 h-6 text-white transition-all duration-300 rounded-md ${
                     active
-                      ? " text-white"
+                      ? "text-white"
                       : "text-white/50 group-hover:text-white"
                   }`}
                 >
@@ -132,7 +129,6 @@ export default function SidebarGuru() {
           })}
         </nav>
 
-        {/* Footer */}
         <div className="p-4 border-t border-white/30 flex flex-col gap-4 shrink-0">
           <button
             onClick={handleLogout}
@@ -144,7 +140,7 @@ export default function SidebarGuru() {
           </button>
           {isOpen && (
             <p className="text-sm text-blue-300 mt-2 text-center animate-fade-in">
-              © 2025 PPLG Nusa
+              © 2026 PPLG Nusa
             </p>
           )}
         </div>
