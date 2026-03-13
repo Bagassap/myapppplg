@@ -13,12 +13,16 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [redirecting, setRedirecting] = useState(false);
 
   const router = useRouter();
   const { data: session, status } = useSession();
 
+  // Redirect jika sudah login — tapi HANYA setelah status pasti "authenticated"
+  // Tidak redirect saat status masih "loading"
   useEffect(() => {
-    if (status === "authenticated" && session?.user?.role) {
+    if (status === "authenticated" && session?.user?.role && !redirecting) {
+      setRedirecting(true);
       redirectByRole(session.user.role);
     }
   }, [status, session]);
@@ -38,6 +42,7 @@ export default function LoginPage() {
     } else {
       setError("Role tidak dikenali. Hubungi administrator.");
       setLoading(false);
+      setRedirecting(false);
     }
   }
 
@@ -75,6 +80,7 @@ export default function LoginPage() {
         const role = sess?.user?.role;
 
         if (role) {
+          setRedirecting(true);
           redirectByRole(role);
         } else if (attempts < 5) {
           setTimeout(tryRedirect, 300);
@@ -92,15 +98,16 @@ export default function LoginPage() {
     }
   }
 
-  if (status === "loading") {
+  // Tampilkan spinner hanya saat status masih loading ATAU sedang redirect setelah login
+  if (status === "loading" || redirecting) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-600">
         <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
-  if (status === "authenticated") return null;
 
+  // Selalu tampilkan form login — jangan return null
   return (
     <main className="relative flex min-h-screen items-center justify-center bg-linear-to-br from-blue-600 to-indigo-600 overflow-hidden font-sans px-4 sm:px-6 md:px-0">
       <div className="absolute -top-25 -left-20 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse" />
@@ -140,7 +147,6 @@ export default function LoginPage() {
             Masuk ke akun Anda untuk melakukan presensi
           </p>
 
-          {/* Error message */}
           {error && (
             <div className="w-full mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2">
               <svg
@@ -159,7 +165,6 @@ export default function LoginPage() {
           )}
 
           <form className="space-y-4 w-full" onSubmit={handleSubmit}>
-            {/* Email */}
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 w-5 h-5" />
               <input
@@ -178,7 +183,6 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Password */}
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-500 w-5 h-5" />
               <input
