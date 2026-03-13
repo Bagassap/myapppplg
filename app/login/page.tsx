@@ -18,8 +18,6 @@ export default function LoginPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
 
-  // Redirect jika sudah login — tapi HANYA setelah status pasti "authenticated"
-  // Tidak redirect saat status masih "loading"
   useEffect(() => {
     if (status === "authenticated" && session?.user?.role && !redirecting) {
       setRedirecting(true);
@@ -98,7 +96,6 @@ export default function LoginPage() {
     }
   }
 
-  // Tampilkan spinner hanya saat status masih loading ATAU sedang redirect setelah login
   if (status === "loading" || redirecting) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-600">
@@ -107,7 +104,6 @@ export default function LoginPage() {
     );
   }
 
-  // Selalu tampilkan form login — jangan return null
   return (
     <main className="relative flex min-h-screen items-center justify-center bg-linear-to-br from-blue-600 to-indigo-600 overflow-hidden font-sans px-4 sm:px-6 md:px-0">
       <div className="absolute -top-25 -left-20 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse" />
