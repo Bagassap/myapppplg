@@ -266,31 +266,75 @@ export default function SiswaAbsensi() {
       alert("Foto Selfie/Lokasi wajib diupload untuk verifikasi.");
       return;
     }
-    const textContent = isStatusPulang ? absenForm.kegiatan : absenForm.catatan;
-    if (!textContent && absenForm.status !== "Hadir") {
-      alert("Mohon isi keterangan/kegiatan.");
-      return;
-    }
+
     setIsSubmitting(true);
-    const formData = new FormData();
-    formData.append("tipe", "absen");
-    formData.append("status", absenForm.status);
-    formData.append("waktu", absenForm.waktuLokasi);
-    formData.append("lokasi", absenForm.lokasi);
-    formData.append("keterangan", absenForm.catatan || "");
-    formData.append("kegiatan", absenForm.kegiatan || "");
-    if (absenForm.foto) formData.append("foto", absenForm.foto);
-    if (absenForm.bukti) formData.append("bukti", absenForm.bukti);
-    const signatureDataURL = sigCanvas.current
-      .getTrimmedCanvas()
-      .toDataURL("image/png");
-    formData.append("tandaTangan", signatureDataURL);
+
     try {
+      // 1. Upload foto
+      let fotoUrl: string | null = null;
+      if (absenForm.foto) {
+        const fotoForm = new FormData();
+        fotoForm.append("foto", absenForm.foto);
+        const fotoRes = await fetch("/api/upload?type=foto", {
+          method: "POST",
+          body: fotoForm,
+        });
+        if (!fotoRes.ok) throw new Error("Gagal upload foto");
+        const fotoData = await fotoRes.json();
+        fotoUrl = fotoData.url;
+      }
+
+      // 2. Upload bukti (jika ada)
+      let buktiUrl: string | null = null;
+      if (absenForm.bukti) {
+        const buktiForm = new FormData();
+        buktiForm.append("bukti", absenForm.bukti);
+        const buktiRes = await fetch("/api/upload?type=bukti", {
+          method: "POST",
+          body: buktiForm,
+        });
+        if (!buktiRes.ok) throw new Error("Gagal upload bukti");
+        const buktiData = await buktiRes.json();
+        buktiUrl = buktiData.url;
+      }
+
+      // 3. Upload tanda tangan
+      let ttdUrl: string | null = null;
+      const signatureDataURL = sigCanvas.current
+        .getTrimmedCanvas()
+        .toDataURL("image/png");
+
+      const ttdBlob = await fetch(signatureDataURL).then((r) => r.blob());
+      const ttdFile = new File([ttdBlob], "ttd.png", { type: "image/png" });
+      const ttdForm = new FormData();
+      ttdForm.append("tandaTangan", ttdFile);
+      const ttdRes = await fetch("/api/upload?type=ttd", {
+        method: "POST",
+        body: ttdForm,
+      });
+      if (!ttdRes.ok) throw new Error("Gagal upload tanda tangan");
+      const ttdData = await ttdRes.json();
+      ttdUrl = ttdData.url;
+
+      // 4. Kirim JSON ke API absensi
       const response = await fetch("/api/absensi", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tipe: "absen",
+          status: absenForm.status,
+          waktu: absenForm.waktuLokasi,
+          lokasi: absenForm.lokasi,
+          keterangan: absenForm.catatan || "",
+          kegiatan: absenForm.kegiatan || "",
+          foto: fotoUrl,
+          bukti: buktiUrl,
+          tandaTangan: ttdUrl,
+        }),
       });
+
       if (!response.ok) throw new Error(await response.text());
+
       await fetchPresensiHariIni();
       alert("✅ Absensi Berhasil Disimpan!");
       setShowAbsenModal(false);
