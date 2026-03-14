@@ -267,8 +267,8 @@ export default function SiswaAbsensi() {
 
   const compressImage = (
     file: File,
-    maxWidth = 1280,
-    quality = 0.75,
+    maxWidth = 800,
+    quality = 0.6,
   ): Promise<File> => {
     return new Promise((resolve) => {
       const img = new Image();
@@ -281,17 +281,20 @@ export default function SiswaAbsensi() {
         const canvas = document.createElement("canvas");
         canvas.width = w;
         canvas.height = h;
-        const ctx = canvas.getContext("2d")!;
+        const ctx = canvas.getContext("2d", { willReadFrequently: false })!;
         ctx.drawImage(img, 0, 0, w, h);
         canvas.toBlob(
-          (blob) =>
+          (blob) => {
+            canvas.width = 0;
+            canvas.height = 0;
             resolve(
               blob
                 ? new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), {
                     type: "image/jpeg",
                   })
                 : file,
-            ),
+            );
+          },
           "image/jpeg",
           quality,
         );
