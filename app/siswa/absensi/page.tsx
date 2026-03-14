@@ -265,6 +265,59 @@ export default function SiswaAbsensi() {
     setPreviewType(type);
   };
 
+  const compressImage = (
+    file: File,
+    maxWidth = 1280,
+    quality = 0.75,
+  ): Promise<File> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const scale = Math.min(1, maxWidth / img.width);
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, w, h);
+        canvas.toBlob(
+          (blob) =>
+            resolve(
+              blob
+                ? new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), {
+                    type: "image/jpeg",
+                  })
+                : file,
+            ),
+          "image/jpeg",
+          quality,
+        );
+      };
+      img.onerror = () => resolve(file);
+      img.src = url;
+    });
+  };
+
+  const uploadWithRetry = async (
+    url: string,
+    formData: FormData,
+    retries = 2,
+  ): Promise<Response> => {
+    for (let i = 0; i <= retries; i++) {
+      try {
+        const res = await fetch(url, { method: "POST", body: formData });
+        return res;
+      } catch (err) {
+        if (i === retries) throw err;
+        await new Promise((r) => setTimeout(r, 1000 * (i + 1)));
+      }
+    }
+    throw new Error("Upload gagal setelah beberapa percobaan");
+  };
+
   const handleAbsenSubmit = async () => {
     if (sigCanvas.current?.isEmpty()) {
       alert("⚠️ Tanda Tangan wajib digambar!");
@@ -281,26 +334,22 @@ export default function SiswaAbsensi() {
 
     setIsSubmitting(true);
     try {
-      let fotoUrl: string | null = null;
-      if (absenForm.foto) {
-        const fotoForm = new FormData();
-        fotoForm.append("foto", absenForm.foto);
-        const fotoRes = await fetch("/api/upload?type=foto", {
-          method: "POST",
-          body: fotoForm,
-        });
-        if (!fotoRes.ok) throw new Error("Gagal upload foto");
-        fotoUrl = (await fotoRes.json()).url;
-      }
+      const fotoKompres = await compressImage(absenForm.foto, 1280, 0.75);
+      const fotoForm = new FormData();
+      fotoForm.append("foto", fotoKompres);
+      const fotoRes = await uploadWithRetry("/api/upload?type=foto", fotoForm);
+      if (!fotoRes.ok) throw new Error("Gagal upload foto");
+      const fotoUrl = (await fotoRes.json()).url;
 
       let buktiUrl: string | null = null;
       if (absenForm.bukti) {
+        const buktiKompres = await compressImage(absenForm.bukti, 1280, 0.75);
         const buktiForm = new FormData();
-        buktiForm.append("bukti", absenForm.bukti);
-        const buktiRes = await fetch("/api/upload?type=bukti", {
-          method: "POST",
-          body: buktiForm,
-        });
+        buktiForm.append("bukti", buktiKompres);
+        const buktiRes = await uploadWithRetry(
+          "/api/upload?type=bukti",
+          buktiForm,
+        );
         if (!buktiRes.ok) throw new Error("Gagal upload bukti");
         buktiUrl = (await buktiRes.json()).url;
       }
@@ -312,10 +361,7 @@ export default function SiswaAbsensi() {
       const ttdFile = new File([ttdBlob], "ttd.png", { type: "image/png" });
       const ttdForm = new FormData();
       ttdForm.append("tandaTangan", ttdFile);
-      const ttdRes = await fetch("/api/upload?type=ttd", {
-        method: "POST",
-        body: ttdForm,
-      });
+      const ttdRes = await uploadWithRetry("/api/upload?type=ttd", ttdForm);
       if (!ttdRes.ok) throw new Error("Gagal upload tanda tangan");
       const ttdUrl = (await ttdRes.json()).url;
 
