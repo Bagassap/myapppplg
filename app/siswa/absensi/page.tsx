@@ -34,8 +34,8 @@ import {
   ChevronRight,
   Image as ImageIcon,
   X,
-  TrendingUp,
-  Award,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 
 const STATUS_STYLES: Record<string, { pill: string; dot: string }> = {
@@ -90,6 +90,7 @@ export default function SiswaAbsensi() {
   const [previewType, setPreviewType] = useState<"foto" | "ttd">("foto");
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
+  const [jamSekarang, setJamSekarang] = useState("");
 
   const sigCanvas = useRef<any>(null);
 
@@ -110,6 +111,20 @@ export default function SiswaAbsensi() {
     bukti: null as File | null,
     tandaTangan: null as string | null,
   });
+
+  useEffect(() => {
+    const tick = () =>
+      setJamSekarang(
+        new Date().toLocaleTimeString("id-ID", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        }),
+      );
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const getLocalDateString = (date: Date) => {
     const year = date.getFullYear();
@@ -210,27 +225,25 @@ export default function SiswaAbsensi() {
     const onError = (error: GeolocationPositionError) => {
       setAbsenForm((prev) => ({ ...prev, lokasi: "" }));
       setGpsLoading(false);
-      if (error.code === 1) {
+      if (error.code === 1)
         setGpsError(
           "Akses lokasi ditolak. Di iPhone: Pengaturan > Safari > Lokasi > Izinkan Saat Menggunakan. Lalu muat ulang halaman.",
         );
-      } else if (error.code === 3) {
+      else if (error.code === 3)
         setGpsError(
           "Waktu habis. Pastikan GPS aktif dan sinyal baik, lalu coba lagi.",
         );
-      } else {
+      else
         setGpsError(
           "GPS tidak tersedia. Pastikan Location Services aktif di Pengaturan iPhone.",
         );
-      }
     };
-    const tryLowAccuracy = () => {
+    const tryLowAccuracy = () =>
       navigator.geolocation.getCurrentPosition(onSuccess, onError, {
         enableHighAccuracy: false,
         timeout: 15000,
         maximumAge: 60000,
       });
-    };
     navigator.geolocation.getCurrentPosition(
       onSuccess,
       (error) => {
@@ -366,15 +379,10 @@ export default function SiswaAbsensi() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentData = presensiData.slice(startIndex, startIndex + itemsPerPage);
   const totalPages = Math.max(1, Math.ceil(presensiData.length / itemsPerPage));
-  const sudahAbsenHariIni = presensiData.length > 0;
+  const sudahAbsen = presensiData.length > 0;
   const statusHariIni = presensiData[0]?.status ?? null;
-  const totalAbsensi = presensiData.length;
-  const now = new Date();
-  const jamSekarang = now.toLocaleTimeString("id-ID", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  const hariIni = now.toLocaleDateString("id-ID", {
+  const waktuAbsen = presensiData[0]?.waktu ?? null;
+  const hariIni = new Date().toLocaleDateString("id-ID", {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -407,92 +415,107 @@ export default function SiswaAbsensi() {
             </button>
           </div>
 
-          {/* ── Stat Cards ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            {/* Card 1: Tanggal & Waktu */}
-            <div className="relative bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-2xl px-5 py-5 text-white shadow-lg overflow-hidden group hover:shadow-xl transition-shadow">
-              <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full" />
-              <div className="absolute -bottom-6 -left-3 w-20 h-20 bg-white/5 rounded-full" />
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2 bg-white/20 rounded-xl">
-                    <Calendar className="w-4 h-4 text-white" />
-                  </div>
-                  <span className="text-xs font-semibold bg-white/20 px-2.5 py-1 rounded-full">
-                    Hari Ini
-                  </span>
-                </div>
-                <p className="text-2xl font-bold tracking-tight">
-                  {jamSekarang}
-                </p>
-                <p className="text-indigo-200 text-xs mt-1 leading-relaxed">
-                  {hariIni}
-                </p>
-              </div>
-            </div>
+          {/* ── 1 Stat Card ── */}
+          <div className="mb-6">
+            <div className="relative bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-700 rounded-2xl shadow-xl overflow-hidden">
+              <div className="absolute -top-8 -right-8 w-40 h-40 bg-white/10 rounded-full" />
+              <div className="absolute -bottom-10 -left-6 w-32 h-32 bg-white/5 rounded-full" />
+              <div
+                className="absolute top-0 right-0 w-64 h-full opacity-10"
+                style={{
+                  background:
+                    "radial-gradient(circle at 80% 50%, white, transparent 60%)",
+                }}
+              />
 
-            {/* Card 2: Status Absensi Hari Ini */}
-            <div
-              className={`relative rounded-2xl px-5 py-5 shadow-lg overflow-hidden group hover:shadow-xl transition-all hover:-translate-y-0.5 ${sudahAbsenHariIni ? "bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200" : "bg-white border border-gray-100"}`}
-            >
-              <div className="absolute -top-4 -right-4 w-20 h-20 bg-emerald-100 rounded-full opacity-50" />
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-3">
-                  <div
-                    className={`p-2 rounded-xl ${sudahAbsenHariIni ? "bg-emerald-200" : "bg-gray-100"}`}
-                  >
-                    <Award
-                      className={`w-4 h-4 ${sudahAbsenHariIni ? "text-emerald-700" : "text-gray-400"}`}
-                    />
+              <div className="relative z-10 p-5 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+                  <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-5">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 bg-white/20 rounded-xl">
+                        <Calendar className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-indigo-200 text-xs font-medium uppercase tracking-wider">
+                          Hari Ini
+                        </p>
+                        <p className="text-white font-bold text-sm leading-tight">
+                          {hariIni}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="hidden sm:block w-px h-10 bg-white/20" />
+
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 bg-white/20 rounded-xl">
+                        <ClockIcon className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-indigo-200 text-xs font-medium uppercase tracking-wider">
+                          Jam
+                        </p>
+                        <p className="text-white font-bold text-lg font-mono leading-tight">
+                          {jamSekarang}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="hidden sm:block w-px h-10 bg-white/20" />
+
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`p-2.5 rounded-xl ${sudahAbsen ? "bg-emerald-400/30" : "bg-amber-400/30"}`}
+                      >
+                        {sudahAbsen ? (
+                          <CheckCircle2 className="w-5 h-5 text-emerald-300" />
+                        ) : (
+                          <AlertCircle className="w-5 h-5 text-amber-300" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-indigo-200 text-xs font-medium uppercase tracking-wider">
+                          Status Absensi
+                        </p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {sudahAbsen ? (
+                            <span className="text-emerald-300 font-bold text-sm">
+                              Sudah Absen
+                            </span>
+                          ) : (
+                            <span className="text-amber-300 font-bold text-sm">
+                              Belum Absen
+                            </span>
+                          )}
+                          {statusHariIni && (
+                            <StatusBadge status={statusHariIni} />
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  {sudahAbsenHariIni ? (
-                    <span className="text-xs font-bold bg-emerald-500 text-white px-2.5 py-1 rounded-full">
-                      ✓ Sudah
-                    </span>
-                  ) : (
-                    <span className="text-xs font-semibold bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full border border-amber-200">
-                      Belum
-                    </span>
+
+                  {waktuAbsen && (
+                    <div className="sm:ml-auto text-right">
+                      <p className="text-indigo-200 text-xs font-medium uppercase tracking-wider">
+                        Waktu Absen
+                      </p>
+                      <p className="text-white font-bold text-lg font-mono">
+                        {waktuAbsen}
+                      </p>
+                    </div>
                   )}
                 </div>
-                <p
-                  className={`text-lg font-bold ${sudahAbsenHariIni ? "text-emerald-800" : "text-gray-400"}`}
-                >
-                  {sudahAbsenHariIni ? "Sudah Absen" : "Belum Absen"}
-                </p>
-                <p
-                  className={`text-xs mt-1 ${sudahAbsenHariIni ? "text-emerald-600" : "text-gray-400"}`}
-                >
-                  {statusHariIni
-                    ? `Status: ${statusHariIni}`
-                    : "Silakan isi absensi hari ini"}
-                </p>
-              </div>
-            </div>
 
-            {/* Card 3: Total Absensi */}
-            <div className="relative bg-white rounded-2xl px-5 py-5 border border-gray-100 shadow-lg overflow-hidden group hover:shadow-xl transition-all hover:-translate-y-0.5">
-              <div className="absolute -top-4 -right-4 w-20 h-20 bg-violet-50 rounded-full" />
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2 bg-violet-50 rounded-xl ring-1 ring-violet-200">
-                    <TrendingUp className="w-4 h-4 text-violet-600" />
-                  </div>
-                  <span className="text-xs font-semibold text-violet-600 bg-violet-50 px-2.5 py-1 rounded-full border border-violet-200">
-                    Hari Ini
-                  </span>
-                </div>
-                <p className="text-3xl font-bold text-violet-700">
-                  {totalAbsensi}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Total record absensi
-                </p>
-                <div className="mt-3 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="mt-4 pt-4 border-t border-white/10 flex items-center gap-2">
                   <div
-                    className="h-full bg-gradient-to-r from-violet-400 to-violet-600 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(totalAbsensi * 50, 100)}%` }}
+                    className={`w-2 h-2 rounded-full ${sudahAbsen ? "bg-emerald-400 animate-pulse" : "bg-amber-400 animate-pulse"}`}
                   />
+                  <p className="text-indigo-200 text-xs">
+                    {sudahAbsen
+                      ? `${presensiData.length} record absensi hari ini · ${siswaData.kelas} · ${siswaData.tempatPKL}`
+                      : `Belum ada absensi hari ini · ${siswaData.kelas} · ${siswaData.tempatPKL}`}
+                  </p>
                 </div>
               </div>
             </div>
@@ -524,10 +547,7 @@ export default function SiswaAbsensi() {
                     ].map((h, idx) => (
                       <th
                         key={h}
-                        className={`px-5 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider
-                          ${idx === 2 ? "hidden sm:table-cell" : ""}
-                          ${idx === 5 ? "hidden md:table-cell" : ""}
-                          ${idx === 3 || idx === 4 ? "text-center" : ""}`}
+                        className={`px-5 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider ${idx === 2 ? "hidden sm:table-cell" : ""} ${idx === 5 ? "hidden md:table-cell" : ""} ${idx === 3 || idx === 4 ? "text-center" : ""}`}
                       >
                         {h}
                       </th>
