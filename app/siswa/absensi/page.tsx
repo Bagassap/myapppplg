@@ -91,6 +91,8 @@ export default function SiswaAbsensi() {
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [jamSekarang, setJamSekarang] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successStatus, setSuccessStatus] = useState("");
 
   const sigCanvas = useRef<any>(null);
 
@@ -335,7 +337,9 @@ export default function SiswaAbsensi() {
 
       if (!response.ok) throw new Error(await response.text());
       await fetchPresensiHariIni();
-      alert("✅ Absensi Berhasil Disimpan!");
+      setSuccessStatus(absenForm.status);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 5000);
       setShowAbsenModal(false);
       clearSignature();
       setAbsenForm({
@@ -1106,6 +1110,89 @@ export default function SiswaAbsensi() {
           <style>{`
             @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
             @keyframes scaleIn { from { opacity: 0; transform: scale(0.92) translateY(12px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+          `}</style>
+        </div>
+      )}
+
+      {showSuccess && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center px-4"
+          style={{ animation: "fadeIn 0.2s ease" }}
+        >
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowSuccess(false)}
+          />
+          <div
+            className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden"
+            style={{ animation: "popIn 0.35s cubic-bezier(0.34,1.56,0.64,1)" }}
+          >
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gray-100 overflow-hidden rounded-t-3xl">
+              <div
+                className="h-full bg-gradient-to-r from-emerald-400 to-indigo-500 rounded-full"
+                style={{ animation: "shrinkBar 5s linear forwards" }}
+              />
+            </div>
+            <div className="px-7 py-8 flex flex-col items-center text-center">
+              <div className="relative mb-5">
+                <div
+                  className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center shadow-lg shadow-emerald-200"
+                  style={{
+                    animation:
+                      "bounceIn 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.1s both",
+                  }}
+                >
+                  <CheckCircle2 className="w-10 h-10 text-white" />
+                </div>
+                <div
+                  className="absolute -top-1 -right-1 w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center"
+                  style={{
+                    animation:
+                      "bounceIn 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.25s both",
+                  }}
+                >
+                  <span className="text-white text-xs">✓</span>
+                </div>
+              </div>
+
+              <h2 className="text-xl font-bold text-gray-900 mb-2">
+                Absensi Berhasil!
+              </h2>
+              <p className="text-gray-500 text-sm leading-relaxed mb-1">
+                Terima kasih, absensi kamu hari ini sudah tercatat.
+              </p>
+              <div className="mt-2 mb-5">
+                <span
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${STATUS_STYLES[successStatus]?.pill ?? STATUS_STYLES.Libur.pill}`}
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${STATUS_STYLES[successStatus]?.dot ?? STATUS_STYLES.Libur.dot}`}
+                  />
+                  Status: {successStatus}
+                </span>
+              </div>
+
+              <p className="text-xs text-gray-400 mb-4">
+                {new Date().toLocaleDateString("id-ID", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </p>
+
+              <button
+                onClick={() => setShowSuccess(false)}
+                className="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-indigo-600 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity text-sm shadow-md"
+              >
+                Oke, Terima Kasih!
+              </button>
+            </div>
+          </div>
+          <style>{`
+            @keyframes popIn { from { opacity: 0; transform: scale(0.85) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+            @keyframes bounceIn { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
+            @keyframes shrinkBar { from { width: 100%; } to { width: 0%; } }
           `}</style>
         </div>
       )}
