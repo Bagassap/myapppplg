@@ -3,36 +3,43 @@ import Sidebar from "@/components/layout/SidebarAdmin";
 import TopBar from "@/components/layout/TopBar";
 import GreetingBanner from "@/components/GreetingBanner";
 import { useState, useEffect, useMemo } from "react";
-import {
-  SlidersHorizontal,
-  TrendingUp,
-  Users,
-  CheckCircle2,
-  XCircle,
-  Clock,
-} from "lucide-react";
+import { Users, CheckCircle2, XCircle, Clock, TrendingUp } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
-const DONUT_COLORS = ["#10b981", "#f59e0b", "#f43f5e"];
+const DONUT_COLORS = ["#639922", "#ba7517", "#e24b4a"];
 
 const DonutTooltip = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white border border-gray-100 rounded-xl shadow-xl px-3 py-2 text-sm">
-        <p className="font-semibold text-gray-800">{payload[0].name}</p>
-        <p className="text-gray-500">
-          Jumlah:{" "}
-          <span className="font-bold text-gray-900">{payload[0].value}</span>
-        </p>
-      </div>
-    );
-  }
-  return null;
+  if (!active || !payload?.length) return null;
+  return (
+    <div
+      style={{
+        background: "var(--color-background-primary)",
+        border: "0.5px solid var(--color-border-tertiary)",
+        borderRadius: 10,
+        padding: "8px 12px",
+        fontSize: 13,
+      }}
+    >
+      <p
+        style={{
+          fontWeight: 500,
+          margin: "0 0 2px",
+          color: "var(--color-text-primary)",
+        }}
+      >
+        {payload[0].name}
+      </p>
+      <p style={{ margin: 0, color: "var(--color-text-secondary)" }}>
+        Jumlah:{" "}
+        <strong style={{ color: "var(--color-text-primary)" }}>
+          {payload[0].value}
+        </strong>
+      </p>
+    </div>
+  );
 };
 
 export default function AdminDashboard() {
-  const [selectedClass, setSelectedClass] = useState("Semua Kelas");
-  const [selectedPeriod, setSelectedPeriod] = useState("Semua Periode");
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalSiswa: 0,
@@ -41,37 +48,12 @@ export default function AdminDashboard() {
     persentaseKehadiran: 0,
   });
   const [classData, setClassData] = useState<any[]>([]);
-  const [filters, setFilters] = useState({
-    kelas: [] as { id: string; label: string }[],
-    tanggal: [] as string[],
-  });
-
-  useEffect(() => {
-    const fetchFilters = async () => {
-      try {
-        const res = await fetch("/api/dashboard/filters");
-        if (res.ok) {
-          const data = await res.json();
-          setFilters({ kelas: data.kelas || [], tanggal: data.tanggal || [] });
-          if (data.tanggal && data.tanggal.length > 0)
-            setSelectedPeriod(data.tanggal[0]);
-        }
-      } catch (error) {
-        console.error("Gagal load filter", error);
-      }
-    };
-    fetchFilters();
-  }, []);
 
   useEffect(() => {
     const fetchDashboard = async () => {
       setLoading(true);
       try {
         const params = new URLSearchParams();
-        if (selectedClass !== "Semua Kelas")
-          params.append("kelas", selectedClass);
-        if (selectedPeriod !== "Semua Periode")
-          params.append("tanggal", selectedPeriod);
         params.append("t", new Date().getTime().toString());
         const res = await fetch(`/api/dashboard?${params.toString()}`);
         if (res.ok) {
@@ -86,7 +68,7 @@ export default function AdminDashboard() {
       }
     };
     fetchDashboard();
-  }, [selectedClass, selectedPeriod]);
+  }, []);
 
   const izin = useMemo(() => {
     const val = stats.totalSiswa - stats.hadirHariIni - stats.tidakHadir;
@@ -103,24 +85,38 @@ export default function AdminDashboard() {
     [stats, izin],
   );
 
+  const pct = stats.persentaseKehadiran;
+  const badgeStyle =
+    pct >= 80
+      ? { background: "#eaf3de", color: "#3b6d11" }
+      : pct >= 60
+        ? { background: "#faeeda", color: "#854f0b" }
+        : { background: "#fcebeb", color: "#a32d2d" };
+
   const breakdown = [
     {
       label: "Hadir",
       value: stats.hadirHariIni,
-      color: "#10b981",
-      icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+      bg: "#eaf3de",
+      color: "#3b6d11",
+      dot: "#639922",
+      Icon: CheckCircle2,
     },
     {
       label: "Izin/Sakit",
       value: izin,
-      color: "#f59e0b",
-      icon: <Clock className="w-3.5 h-3.5" />,
+      bg: "#faeeda",
+      color: "#854f0b",
+      dot: "#ba7517",
+      Icon: Clock,
     },
     {
       label: "Tidak Hadir",
       value: stats.tidakHadir,
-      color: "#f43f5e",
-      icon: <XCircle className="w-3.5 h-3.5" />,
+      bg: "#fcebeb",
+      color: "#a32d2d",
+      dot: "#e24b4a",
+      Icon: XCircle,
     },
   ];
 
@@ -131,57 +127,29 @@ export default function AdminDashboard() {
         <TopBar />
         <main className="flex-1 p-6 sm:p-8 lg:p-10 overflow-y-auto overflow-x-hidden">
           <GreetingBanner />
-          <p className="text-gray-500 text-sm sm:text-base -mt-4 mb-7">
+          <p className="text-gray-500 text-sm -mt-4 mb-7">
             Pantau statistik kehadiran siswa secara keseluruhan.
           </p>
 
-          <div className="bg-white px-5 py-4 rounded-2xl shadow-sm border border-gray-100 mb-6 flex flex-wrap gap-3 items-center">
-            <SlidersHorizontal className="w-4 h-4 text-indigo-400 shrink-0" />
-            <div className="flex flex-wrap gap-3 flex-1">
-              <select
-                value={selectedClass}
-                onChange={(e) => setSelectedClass(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 min-w-[140px]"
-              >
-                <option>Semua Kelas</option>
-                {filters.kelas.map((k) => (
-                  <option key={k.id} value={k.id}>
-                    {k.label}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={selectedPeriod}
-                onChange={(e) => setSelectedPeriod(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 min-w-[140px]"
-              >
-                <option>Semua Periode</option>
-                {filters.tanggal.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-indigo-500" />
-              <h3 className="text-sm font-semibold text-gray-700">
-                Ringkasan Kehadiran
-              </h3>
-              <span className="ml-auto text-xs text-gray-400 bg-gray-50 border border-gray-200 px-2.5 py-0.5 rounded-full">
-                {selectedPeriod}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-indigo-500" />
+                <p className="text-sm font-semibold text-gray-700">
+                  Ringkasan Kehadiran
+                </p>
+              </div>
+              <span className="text-xs text-gray-400 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-full">
+                Hari Ini
               </span>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-gray-100">
-              <div className="p-6 flex flex-col items-center justify-center gap-5">
+            <div className="grid grid-cols-1 lg:grid-cols-2">
+              <div className="p-6 lg:border-r border-gray-100 flex flex-col items-center gap-6">
                 {loading ? (
                   <div className="w-52 h-52 rounded-full bg-gray-100 animate-pulse" />
                 ) : donutData.length === 0 ? (
-                  <div className="flex flex-col items-center gap-2 text-gray-300 py-10">
+                  <div className="flex flex-col items-center gap-2 py-12 text-gray-300">
                     <Users className="w-10 h-10" />
                     <p className="text-sm">Belum ada data</p>
                   </div>
@@ -193,57 +161,54 @@ export default function AdminDashboard() {
                           data={donutData}
                           cx="50%"
                           cy="50%"
-                          innerRadius={62}
-                          outerRadius={92}
+                          innerRadius={64}
+                          outerRadius={94}
                           paddingAngle={3}
                           dataKey="value"
                           startAngle={90}
                           endAngle={-270}
                         >
                           {donutData.map((_, i) => (
-                            <Cell
-                              key={i}
-                              fill={DONUT_COLORS[i % DONUT_COLORS.length]}
-                            />
+                            <Cell key={i} fill={DONUT_COLORS[i]} />
                           ))}
                         </Pie>
                         <Tooltip content={<DonutTooltip />} />
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <span className="text-3xl font-black text-gray-900 leading-none">
+                      <span className="text-4xl font-bold text-gray-900 leading-none">
                         {stats.totalSiswa}
                       </span>
-                      <span className="text-xs text-gray-400 mt-0.5">
+                      <span className="text-xs text-gray-400 mt-1">
                         total siswa
                       </span>
                       <span
-                        className={`text-xs font-bold mt-1.5 px-2.5 py-0.5 rounded-full ${stats.persentaseKehadiran >= 80 ? "bg-emerald-100 text-emerald-700" : stats.persentaseKehadiran >= 60 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"}`}
+                        className="text-xs font-semibold mt-2 px-2.5 py-0.5 rounded-full"
+                        style={badgeStyle}
                       >
-                        {stats.persentaseKehadiran}% hadir
+                        {pct}% hadir
                       </span>
                     </div>
                   </div>
                 )}
 
-                <div className="flex flex-wrap justify-center gap-2.5">
+                <div className="flex flex-wrap justify-center gap-2">
                   {breakdown.map((b) => (
                     <div
                       key={b.label}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border"
+                      className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm border"
                       style={{
-                        borderColor: `${b.color}30`,
-                        background: `${b.color}08`,
+                        background: b.bg,
+                        borderColor: `${b.dot}40`,
+                        color: b.color,
                       }}
                     >
-                      <span style={{ color: b.color }}>{b.icon}</span>
-                      <span className="text-xs font-semibold text-gray-600">
-                        {b.label}
-                      </span>
                       <span
-                        className="text-xs font-black"
-                        style={{ color: b.color }}
-                      >
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ background: b.dot }}
+                      />
+                      <span className="font-medium">{b.label}</span>
+                      <span className="font-bold">
                         {loading ? "—" : b.value}
                       </span>
                     </div>
@@ -252,9 +217,9 @@ export default function AdminDashboard() {
               </div>
 
               <div className="p-6">
-                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
                   <Users className="w-3.5 h-3.5" /> Laporan per Kelas
-                </h4>
+                </p>
                 {loading ? (
                   <div className="space-y-3">
                     {[...Array(4)].map((_, i) => (
@@ -270,49 +235,59 @@ export default function AdminDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
-                    {classData.map((item, i) => (
-                      <div
-                        key={i}
-                        className="group hover:bg-gray-50 rounded-xl p-2 -mx-2 transition-colors"
-                      >
-                        <div className="flex items-center justify-between mb-1.5">
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-lg bg-indigo-50 flex items-center justify-center">
-                              <span className="text-[10px] font-black text-indigo-600">
-                                {i + 1}
+                    {classData.map((item, i) => {
+                      const barColor =
+                        item.persentase >= 80
+                          ? "#639922"
+                          : item.persentase >= 60
+                            ? "#ba7517"
+                            : "#e24b4a";
+                      const bdg =
+                        item.persentase >= 80
+                          ? { bg: "#eaf3de", color: "#3b6d11" }
+                          : item.persentase >= 60
+                            ? { bg: "#faeeda", color: "#854f0b" }
+                            : { bg: "#fcebeb", color: "#a32d2d" };
+                      return (
+                        <div
+                          key={i}
+                          className="group hover:bg-gray-50 rounded-xl p-2 -mx-2 transition-colors cursor-default"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
+                                <span className="text-[10px] font-bold text-indigo-600">
+                                  {i + 1}
+                                </span>
+                              </div>
+                              <span className="text-sm text-gray-800">
+                                {item.kelas}
                               </span>
                             </div>
-                            <span className="text-sm font-semibold text-gray-800">
-                              {item.kelas}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-400">
+                                {item.hadir}/{item.total}
+                              </span>
+                              <span
+                                className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                                style={bdg}
+                              >
+                                {item.persentase}%
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-400">
-                              {item.hadir}/{item.total}
-                            </span>
-                            <span
-                              className={`text-xs font-bold px-2 py-0.5 rounded-full ${item.persentase >= 80 ? "bg-emerald-100 text-emerald-700" : item.persentase >= 60 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"}`}
-                            >
-                              {item.persentase}%
-                            </span>
+                          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-700"
+                              style={{
+                                width: `${item.persentase}%`,
+                                background: barColor,
+                              }}
+                            />
                           </div>
                         </div>
-                        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all duration-700"
-                            style={{
-                              width: `${item.persentase}%`,
-                              background:
-                                item.persentase >= 80
-                                  ? "#10b981"
-                                  : item.persentase >= 60
-                                    ? "#f59e0b"
-                                    : "#f43f5e",
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

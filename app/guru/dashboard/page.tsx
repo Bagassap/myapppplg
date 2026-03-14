@@ -2,21 +2,45 @@
 import Sidebar from "@/components/layout/SidebarGuru";
 import TopBar from "@/components/layout/TopBar";
 import GreetingBanner from "@/components/GreetingBanner";
-import AbsensiChart from "@/components/dashboard/AbsensiChart";
 import { useState, useEffect, useMemo } from "react";
-import {
-  Users,
-  CheckCircle,
-  XCircle,
-  TrendingUp,
-  SlidersHorizontal,
-} from "lucide-react";
+import { Users, CheckCircle2, XCircle, Clock, TrendingUp } from "lucide-react";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+
+const DONUT_COLORS = ["#639922", "#ba7517", "#e24b4a"];
+
+const DonutTooltip = ({ active, payload }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div
+      style={{
+        background: "var(--color-background-primary)",
+        border: "0.5px solid var(--color-border-tertiary)",
+        borderRadius: 10,
+        padding: "8px 12px",
+        fontSize: 13,
+      }}
+    >
+      <p
+        style={{
+          fontWeight: 500,
+          margin: "0 0 2px",
+          color: "var(--color-text-primary)",
+        }}
+      >
+        {payload[0].name}
+      </p>
+      <p style={{ margin: 0, color: "var(--color-text-secondary)" }}>
+        Jumlah:{" "}
+        <strong style={{ color: "var(--color-text-primary)" }}>
+          {payload[0].value}
+        </strong>
+      </p>
+    </div>
+  );
+};
 
 export default function GuruDashboard() {
-  const [selectedPKL, setSelectedPKL] = useState("Semua Tempat PKL");
-  const [selectedPeriod, setSelectedPeriod] = useState("Semua Periode");
   const [loading, setLoading] = useState(true);
-
   const [stats, setStats] = useState({
     totalSiswaPKL: 0,
     hadirHariIni: 0,
@@ -25,41 +49,12 @@ export default function GuruDashboard() {
   });
   const [pklData, setPklData] = useState<any[]>([]);
 
-  const [filters, setFilters] = useState({
-    tempatPKL: [] as { id: string; label: string }[],
-    tanggal: [] as string[],
-  });
-
-  useEffect(() => {
-    const fetchFilters = async () => {
-      try {
-        const res = await fetch("/api/dashboard/filters");
-        if (res.ok) {
-          const data = await res.json();
-          setFilters({
-            tempatPKL: data.tempatPKL || [],
-            tanggal: data.tanggal || [],
-          });
-          if (data.tanggal && data.tanggal.length > 0) {
-            setSelectedPeriod(data.tanggal[0]);
-          }
-        }
-      } catch {}
-    };
-    fetchFilters();
-  }, []);
-
   useEffect(() => {
     const fetchDashboard = async () => {
       setLoading(true);
       try {
         const params = new URLSearchParams();
-        if (selectedPKL !== "Semua Tempat PKL")
-          params.append("tempatPKL", selectedPKL);
-        if (selectedPeriod !== "Semua Periode")
-          params.append("tanggal", selectedPeriod);
         params.append("t", new Date().getTime().toString());
-
         const res = await fetch(`/api/dashboard?${params.toString()}`);
         if (res.ok) {
           const data = await res.json();
@@ -72,63 +67,52 @@ export default function GuruDashboard() {
       }
     };
     fetchDashboard();
-  }, [selectedPKL, selectedPeriod]);
+  }, []);
 
-  // Transformasi pklData → format chart (group by siswa)
-  const chartData = useMemo(() => {
-    if (!pklData.length) return [];
-    // Ambil max 8 siswa supaya chart tidak terlalu padat
-    return pklData.slice(0, 8).map((item: any) => ({
-      label: item.siswa?.split(" ")[0] ?? item.tempatPKL, // nama depan saja
-      hadir: item.hadir ?? 0,
-      izin: item.izin ?? 0,
-      tidakHadir: Math.max(
-        0,
-        (item.totalHari ?? 0) - (item.hadir ?? 0) - (item.izin ?? 0),
-      ),
-    }));
-  }, [pklData]);
+  const izin = useMemo(() => {
+    const val = stats.totalSiswaPKL - stats.hadirHariIni - stats.tidakHadir;
+    return val > 0 ? val : 0;
+  }, [stats]);
 
-  const statCards = [
+  const donutData = useMemo(
+    () =>
+      [
+        { name: "Hadir", value: stats.hadirHariIni },
+        { name: "Izin/Sakit", value: izin },
+        { name: "Tidak Hadir", value: stats.tidakHadir },
+      ].filter((d) => d.value > 0),
+    [stats, izin],
+  );
+
+  const pct = stats.persentaseKehadiran;
+  const badgeStyle =
+    pct >= 80
+      ? { background: "#eaf3de", color: "#3b6d11" }
+      : pct >= 60
+        ? { background: "#faeeda", color: "#854f0b" }
+        : { background: "#fcebeb", color: "#a32d2d" };
+
+  const breakdown = [
     {
-      icon: <Users className="w-7 h-7 text-blue-600" />,
-      label: "Total Siswa PKL",
-      value: stats.totalSiswaPKL,
-      bg: "from-blue-50 to-blue-100",
-      border: "border-blue-200",
-      text: "text-blue-600",
-      badgeLabel: "Total",
-      badge: "text-blue-500",
-    },
-    {
-      icon: <CheckCircle className="w-7 h-7 text-green-600" />,
-      label: "Hadir Hari Ini",
+      label: "Hadir",
       value: stats.hadirHariIni,
-      bg: "from-green-50 to-green-100",
-      border: "border-green-200",
-      text: "text-green-600",
-      badgeLabel: "Hadir",
-      badge: "text-green-500",
+      bg: "#eaf3de",
+      color: "#3b6d11",
+      dot: "#639922",
     },
     {
-      icon: <XCircle className="w-7 h-7 text-red-500" />,
+      label: "Izin/Sakit",
+      value: izin,
+      bg: "#faeeda",
+      color: "#854f0b",
+      dot: "#ba7517",
+    },
+    {
       label: "Tidak Hadir",
       value: stats.tidakHadir,
-      bg: "from-red-50 to-red-100",
-      border: "border-red-200",
-      text: "text-red-500",
-      badgeLabel: "Absen",
-      badge: "text-red-400",
-    },
-    {
-      icon: <TrendingUp className="w-7 h-7 text-indigo-600" />,
-      label: "Persentase Kehadiran",
-      value: `${stats.persentaseKehadiran}%`,
-      bg: "from-indigo-50 to-blue-100",
-      border: "border-indigo-200",
-      text: "text-indigo-600",
-      badgeLabel: "Persen",
-      badge: "text-indigo-400",
+      bg: "#fcebeb",
+      color: "#a32d2d",
+      dot: "#e24b4a",
     },
   ];
 
@@ -137,139 +121,179 @@ export default function GuruDashboard() {
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
-        <main className="flex-1 p-6 sm:p-8 lg:p-12 overflow-y-auto overflow-x-hidden">
+        <main className="flex-1 p-6 sm:p-8 lg:p-10 overflow-y-auto overflow-x-hidden">
           <GreetingBanner />
-          <p className="text-gray-500 text-sm sm:text-base -mt-4 mb-7">
+          <p className="text-gray-500 text-sm -mt-4 mb-7">
             Pantau ringkasan kehadiran siswa di tempat PKL yang Anda bimbing.
           </p>
 
-          {/* ── Filter sederhana ─────────────────────────────────── */}
-          <div className="bg-white px-5 py-4 rounded-2xl shadow-sm border border-gray-100 mb-7 flex flex-wrap gap-3 items-center">
-            <SlidersHorizontal className="w-4 h-4 text-indigo-400 shrink-0" />
-            <div className="flex flex-wrap gap-3 flex-1">
-              <select
-                value={selectedPKL}
-                onChange={(e) => setSelectedPKL(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 min-w-[160px]"
-              >
-                <option>Semua Tempat PKL</option>
-                {filters.tempatPKL.map((pkl) => (
-                  <option key={pkl.id} value={pkl.id}>
-                    {pkl.label}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={selectedPeriod}
-                onChange={(e) => setSelectedPeriod(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 min-w-[140px]"
-              >
-                <option>Semua Periode</option>
-                {filters.tanggal.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* ── Statistik Cards ───────────────────────────────────── */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
-            {statCards.map((card, i) => (
-              <div
-                key={i}
-                className={`bg-gradient-to-br ${card.bg} p-5 rounded-2xl border ${card.border} shadow-sm`}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  {card.icon}
-                  <span className={`text-xs font-medium ${card.badge}`}>
-                    {card.badgeLabel}
-                  </span>
-                </div>
-                <p className="text-xs text-gray-500 mb-1">{card.label}</p>
-                <p className={`text-2xl sm:text-3xl font-bold ${card.text}`}>
-                  {loading ? (
-                    <span className="text-gray-300 animate-pulse">—</span>
-                  ) : (
-                    card.value
-                  )}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-violet-500" />
+                <p className="text-sm font-semibold text-gray-700">
+                  Ringkasan Kehadiran Siswa PKL
                 </p>
               </div>
-            ))}
-          </div>
+              <span className="text-xs text-gray-400 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-full">
+                Hari Ini
+              </span>
+            </div>
 
-          {/* ── Grafik ───────────────────────────────────────────── */}
-          <AbsensiChart data={chartData} loading={loading} />
+            <div className="grid grid-cols-1 lg:grid-cols-2">
+              <div className="p-6 lg:border-r border-gray-100 flex flex-col items-center gap-6">
+                {loading ? (
+                  <div className="w-52 h-52 rounded-full bg-gray-100 animate-pulse" />
+                ) : donutData.length === 0 ? (
+                  <div className="flex flex-col items-center gap-2 py-12 text-gray-300">
+                    <Users className="w-10 h-10" />
+                    <p className="text-sm">Belum ada data</p>
+                  </div>
+                ) : (
+                  <div className="relative w-52 h-52">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={donutData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={64}
+                          outerRadius={94}
+                          paddingAngle={3}
+                          dataKey="value"
+                          startAngle={90}
+                          endAngle={-270}
+                        >
+                          {donutData.map((_, i) => (
+                            <Cell key={i} fill={DONUT_COLORS[i]} />
+                          ))}
+                        </Pie>
+                        <Tooltip content={<DonutTooltip />} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                      <span className="text-4xl font-bold text-gray-900 leading-none">
+                        {stats.totalSiswaPKL}
+                      </span>
+                      <span className="text-xs text-gray-400 mt-1">
+                        total siswa
+                      </span>
+                      <span
+                        className="text-xs font-semibold mt-2 px-2.5 py-0.5 rounded-full"
+                        style={badgeStyle}
+                      >
+                        {pct}% hadir
+                      </span>
+                    </div>
+                  </div>
+                )}
 
-          {/* ── Tabel per Siswa PKL ──────────────────────────────── */}
-          <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-500" />
-              Laporan Kehadiran per Siswa PKL
-            </h3>
-            <div className="w-full overflow-x-auto">
-              <table className="w-full table-auto border-collapse min-w-[500px] text-sm">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-100">
-                    <th className="px-5 py-3 text-left font-semibold text-gray-600 rounded-tl-xl">
-                      Tempat PKL
-                    </th>
-                    <th className="px-5 py-3 text-left font-semibold text-gray-600">
-                      Siswa
-                    </th>
-                    <th className="px-5 py-3 text-left font-semibold text-gray-600">
-                      Hari Hadir
-                    </th>
-                    <th className="px-5 py-3 text-left font-semibold text-gray-600 rounded-tr-xl">
-                      Total Hari
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td
-                        colSpan={4}
-                        className="text-center py-8 text-gray-400"
-                      >
-                        Memuat data...
-                      </td>
-                    </tr>
-                  ) : pklData.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={4}
-                        className="text-center py-8 text-gray-400"
-                      >
-                        Tidak ada data siswa bimbingan.
-                      </td>
-                    </tr>
-                  ) : (
-                    pklData.map((item, index) => (
-                      <tr
-                        key={index}
-                        className="border-b border-gray-50 hover:bg-indigo-50/40 transition-colors"
-                      >
-                        <td className="px-5 py-3 font-medium text-gray-900">
-                          {item.tempatPKL}
-                        </td>
-                        <td className="px-5 py-3 text-gray-600">
-                          {item.siswa}
-                        </td>
-                        <td className="px-5 py-3">
-                          <span className="text-green-600 font-semibold">
-                            {item.hadir}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3 text-gray-600">
-                          {item.totalHari}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {breakdown.map((b) => (
+                    <div
+                      key={b.label}
+                      className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm border"
+                      style={{
+                        background: b.bg,
+                        borderColor: `${b.dot}40`,
+                        color: b.color,
+                      }}
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ background: b.dot }}
+                      />
+                      <span className="font-medium">{b.label}</span>
+                      <span className="font-bold">
+                        {loading ? "—" : b.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-6">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5" /> Laporan per Siswa PKL
+                </p>
+                {loading ? (
+                  <div className="space-y-3">
+                    {[...Array(4)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-12 bg-gray-100 rounded-xl animate-pulse"
+                      />
+                    ))}
+                  </div>
+                ) : pklData.length === 0 ? (
+                  <div className="flex items-center justify-center h-32 text-gray-400 text-sm">
+                    Tidak ada data siswa bimbingan.
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                    {pklData.map((item, i) => {
+                      const total = item.totalHari ?? item.total ?? 0;
+                      const hadir = item.hadir ?? 0;
+                      const p =
+                        total > 0 ? Math.round((hadir / total) * 100) : 0;
+                      const barColor =
+                        p >= 80 ? "#639922" : p >= 60 ? "#ba7517" : "#e24b4a";
+                      const bdg =
+                        p >= 80
+                          ? { bg: "#eaf3de", color: "#3b6d11" }
+                          : p >= 60
+                            ? { bg: "#faeeda", color: "#854f0b" }
+                            : { bg: "#fcebeb", color: "#a32d2d" };
+                      const initial = (item.siswa || item.tempatPKL || "?")
+                        .charAt(0)
+                        .toUpperCase();
+                      return (
+                        <div
+                          key={i}
+                          className="group hover:bg-gray-50 rounded-xl p-2 -mx-2 transition-colors cursor-default"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center shrink-0">
+                                <span className="text-xs font-bold text-violet-600">
+                                  {initial}
+                                </span>
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm text-gray-800 truncate max-w-[140px]">
+                                  {item.siswa || item.tempatPKL}
+                                </p>
+                                {item.siswa && item.tempatPKL && (
+                                  <p className="text-xs text-gray-400 truncate max-w-[140px]">
+                                    {item.tempatPKL}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-xs text-gray-400">
+                                {hadir}/{total}
+                              </span>
+                              <span
+                                className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                                style={bdg}
+                              >
+                                {p}%
+                              </span>
+                            </div>
+                          </div>
+                          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-700"
+                              style={{ width: `${p}%`, background: barColor }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </main>
