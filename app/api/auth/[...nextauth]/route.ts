@@ -66,7 +66,7 @@ export const authOptions: NextAuthOptions = {
 
     session: {
         strategy: "jwt",
-        maxAge: 8 * 60 * 60,
+        maxAge: 10 * 60 * 60,
         updateAge: 60 * 60,
     },
 
@@ -111,7 +111,7 @@ export const authOptions: NextAuthOptions = {
         },
     },
 
-    debug: process.env.NODE_ENV === "development",
+    debug: false,
 };
 
 const handler = NextAuth(authOptions);
