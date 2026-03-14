@@ -547,7 +547,7 @@ export default function SiswaAbsensi() {
                     ].map((h, idx) => (
                       <th
                         key={h}
-                        className={`px-5 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider ${idx === 2 ? "hidden sm:table-cell" : ""} ${idx === 5 ? "hidden md:table-cell" : ""} ${idx === 3 || idx === 4 ? "text-center" : ""}`}
+                        className={`px-5 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider ${idx === 2 ? "hidden sm:table-cell" : ""} ${idx === 5 ? "hidden md:table-cell" : ""} ${idx === 3 || idx === 4 ? "text-center w-20" : ""}`}
                       >
                         {h}
                       </th>
@@ -590,7 +590,7 @@ export default function SiswaAbsensi() {
                             <span className="text-gray-300">-</span>
                           )}
                         </td>
-                        <td className="px-5 py-3.5 text-center">
+                        <td className="px-5 py-3.5 text-center w-20">
                           {item.foto ? (
                             <div
                               className="flex justify-center cursor-pointer group"
@@ -615,7 +615,7 @@ export default function SiswaAbsensi() {
                             </div>
                           )}
                         </td>
-                        <td className="px-5 py-3.5 text-center">
+                        <td className="px-5 py-3.5 text-center w-20">
                           {item.tandaTangan ? (
                             <div
                               className="flex justify-center cursor-pointer group"
