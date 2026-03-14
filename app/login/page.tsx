@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { signIn, useSession } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 
@@ -19,9 +19,20 @@ export default function LoginPage() {
   const { data: session, status } = useSession();
 
   useEffect(() => {
-    if (status === "authenticated" && session?.user?.role && !redirecting) {
-      setRedirecting(true);
-      redirectByRole(session.user.role);
+    if (status === "loading") return;
+
+    if (status === "authenticated" && session?.user?.role) {
+      const isActive = sessionStorage.getItem("session-active");
+
+      if (!isActive) {
+        signOut({ callbackUrl: "/login" });
+        return;
+      }
+
+      if (!redirecting) {
+        setRedirecting(true);
+        redirectByRole(session.user.role);
+      }
     }
   }, [status, session]);
 
@@ -69,6 +80,8 @@ export default function LoginPage() {
         setLoading(false);
         return;
       }
+
+      sessionStorage.setItem("session-active", "1");
 
       let attempts = 0;
       const tryRedirect = async () => {
