@@ -17,7 +17,6 @@ const SignatureCanvas = dynamic(() => import("react-signature-canvas"), {
 
 import {
   Calendar,
-  CheckSquare,
   Clock as ClockIcon,
   MapPin,
   Camera,
@@ -35,9 +34,10 @@ import {
   ChevronRight,
   Image as ImageIcon,
   X,
+  TrendingUp,
+  Award,
 } from "lucide-react";
 
-// ── Status Badge (konsisten dengan admin) ─────────────────────────────────────
 const STATUS_STYLES: Record<string, { pill: string; dot: string }> = {
   Hadir: {
     pill: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
@@ -131,19 +131,20 @@ export default function SiswaAbsensi() {
       );
       if (!presensiRes.ok) throw new Error("Gagal memuat data presensi.");
       const presensiRaw = await presensiRes.json();
-      const transformedPresensi = presensiRaw.map((item: any) => ({
-        id: item.id,
-        tanggal: new Date(item.tanggal).toLocaleDateString("id-ID"),
-        status: item.status,
-        waktu: item.waktu || "-",
-        kegiatan: item.kegiatan || "",
-        lokasi: item.lokasi || "",
-        catatan: item.keterangan || "",
-        foto: item.foto || "",
-        bukti: item.bukti || "",
-        tandaTangan: item.tandaTangan || "",
-      }));
-      setPresensiData(transformedPresensi);
+      setPresensiData(
+        presensiRaw.map((item: any) => ({
+          id: item.id,
+          tanggal: new Date(item.tanggal).toLocaleDateString("id-ID"),
+          status: item.status,
+          waktu: item.waktu || "-",
+          kegiatan: item.kegiatan || "",
+          lokasi: item.lokasi || "",
+          catatan: item.keterangan || "",
+          foto: item.foto || "",
+          bukti: item.bukti || "",
+          tandaTangan: item.tandaTangan || "",
+        })),
+      );
     } catch (err: any) {
       console.error("Fetch presensi error:", err);
     }
@@ -233,11 +234,8 @@ export default function SiswaAbsensi() {
     navigator.geolocation.getCurrentPosition(
       onSuccess,
       (error) => {
-        if (error.code === 3 || error.code === 2) {
-          tryLowAccuracy();
-        } else {
-          onError(error);
-        }
+        if (error.code === 3 || error.code === 2) tryLowAccuracy();
+        else onError(error);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
@@ -246,7 +244,6 @@ export default function SiswaAbsensi() {
   const clearSignature = () => sigCanvas.current?.clear();
   const isStatusIzinOrSakit = ["Izin", "Sakit"].includes(absenForm.status);
   const isStatusPulang = absenForm.status === "Pulang";
-
   const openPreview = (url: string, type: "foto" | "ttd") => {
     if (!url) return;
     setPreviewUrl(url);
@@ -268,9 +265,7 @@ export default function SiswaAbsensi() {
     }
 
     setIsSubmitting(true);
-
     try {
-      // 1. Upload foto
       let fotoUrl: string | null = null;
       if (absenForm.foto) {
         const fotoForm = new FormData();
@@ -280,11 +275,9 @@ export default function SiswaAbsensi() {
           body: fotoForm,
         });
         if (!fotoRes.ok) throw new Error("Gagal upload foto");
-        const fotoData = await fotoRes.json();
-        fotoUrl = fotoData.url;
+        fotoUrl = (await fotoRes.json()).url;
       }
 
-      // 2. Upload bukti (jika ada)
       let buktiUrl: string | null = null;
       if (absenForm.bukti) {
         const buktiForm = new FormData();
@@ -294,16 +287,12 @@ export default function SiswaAbsensi() {
           body: buktiForm,
         });
         if (!buktiRes.ok) throw new Error("Gagal upload bukti");
-        const buktiData = await buktiRes.json();
-        buktiUrl = buktiData.url;
+        buktiUrl = (await buktiRes.json()).url;
       }
 
-      // 3. Upload tanda tangan
-      let ttdUrl: string | null = null;
       const signatureDataURL = sigCanvas.current
         .getTrimmedCanvas()
         .toDataURL("image/png");
-
       const ttdBlob = await fetch(signatureDataURL).then((r) => r.blob());
       const ttdFile = new File([ttdBlob], "ttd.png", { type: "image/png" });
       const ttdForm = new FormData();
@@ -313,10 +302,8 @@ export default function SiswaAbsensi() {
         body: ttdForm,
       });
       if (!ttdRes.ok) throw new Error("Gagal upload tanda tangan");
-      const ttdData = await ttdRes.json();
-      ttdUrl = ttdData.url;
+      const ttdUrl = (await ttdRes.json()).url;
 
-      // 4. Kirim JSON ke API absensi
       const response = await fetch("/api/absensi", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -334,7 +321,6 @@ export default function SiswaAbsensi() {
       });
 
       if (!response.ok) throw new Error(await response.text());
-
       await fetchPresensiHariIni();
       alert("✅ Absensi Berhasil Disimpan!");
       setShowAbsenModal(false);
@@ -380,11 +366,20 @@ export default function SiswaAbsensi() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentData = presensiData.slice(startIndex, startIndex + itemsPerPage);
   const totalPages = Math.max(1, Math.ceil(presensiData.length / itemsPerPage));
-  const statHadir = presensiData.filter((i) => i.status === "Hadir").length;
-  const statPulang = presensiData.filter((i) => i.status === "Pulang").length;
-  const statIzin = presensiData.filter((i) =>
-    ["Izin", "Sakit"].includes(i.status),
-  ).length;
+  const sudahAbsenHariIni = presensiData.length > 0;
+  const statusHariIni = presensiData[0]?.status ?? null;
+  const totalAbsensi = presensiData.length;
+  const now = new Date();
+  const jamSekarang = now.toLocaleTimeString("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const hariIni = now.toLocaleDateString("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -392,7 +387,6 @@ export default function SiswaAbsensi() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar />
         <main className="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 px-4 sm:px-6 lg:px-8 py-7">
-          {/* ── Page Header ── */}
           <div className="mb-7 flex items-start justify-between">
             <div>
               <div className="flex items-center gap-2.5 mb-1">
@@ -414,64 +408,98 @@ export default function SiswaAbsensi() {
           </div>
 
           {/* ── Stat Cards ── */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {/* Tanggal */}
-            <div className="col-span-2 lg:col-span-1 bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex items-center gap-4">
-              <div className="p-2.5 rounded-xl bg-indigo-50 ring-1 ring-indigo-200 shrink-0">
-                <Calendar className="w-4 h-4 text-indigo-600" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-gray-500 mb-0.5">
-                  Hari Ini
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            {/* Card 1: Tanggal & Waktu */}
+            <div className="relative bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-2xl px-5 py-5 text-white shadow-lg overflow-hidden group hover:shadow-xl transition-shadow">
+              <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full" />
+              <div className="absolute -bottom-6 -left-3 w-20 h-20 bg-white/5 rounded-full" />
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2 bg-white/20 rounded-xl">
+                    <Calendar className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="text-xs font-semibold bg-white/20 px-2.5 py-1 rounded-full">
+                    Hari Ini
+                  </span>
+                </div>
+                <p className="text-2xl font-bold tracking-tight">
+                  {jamSekarang}
                 </p>
-                <p className="text-sm font-bold text-gray-800 truncate">
-                  {new Date().toLocaleDateString("id-ID", {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "short",
-                  })}
+                <p className="text-indigo-200 text-xs mt-1 leading-relaxed">
+                  {hariIni}
                 </p>
               </div>
             </div>
-            {/* Hadir */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500 mb-1">Hadir</p>
-                <p className="text-2xl font-bold text-emerald-700">
-                  {statHadir}
+
+            {/* Card 2: Status Absensi Hari Ini */}
+            <div
+              className={`relative rounded-2xl px-5 py-5 shadow-lg overflow-hidden group hover:shadow-xl transition-all hover:-translate-y-0.5 ${sudahAbsenHariIni ? "bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200" : "bg-white border border-gray-100"}`}
+            >
+              <div className="absolute -top-4 -right-4 w-20 h-20 bg-emerald-100 rounded-full opacity-50" />
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                  <div
+                    className={`p-2 rounded-xl ${sudahAbsenHariIni ? "bg-emerald-200" : "bg-gray-100"}`}
+                  >
+                    <Award
+                      className={`w-4 h-4 ${sudahAbsenHariIni ? "text-emerald-700" : "text-gray-400"}`}
+                    />
+                  </div>
+                  {sudahAbsenHariIni ? (
+                    <span className="text-xs font-bold bg-emerald-500 text-white px-2.5 py-1 rounded-full">
+                      ✓ Sudah
+                    </span>
+                  ) : (
+                    <span className="text-xs font-semibold bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full border border-amber-200">
+                      Belum
+                    </span>
+                  )}
+                </div>
+                <p
+                  className={`text-lg font-bold ${sudahAbsenHariIni ? "text-emerald-800" : "text-gray-400"}`}
+                >
+                  {sudahAbsenHariIni ? "Sudah Absen" : "Belum Absen"}
+                </p>
+                <p
+                  className={`text-xs mt-1 ${sudahAbsenHariIni ? "text-emerald-600" : "text-gray-400"}`}
+                >
+                  {statusHariIni
+                    ? `Status: ${statusHariIni}`
+                    : "Silakan isi absensi hari ini"}
                 </p>
               </div>
-              <div className="p-2.5 rounded-xl ring-1 ring-emerald-200 bg-emerald-50">
-                <CheckSquare className="w-4 h-4 text-emerald-500" />
-              </div>
             </div>
-            {/* Pulang */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500 mb-1">Pulang</p>
-                <p className="text-2xl font-bold text-sky-700">{statPulang}</p>
-              </div>
-              <div className="p-2.5 rounded-xl ring-1 ring-sky-200 bg-sky-50">
-                <ClockIcon className="w-4 h-4 text-sky-500" />
-              </div>
-            </div>
-            {/* Izin/Sakit */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500 mb-1">
-                  Izin/Sakit
+
+            {/* Card 3: Total Absensi */}
+            <div className="relative bg-white rounded-2xl px-5 py-5 border border-gray-100 shadow-lg overflow-hidden group hover:shadow-xl transition-all hover:-translate-y-0.5">
+              <div className="absolute -top-4 -right-4 w-20 h-20 bg-violet-50 rounded-full" />
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2 bg-violet-50 rounded-xl ring-1 ring-violet-200">
+                    <TrendingUp className="w-4 h-4 text-violet-600" />
+                  </div>
+                  <span className="text-xs font-semibold text-violet-600 bg-violet-50 px-2.5 py-1 rounded-full border border-violet-200">
+                    Hari Ini
+                  </span>
+                </div>
+                <p className="text-3xl font-bold text-violet-700">
+                  {totalAbsensi}
                 </p>
-                <p className="text-2xl font-bold text-amber-700">{statIzin}</p>
-              </div>
-              <div className="p-2.5 rounded-xl ring-1 ring-amber-200 bg-amber-50">
-                <FileText className="w-4 h-4 text-amber-500" />
+                <p className="text-xs text-gray-500 mt-1">
+                  Total record absensi
+                </p>
+                <div className="mt-3 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-violet-400 to-violet-600 rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(totalAbsensi * 50, 100)}%` }}
+                  />
+                </div>
               </div>
             </div>
           </div>
 
           {/* ── Tabel Riwayat ── */}
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-6">
-            {/* Header bar */}
             <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
               <h2 className="font-semibold text-gray-700 text-sm flex items-center gap-2">
                 <ClockIcon className="w-4 h-4 text-indigo-500" />
@@ -522,15 +550,12 @@ export default function SiswaAbsensi() {
                         key={item.id}
                         className="border-b border-gray-100 hover:bg-indigo-50 transition-colors"
                       >
-                        {/* Status */}
                         <td className="px-5 py-3.5">
                           <StatusBadge status={item.status} />
                         </td>
-                        {/* Waktu */}
                         <td className="px-5 py-3.5 text-gray-700 text-xs whitespace-nowrap font-mono">
                           {item.waktu}
                         </td>
-                        {/* Lokasi */}
                         <td className="px-5 py-3.5 hidden sm:table-cell">
                           {item.lokasi ? (
                             <a
@@ -545,13 +570,11 @@ export default function SiswaAbsensi() {
                             <span className="text-gray-300">-</span>
                           )}
                         </td>
-                        {/* Foto */}
                         <td className="px-5 py-3.5 text-center">
                           {item.foto ? (
                             <div
                               className="flex justify-center cursor-pointer group"
                               onClick={() => openPreview(item.foto, "foto")}
-                              title="Klik untuk memperbesar"
                             >
                               <div className="w-10 h-10 border-2 border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:scale-105 transition-all">
                                 <img
@@ -572,7 +595,6 @@ export default function SiswaAbsensi() {
                             </div>
                           )}
                         </td>
-                        {/* TTD */}
                         <td className="px-5 py-3.5 text-center">
                           {item.tandaTangan ? (
                             <div
@@ -580,7 +602,6 @@ export default function SiswaAbsensi() {
                               onClick={() =>
                                 openPreview(item.tandaTangan, "ttd")
                               }
-                              title="Klik untuk memperbesar"
                             >
                               <div className="w-10 h-10 border-2 border-gray-200 rounded-xl bg-white overflow-hidden shadow-sm hover:shadow-md hover:scale-105 transition-all p-0.5">
                                 <img
@@ -601,7 +622,6 @@ export default function SiswaAbsensi() {
                             </div>
                           )}
                         </td>
-                        {/* Keterangan */}
                         <td className="px-5 py-3.5 text-gray-400 text-xs hidden md:table-cell max-w-[180px]">
                           <span className="block truncate">
                             {item.catatan || item.kegiatan || "—"}
@@ -614,7 +634,6 @@ export default function SiswaAbsensi() {
               </table>
             </div>
 
-            {/* Pagination */}
             <div className="px-5 py-3 border-t border-gray-100 bg-gray-50 flex items-center justify-between gap-4">
               <p className="text-xs text-gray-500 font-medium">
                 Menampilkan {presensiData.length === 0 ? 0 : startIndex + 1}–
@@ -645,9 +664,6 @@ export default function SiswaAbsensi() {
             </div>
           </div>
 
-          {/* ══════════════════════════════════════════════════════════
-              MODAL FORM ABSENSI
-              ══════════════════════════════════════════════════════════ */}
           {showAbsenModal && (
             <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
               <div
@@ -660,7 +676,6 @@ export default function SiswaAbsensi() {
                   animation: "slideUp .25s cubic-bezier(.32,1.25,.6,1)",
                 }}
               >
-                {/* Modal Header */}
                 <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-xl bg-indigo-50">
@@ -689,7 +704,6 @@ export default function SiswaAbsensi() {
                   </button>
                 </div>
 
-                {/* Modal Body */}
                 <div className="flex-1 overflow-y-auto px-5 py-5">
                   <form
                     onSubmit={(e) => {
@@ -698,7 +712,6 @@ export default function SiswaAbsensi() {
                     }}
                     className="space-y-5"
                   >
-                    {/* Data Diri */}
                     <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
                       <h4 className="text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-3 flex items-center gap-1.5">
                         <User className="w-3.5 h-3.5" /> Data Diri
@@ -742,7 +755,6 @@ export default function SiswaAbsensi() {
                       </div>
                     </div>
 
-                    {/* Status */}
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Status Kehadiran
@@ -766,7 +778,6 @@ export default function SiswaAbsensi() {
                       </select>
                     </div>
 
-                    {/* Waktu + GPS */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
@@ -818,7 +829,6 @@ export default function SiswaAbsensi() {
                       </div>
                     </div>
 
-                    {/* Foto */}
                     <div>
                       <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
                         <Camera className="w-4 h-4" /> Foto Selfie / Lokasi{" "}
@@ -842,7 +852,6 @@ export default function SiswaAbsensi() {
                       </p>
                     </div>
 
-                    {/* Bukti Izin/Sakit */}
                     {isStatusIzinOrSakit && (
                       <div className="bg-amber-50 p-4 rounded-xl border border-amber-100">
                         <label className="text-sm font-semibold text-amber-800 mb-2 flex items-center gap-1">
@@ -862,7 +871,6 @@ export default function SiswaAbsensi() {
                       </div>
                     )}
 
-                    {/* Keterangan / Kegiatan */}
                     <div>
                       <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
                         <FileText className="w-4 h-4" />{" "}
@@ -883,25 +891,23 @@ export default function SiswaAbsensi() {
                         }
                         onChange={(e) => {
                           const val = e.target.value;
-                          if (isStatusPulang) {
+                          if (isStatusPulang)
                             setAbsenForm((prev) => ({
                               ...prev,
                               kegiatan: val,
                               catatan: "",
                             }));
-                          } else {
+                          else
                             setAbsenForm((prev) => ({
                               ...prev,
                               catatan: val,
                               kegiatan: "",
                             }));
-                          }
                         }}
                         className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-700 focus:ring-2 focus:ring-indigo-300 outline-none resize-none"
                       />
                     </div>
 
-                    {/* Tanda Tangan */}
                     <div>
                       <div className="flex justify-between items-center mb-2">
                         <label className="text-sm font-semibold text-gray-700 flex items-center gap-1">
@@ -932,7 +938,6 @@ export default function SiswaAbsensi() {
                       </p>
                     </div>
 
-                    {/* Buttons */}
                     <div className="pt-2 flex gap-3">
                       <button
                         type="button"
@@ -966,7 +971,6 @@ export default function SiswaAbsensi() {
         </main>
       </div>
 
-      {/* ── Preview Modal (pertahankan style asli yang sudah bagus) ── */}
       {previewUrl && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center"
