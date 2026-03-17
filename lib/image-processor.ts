@@ -1,42 +1,29 @@
-import "server-only";
+"server-only";
 import sharp from "sharp";
 import path from "path";
 import fs from "fs/promises";
 import { existsSync, mkdirSync } from "fs";
 
+const UPLOAD_BASE = path.join(process.cwd(), "public", "uploads");
+
 const CONFIG = {
     MAX_FILE_SIZE_BYTES: 1 * 1024 * 1024,
-    UPLOAD_DIR: path.join(process.cwd(), "public", "uploads"),
-
-    FOTO: {
-        maxWidth: 1280,
-        maxHeight: 1280,
-        quality: 80,
-        format: "webp" as const,
-    },
-
-    TTD: {
-        maxWidth: 800,
-        maxHeight: 400,
-        quality: 85,
-        format: "webp" as const,
-    },
-
-    BUKTI: {
-        maxWidth: 1600,
-        maxHeight: 1600,
-        quality: 75,
-        format: "webp" as const,
-    },
+    FOTO: { maxWidth: 1280, maxHeight: 1280, quality: 80 },
+    TTD: { maxWidth: 800, maxHeight: 400, quality: 85 },
+    BUKTI: { maxWidth: 1600, maxHeight: 1600, quality: 75 },
 };
 
 export type ImageType = "foto" | "ttd" | "bukti";
 
+function getSubDir(type: ImageType): string {
+    if (type === "foto") return "absensi";
+    if (type === "ttd") return "ttd";
+    return "bukti";
+}
+
 function ensureUploadDir(subDir: string): string {
-    const dir = path.join(CONFIG.UPLOAD_DIR, subDir);
-    if (!existsSync(dir)) {
-        mkdirSync(dir, { recursive: true });
-    }
+    const dir = UPLOAD_BASE + "/" + subDir;
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
     return dir;
 }
 
@@ -50,54 +37,33 @@ export async function processAndSaveImage(
     buffer: Buffer,
     userId: string,
     type: ImageType
-): Promise<{
-    filename: string;
-    url: string;
-    sizeKB: number;
-    width: number;
-    height: number;
-}> {
+): Promise<{ filename: string; url: string; sizeKB: number; width: number; height: number }> {
     const cfg = CONFIG[type.toUpperCase() as keyof typeof CONFIG] as typeof CONFIG.FOTO;
     const metadata = await sharp(buffer).metadata();
     const originalSizeKB = Math.round(buffer.length / 1024);
 
     console.log(`[ImageProcessor] ${type} asli: ${originalSizeKB} KB, ${metadata.width}x${metadata.height}`);
 
-    let pipeline = sharp(buffer)
+    let outputBuffer = await sharp(buffer)
         .rotate()
-        .resize({
-            width: cfg.maxWidth,
-            height: cfg.maxHeight,
-            fit: "inside",
-            withoutEnlargement: true,
-        });
-
-    let outputBuffer = await pipeline
+        .resize({ width: cfg.maxWidth, height: cfg.maxHeight, fit: "inside", withoutEnlargement: true })
         .webp({ quality: cfg.quality, effort: 4 })
         .toBuffer();
 
     if (outputBuffer.length > CONFIG.MAX_FILE_SIZE_BYTES) {
         let quality = cfg.quality - 10;
-
         while (outputBuffer.length > CONFIG.MAX_FILE_SIZE_BYTES && quality >= 30) {
             console.log(`[ImageProcessor] Masih ${Math.round(outputBuffer.length / 1024)} KB, turunkan quality ke ${quality}`);
-
             outputBuffer = await sharp(buffer)
                 .rotate()
-                .resize({
-                    width: cfg.maxWidth,
-                    height: cfg.maxHeight,
-                    fit: "inside",
-                    withoutEnlargement: true,
-                })
+                .resize({ width: cfg.maxWidth, height: cfg.maxHeight, fit: "inside", withoutEnlargement: true })
                 .webp({ quality, effort: 4 })
                 .toBuffer();
-
             quality -= 10;
         }
     }
 
-    const subDir = type === "foto" ? "absensi" : type === "ttd" ? "ttd" : "bukti";
+    const subDir = getSubDir(type);
     const uploadDir = ensureUploadDir(subDir);
     const filename = generateFilename(userId, type);
     const filepath = path.join(uploadDir, filename);
@@ -106,11 +72,7 @@ export async function processAndSaveImage(
     const finalMeta = await sharp(outputBuffer).metadata();
     const finalSizeKB = Math.round(outputBuffer.length / 1024);
 
-    console.log(
-        `[ImageProcessor] ${type} selesai: ${finalSizeKB} KB ` +
-        `(hemat ${originalSizeKB - finalSizeKB} KB), ` +
-        `${finalMeta.width}x${finalMeta.height}`
-    );
+    console.log(`[ImageProcessor] ${type} selesai: ${finalSizeKB} KB (hemat ${originalSizeKB - finalSizeKB} KB), ${finalMeta.width}x${finalMeta.height}`);
 
     return {
         filename,
@@ -121,38 +83,27 @@ export async function processAndSaveImage(
     };
 }
 
-export async function parseImageFromRequest(
-    req: Request,
-    fieldName: string
-): Promise<Buffer | null> {
-    try {
-        const formData = await req.formData();
-        const file = formData.get(fieldName) as File | null;
-        if (!file) return null;
+export async function parseImageFromRequest(req: Request, fieldName: string): Promise<Buffer | null> {
+    const formData = await req.formData();
+    const file = formData.get(fieldName) as File | null;
+    if (!file) return null;
 
-        const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic"];
-        if (!allowedTypes.includes(file.type)) {
-            throw new Error(`Tipe file tidak didukung: ${file.type}. Gunakan JPG, PNG, atau WebP.`);
-        }
-
-        const MAX_INPUT_SIZE = 10 * 1024 * 1024;
-        if (file.size > MAX_INPUT_SIZE) {
-            throw new Error("File terlalu besar. Maksimal 10 MB sebelum kompresi.");
-        }
-
-        const arrayBuffer = await file.arrayBuffer();
-        return Buffer.from(arrayBuffer);
-    } catch (err) {
-        throw err;
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic"];
+    if (!allowedTypes.includes(file.type)) {
+        throw new Error(`Tipe file tidak didukung: ${file.type}. Gunakan JPG, PNG, atau WebP.`);
     }
+
+    if (file.size > 10 * 1024 * 1024) {
+        throw new Error("File terlalu besar. Maksimal 10 MB sebelum kompresi.");
+    }
+
+    return Buffer.from(await file.arrayBuffer());
 }
 
 export async function deleteOldImage(urlPath: string | null): Promise<void> {
     if (!urlPath) return;
     try {
-        const filepath = path.join(process.cwd(), "public", urlPath);
-        await fs.unlink(filepath);
+        await fs.unlink(path.join(process.cwd(), "public", urlPath));
         console.log(`[ImageProcessor] Hapus file lama: ${urlPath}`);
-    } catch {
-    }
+    } catch { }
 }
