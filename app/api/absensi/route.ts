@@ -277,7 +277,23 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        const body = await req.json();
+        let body: any;
+        const contentType = req.headers.get("content-type") ?? "";
+
+        if (contentType.includes("application/json")) {
+            body = await req.json();
+        } else if (contentType.includes("multipart/form-data") || contentType.includes("application/x-www-form-urlencoded")) {
+            const formData = await req.formData();
+            body = Object.fromEntries(formData.entries());
+        } else {
+            const text = await req.text();
+            try {
+                body = JSON.parse(text);
+            } catch {
+                return jsonError("Format request tidak valid", 400);
+            }
+        }
+
         const {
             status, tipe, keterangan, kegiatan,
             foto, lokasi, waktu, bukti, tandaTangan, tanggal,
