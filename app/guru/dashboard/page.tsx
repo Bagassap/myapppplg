@@ -3,80 +3,61 @@ import Sidebar from "@/components/layout/SidebarGuru";
 import TopBar from "@/components/layout/TopBar";
 import GreetingBanner from "@/components/GreetingBanner";
 import { useState, useEffect, useMemo } from "react";
-import { Users } from "lucide-react";
+import { Users, TrendingUp } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
-const DONUT_COLORS = ["#6366f1", "#a78bfa", "#e24b4a"];
-
-const DonutTooltip = ({ active, payload }: any) => {
-  if (!active || !payload?.length) return null;
-  return (
-    <div
-      style={{
-        background: "var(--color-background-primary)",
-        border: "0.5px solid var(--color-border-tertiary)",
-        borderRadius: 10,
-        padding: "8px 12px",
-        fontSize: 13,
-      }}
-    >
-      <p
-        style={{
-          fontWeight: 500,
-          margin: "0 0 2px",
-          color: "var(--color-text-primary)",
-        }}
-      >
-        {payload[0].name}
-      </p>
-      <p style={{ margin: 0, color: "var(--color-text-secondary)" }}>
-        Jumlah:{" "}
-        <strong style={{ color: "var(--color-text-primary)" }}>
-          {payload[0].value}
-        </strong>
-      </p>
-    </div>
-  );
-};
+const DONUT_COLORS = ["#10b981", "#f59e0b", "#f43f5e"];
 
 const SISWA_THEMES = [
   {
-    bg: "#eef2ff",
-    border: "#c7d2fe",
-    av: ["#e0e7ff", "#4338ca"],
-    bar: "#6366f1",
+    bg: "#f0fdf4",
+    border: "#bbf7d0",
+    av: ["#dcfce7", "#166534"],
+    bar: "#10b981",
   },
   {
-    bg: "#f5f3ff",
-    border: "#ddd6fe",
-    av: ["#ede9fe", "#6d28d9"],
-    bar: "#7c3aed",
-  },
-  {
-    bg: "#fef2f2",
-    border: "#fecaca",
-    av: ["#fee2e2", "#991b1b"],
-    bar: "#e24b4a",
+    bg: "#fefce8",
+    border: "#fef08a",
+    av: ["#fef9c3", "#854d0e"],
+    bar: "#eab308",
   },
   {
     bg: "#fff7ed",
     border: "#fed7aa",
     av: ["#ffedd5", "#9a3412"],
-    bar: "#ea580c",
+    bar: "#f97316",
   },
   {
-    bg: "#f0fdf4",
-    border: "#bbf7d0",
-    av: ["#dcfce7", "#166534"],
-    bar: "#16a34a",
+    bg: "#fef2f2",
+    border: "#fecaca",
+    av: ["#fee2e2", "#991b1b"],
+    bar: "#f43f5e",
   },
   {
-    bg: "#faf5ff",
-    border: "#e9d5ff",
-    av: ["#f3e8ff", "#7e22ce"],
-    bar: "#9333ea",
+    bg: "#eef2ff",
+    border: "#c7d2fe",
+    av: ["#e0e7ff", "#3730a3"],
+    bar: "#6366f1",
+  },
+  {
+    bg: "#f5f3ff",
+    border: "#ddd6fe",
+    av: ["#ede9fe", "#5b21b6"],
+    bar: "#7c3aed",
   },
 ];
+
+const DonutTooltip = ({ active, payload }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-white border border-gray-100 rounded-xl px-3 py-2 text-xs shadow-lg">
+      <p className="font-semibold text-gray-800">{payload[0].name}</p>
+      <p className="text-gray-500">
+        Jumlah: <strong className="text-gray-900">{payload[0].value}</strong>
+      </p>
+    </div>
+  );
+};
 
 export default function GuruDashboard() {
   const [loading, setLoading] = useState(true);
@@ -125,23 +106,19 @@ export default function GuruDashboard() {
 
   const bestSiswa =
     pklData.length > 0
-      ? [...pklData].sort((a, b) => {
-          const pa =
-            a.totalHari > 0 ? Math.round((a.hadir / a.totalHari) * 100) : 0;
-          const pb =
-            b.totalHari > 0 ? Math.round((b.hadir / b.totalHari) * 100) : 0;
-          return pb - pa;
-        })[0]
+      ? pklData.reduce((a: any, b: any) => {
+          const pa = a.totalHari > 0 ? a.hadir / a.totalHari : 0;
+          const pb = b.totalHari > 0 ? b.hadir / b.totalHari : 0;
+          return pa > pb ? a : b;
+        })
       : null;
   const worstSiswa =
     pklData.length > 0
-      ? [...pklData]
-          .filter((s) => (s.totalHari ?? 0) > 0)
-          .sort((a, b) => {
-            const pa = Math.round((a.hadir / a.totalHari) * 100);
-            const pb = Math.round((b.hadir / b.totalHari) * 100);
-            return pa - pb;
-          })[0]
+      ? pklData.reduce((a: any, b: any) => {
+          const pa = a.totalHari > 0 ? a.hadir / a.totalHari : 0;
+          const pb = b.totalHari > 0 ? b.hadir / b.totalHari : 0;
+          return pa < pb ? a : b;
+        })
       : null;
 
   const hariIni = new Date().toLocaleDateString("id-ID", {
@@ -158,211 +135,189 @@ export default function GuruDashboard() {
         <TopBar />
         <main className="flex-1 p-6 sm:p-8 overflow-y-auto overflow-x-hidden">
           <GreetingBanner />
-          <p className="text-gray-500 text-sm -mt-4 mb-5">
-            Pantau kehadiran siswa bimbingan Anda di tempat PKL.
-          </p>
 
-          <div
-            className="rounded-2xl p-6 mb-5 relative overflow-hidden"
-            style={{
-              background:
-                "linear-gradient(135deg,#1e1b4b 0%,#312e81 60%,#4c1d95 100%)",
-            }}
-          >
-            <div
-              className="absolute w-64 h-64 rounded-full -right-16 -top-16"
-              style={{ background: "rgba(129,140,248,.15)" }}
-            />
-            <div
-              className="absolute w-40 h-40 rounded-full"
-              style={{
-                background: "rgba(196,181,253,.1)",
-                left: "32%",
-                bottom: "-60px",
-              }}
-            />
-            <div
-              className="absolute w-20 h-20 rounded-full left-2 top-2"
-              style={{ background: "rgba(167,139,250,.18)" }}
-            />
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 p-6 shadow-xl mb-5">
+            <div className="absolute w-64 h-64 rounded-full right-[-50px] top-[-80px] bg-emerald-500/10 pointer-events-none" />
+            <div className="absolute w-40 h-40 rounded-full left-[32%] bottom-[-60px] bg-amber-500/8 pointer-events-none" />
             <div className="relative z-10 flex items-end justify-between flex-wrap gap-4">
               <div>
-                <h2 className="text-xl font-medium text-white mb-1">
-                  Selamat datang, Guru 👋
-                </h2>
-                <p
-                  className="text-sm"
-                  style={{ color: "rgba(199,210,254,.75)" }}
-                >
-                  {hariIni} · Siswa bimbingan PKL Anda
+                <p className="text-slate-400 text-xs mb-1">{hariIni}</p>
+                <p className="text-white text-sm mb-3">
+                  Pantau kehadiran siswa bimbingan PKL Anda
                 </p>
-                <div className="flex gap-2 mt-3 flex-wrap">
-                  {[
-                    {
-                      label: `${pct}% hadir`,
-                      bg: "rgba(134,239,172,.15)",
-                      color: "#86efac",
-                      border: "rgba(134,239,172,.25)",
-                    },
-                    {
-                      label: `${stats.totalSiswaPKL} siswa PKL`,
-                      bg: "rgba(196,181,253,.12)",
-                      color: "#c4b5fd",
-                      border: "rgba(196,181,253,.2)",
-                    },
-                    {
-                      label: `${stats.tidakHadir} tidak hadir`,
-                      bg: "rgba(252,165,165,.12)",
+                <div className="flex gap-2 flex-wrap">
+                  <span
+                    className="px-3 py-1 rounded-full text-xs font-semibold border"
+                    style={{
+                      background: "rgba(52,211,153,.15)",
+                      color: "#34d399",
+                      borderColor: "rgba(52,211,153,.25)",
+                    }}
+                  >
+                    {pct}% hadir
+                  </span>
+                  <span
+                    className="px-3 py-1 rounded-full text-xs font-semibold border"
+                    style={{
+                      background: "rgba(203,213,225,.1)",
+                      color: "#94a3b8",
+                      borderColor: "rgba(203,213,225,.2)",
+                    }}
+                  >
+                    {loading ? "—" : stats.totalSiswaPKL} siswa PKL
+                  </span>
+                  <span
+                    className="px-3 py-1 rounded-full text-xs font-semibold border"
+                    style={{
+                      background: "rgba(252,165,165,.12)",
                       color: "#fca5a5",
-                      border: "rgba(252,165,165,.2)",
-                    },
-                  ].map((b) => (
-                    <span
-                      key={b.label}
-                      className="px-3 py-1 rounded-full text-xs font-medium border"
-                      style={{
-                        background: b.bg,
-                        color: b.color,
-                        borderColor: b.border,
-                      }}
-                    >
-                      {loading ? "—" : b.label}
-                    </span>
-                  ))}
+                      borderColor: "rgba(252,165,165,.2)",
+                    }}
+                  >
+                    {loading ? "—" : stats.tidakHadir + izin} tidak hadir
+                  </span>
                 </div>
               </div>
               <div
-                className="flex rounded-xl overflow-hidden"
+                className="flex gap-px rounded-xl overflow-hidden border"
                 style={{
-                  background: "rgba(255,255,255,.08)",
-                  border: "1px solid rgba(255,255,255,.12)",
+                  background: "rgba(255,255,255,.07)",
+                  borderColor: "rgba(255,255,255,.1)",
                 }}
               >
                 {[
-                  { v: stats.hadirHariIni, l: "Hadir", c: "#fff" },
+                  { v: stats.hadirHariIni, l: "Hadir", c: "#34d399" },
                   { v: izin, l: "Izin", c: "#fbbf24" },
                   { v: stats.tidakHadir, l: "Alfa", c: "#f87171" },
                 ].map((s, i) => (
                   <div
-                    key={s.l}
+                    key={i}
                     className="px-4 py-3 text-center"
                     style={{
                       borderRight:
-                        i < 2 ? "1px solid rgba(255,255,255,.1)" : "none",
+                        i < 2 ? "1px solid rgba(255,255,255,.08)" : "none",
                     }}
                   >
-                    <div
-                      className="text-xl font-medium leading-none"
+                    <p
+                      className="text-xl font-black leading-none"
                       style={{ color: s.c }}
                     >
                       {loading ? "—" : s.v}
-                    </div>
-                    <div
-                      className="text-xs mt-1"
-                      style={{ color: "rgba(199,210,254,.65)" }}
-                    >
-                      {s.l}
-                    </div>
+                    </p>
+                    <p className="text-[10px] mt-1 text-slate-400">{s.l}</p>
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
-            <div className="lg:col-span-2 bg-white border border-indigo-50 rounded-2xl p-5">
-              <p className="text-xs font-medium text-indigo-400 uppercase tracking-wider mb-3">
-                Distribusi kehadiran
-              </p>
-              {loading ? (
-                <div className="w-36 h-36 rounded-full bg-gray-100 animate-pulse mx-auto mb-3" />
-              ) : donutData.length === 0 ? (
-                <div className="flex flex-col items-center gap-2 py-8 text-gray-300">
-                  <Users className="w-8 h-8" />
-                  <p className="text-sm">Belum ada data</p>
-                </div>
-              ) : (
-                <div className="relative w-36 h-36 mx-auto mb-4">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={donutData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={44}
-                        outerRadius={66}
-                        paddingAngle={3}
-                        dataKey="value"
-                        startAngle={90}
-                        endAngle={-270}
-                      >
-                        {donutData.map((_, i) => (
-                          <Cell key={i} fill={DONUT_COLORS[i]} />
-                        ))}
-                      </Pie>
-                      <Tooltip content={<DonutTooltip />} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-2xl font-semibold text-indigo-900 leading-none">
-                      {pct}%
-                    </span>
-                    <span className="text-xs text-gray-400 mt-1">hadir</span>
-                  </div>
-                </div>
-              )}
-              <div className="space-y-2.5">
-                {[
-                  {
-                    label: "Hadir",
-                    val: stats.hadirHariIni,
-                    color: "#6366f1",
-                    pctVal: pct,
-                  },
-                  {
-                    label: "Izin/Sakit",
-                    val: izin,
-                    color: "#a78bfa",
-                    pctVal:
-                      stats.totalSiswaPKL > 0
-                        ? Math.round((izin / stats.totalSiswaPKL) * 100)
-                        : 0,
-                  },
-                  {
-                    label: "Alfa",
-                    val: stats.tidakHadir,
-                    color: "#e24b4a",
-                    pctVal:
-                      stats.totalSiswaPKL > 0
-                        ? Math.round(
-                            (stats.tidakHadir / stats.totalSiswaPKL) * 100,
-                          )
-                        : 0,
-                  },
-                ].map((b) => (
-                  <div
-                    key={b.label}
-                    className="flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="w-2 h-2 rounded-sm flex-shrink-0"
-                        style={{ background: b.color }}
-                      />
-                      <span className="text-sm text-gray-600">{b.label}</span>
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+            <div className="lg:col-span-2 grid grid-rows-2 gap-4">
+              <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                  <TrendingUp className="w-3 h-3 text-emerald-500" /> Distribusi
+                </p>
+                {loading ? (
+                  <div className="w-32 h-32 rounded-full bg-gray-100 animate-pulse mx-auto" />
+                ) : (
+                  <div className="flex items-center gap-4">
+                    <div className="relative w-28 h-28 shrink-0">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={donutData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={34}
+                            outerRadius={52}
+                            paddingAngle={3}
+                            dataKey="value"
+                            startAngle={90}
+                            endAngle={-270}
+                          >
+                            {donutData.map((_, i) => (
+                              <Cell key={i} fill={DONUT_COLORS[i]} />
+                            ))}
+                          </Pie>
+                          <Tooltip content={<DonutTooltip />} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span className="text-lg font-black text-slate-800 leading-none">
+                          {pct}%
+                        </span>
+                        <span className="text-[9px] text-gray-400 mt-0.5">
+                          hadir
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-sm font-medium text-gray-800">
-                      {loading ? "—" : b.val}{" "}
-                      <span className="text-xs text-gray-400">{b.pctVal}%</span>
-                    </span>
+                    <div className="flex flex-col gap-2 flex-1">
+                      {[
+                        {
+                          label: "Hadir",
+                          val: stats.hadirHariIni,
+                          color: "#10b981",
+                        },
+                        { label: "Izin/Sakit", val: izin, color: "#f59e0b" },
+                        {
+                          label: "Alfa",
+                          val: stats.tidakHadir,
+                          color: "#f43f5e",
+                        },
+                      ].map((b) => (
+                        <div key={b.label} className="flex items-center gap-2">
+                          <span
+                            className="w-2 h-2 rounded-sm shrink-0"
+                            style={{ background: b.color }}
+                          />
+                          <span className="text-xs text-gray-600 flex-1">
+                            {b.label}
+                          </span>
+                          <span className="text-xs font-bold text-gray-800">
+                            {b.val}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
+                )}
+              </div>
+
+              <div className="rounded-2xl p-5 bg-gradient-to-br from-slate-800 to-slate-900 shadow-lg">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+                  Ringkasan
+                </p>
+                <p className="text-4xl font-black text-white leading-none mb-1">
+                  {pct}%
+                </p>
+                <p className="text-xs text-slate-400 mb-4">
+                  Rata-rata kehadiran siswa PKL
+                </p>
+                {bestSiswa && (
+                  <div className="text-xs text-slate-500 border-t border-white/10 pt-3 space-y-1.5">
+                    <p>
+                      Terbaik:{" "}
+                      <strong className="text-emerald-400">
+                        {bestSiswa.siswa || bestSiswa.tempatPKL}
+                      </strong>
+                    </p>
+                    {worstSiswa && worstSiswa !== bestSiswa && (
+                      <p>
+                        Perhatian:{" "}
+                        <strong className="text-red-400">
+                          {worstSiswa.siswa || worstSiswa.tempatPKL}
+                        </strong>
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="lg:col-span-3 bg-white border border-indigo-50 rounded-2xl p-5">
-              <p className="text-xs font-medium text-indigo-400 uppercase tracking-wider mb-3">
-                Kehadiran per siswa PKL
+            <div className="lg:col-span-3 bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-1.5">
+                <Users className="w-3 h-3 text-emerald-500" /> Kehadiran siswa
+                PKL
               </p>
               {loading ? (
                 <div className="space-y-3">
@@ -379,28 +334,27 @@ export default function GuruDashboard() {
                 </div>
               ) : (
                 <>
-                  <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                  <div className="space-y-3 max-h-72 overflow-y-auto pr-1 mb-3">
                     {pklData.map((item, i) => {
                       const total = item.totalHari ?? item.total ?? 0;
                       const hadir = item.hadir ?? 0;
                       const p =
                         total > 0 ? Math.round((hadir / total) * 100) : 0;
-                      const izinSiswa = Math.max(
+                      const izinS = Math.max(
                         0,
-                        total - hadir - (item.tidakHadir ?? 0),
+                        total - hadir - (item.tidakHadir || 0),
                       );
+                      const alfaS = item.tidakHadir || 0;
                       const th = SISWA_THEMES[i % SISWA_THEMES.length];
+                      const barC =
+                        p >= 80 ? "#10b981" : p >= 60 ? "#f59e0b" : "#f43f5e";
+                      const badgeBg =
+                        p >= 80 ? "#f0fdf4" : p >= 60 ? "#fefce8" : "#fef2f2";
+                      const badgeTc =
+                        p >= 80 ? "#166534" : p >= 60 ? "#854d0e" : "#991b1b";
                       const initial = (item.siswa || item.tempatPKL || "?")
                         .charAt(0)
                         .toUpperCase();
-                      const barColor =
-                        p >= 80 ? "#6366f1" : p >= 60 ? "#a78bfa" : "#e24b4a";
-                      const bdg =
-                        p >= 80
-                          ? { bg: "#eef2ff", tc: "#3730a3" }
-                          : p >= 60
-                            ? { bg: "#f5f3ff", tc: "#5b21b6" }
-                            : { bg: "#fef2f2", tc: "#991b1b" };
                       return (
                         <div
                           key={i}
@@ -408,13 +362,13 @@ export default function GuruDashboard() {
                           style={{ background: th.bg, borderColor: th.border }}
                         >
                           <div
-                            className="absolute -right-3 -bottom-3 w-14 h-14 rounded-full"
-                            style={{ background: th.bar, opacity: 0.12 }}
+                            className="absolute right-[-10px] bottom-[-10px] w-12 h-12 rounded-full opacity-15"
+                            style={{ background: th.bar }}
                           />
                           <div className="flex items-center justify-between mb-2 relative z-10">
                             <div className="flex items-center gap-2">
                               <div
-                                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0"
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
                                 style={{
                                   background: th.av[0],
                                   color: th.av[1],
@@ -424,15 +378,15 @@ export default function GuruDashboard() {
                               </div>
                               <div className="min-w-0">
                                 <p
-                                  className="text-xs font-medium truncate max-w-[140px]"
+                                  className="text-xs font-semibold truncate max-w-[140px]"
                                   style={{ color: th.av[1] }}
                                 >
                                   {item.siswa || item.tempatPKL}
                                 </p>
                                 {item.siswa && item.tempatPKL && (
                                   <p
-                                    className="text-[10px] truncate max-w-[140px]"
-                                    style={{ color: th.av[1], opacity: 0.6 }}
+                                    className="text-[10px] opacity-60 truncate max-w-[140px]"
+                                    style={{ color: th.av[1] }}
                                   >
                                     {item.tempatPKL}
                                   </p>
@@ -440,8 +394,8 @@ export default function GuruDashboard() {
                               </div>
                             </div>
                             <span
-                              className="text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0"
-                              style={{ background: bdg.bg, color: bdg.tc }}
+                              className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
+                              style={{ background: badgeBg, color: badgeTc }}
                             >
                               {p}%
                             </span>
@@ -452,42 +406,58 @@ export default function GuruDashboard() {
                           >
                             <div
                               className="h-full rounded-full transition-all duration-700"
-                              style={{ width: `${p}%`, background: barColor }}
+                              style={{ width: `${p}%`, background: barC }}
                             />
                           </div>
-                          <div className="flex gap-2 mt-2 relative z-10">
-                            <span
-                              className="text-[10px] px-1.5 py-0.5 rounded-md font-medium"
-                              style={{ background: th.av[0], color: th.av[1] }}
-                            >
-                              {hadir} hadir
-                            </span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-md font-medium bg-purple-50 text-purple-700">
-                              {izinSiswa} izin
-                            </span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-md font-medium bg-red-50 text-red-700">
-                              {item.tidakHadir ?? 0} alfa
-                            </span>
+                          <div className="flex gap-1.5 mt-2 relative z-10">
+                            {[
+                              {
+                                v: hadir,
+                                l: "hadir",
+                                bg: "#f0fdf4",
+                                tc: "#166534",
+                              },
+                              {
+                                v: izinS,
+                                l: "izin",
+                                bg: "#fefce8",
+                                tc: "#854d0e",
+                              },
+                              {
+                                v: alfaS,
+                                l: "alfa",
+                                bg: "#fef2f2",
+                                tc: "#991b1b",
+                              },
+                            ].map((c) => (
+                              <span
+                                key={c.l}
+                                className="text-[9px] font-medium px-1.5 py-0.5 rounded-md"
+                                style={{ background: c.bg, color: c.tc }}
+                              >
+                                {c.v} {c.l}
+                              </span>
+                            ))}
                           </div>
                         </div>
                       );
                     })}
                   </div>
-                  <div className="flex gap-2 mt-3">
+                  <div className="flex gap-2">
                     {[
                       {
                         v: stats.totalSiswaPKL,
                         l: "Total",
-                        bg: "#eef2ff",
-                        tc: "#4338ca",
+                        bg: "#f1f5f9",
+                        tc: "#475569",
                       },
                       {
                         v: stats.hadirHariIni,
                         l: "Hadir",
-                        bg: "#eef2ff",
-                        tc: "#3730a3",
+                        bg: "#f0fdf4",
+                        tc: "#166534",
                       },
-                      { v: izin, l: "Izin", bg: "#f5f3ff", tc: "#5b21b6" },
+                      { v: izin, l: "Izin", bg: "#fefce8", tc: "#854d0e" },
                       {
                         v: stats.tidakHadir,
                         l: "Alfa",
@@ -497,94 +467,26 @@ export default function GuruDashboard() {
                     ].map((s) => (
                       <div
                         key={s.l}
-                        className="flex-1 text-center rounded-lg py-2"
+                        className="flex-1 rounded-lg py-2 text-center"
                         style={{ background: s.bg }}
                       >
-                        <div
-                          className="text-sm font-medium"
+                        <p
+                          className="text-sm font-black"
                           style={{ color: s.tc }}
                         >
-                          {loading ? "—" : s.v}
-                        </div>
-                        <div
-                          className="text-[10px] mt-0.5"
+                          {s.v}
+                        </p>
+                        <p
+                          className="text-[9px] mt-0.5"
                           style={{ color: s.tc, opacity: 0.7 }}
                         >
                           {s.l}
-                        </div>
+                        </p>
                       </div>
                     ))}
                   </div>
                 </>
               )}
-            </div>
-          </div>
-
-          <div
-            className="rounded-2xl p-5"
-            style={{ background: "linear-gradient(135deg,#4338ca,#6d28d9)" }}
-          >
-            <p
-              className="text-xs font-medium uppercase tracking-wider mb-3"
-              style={{ color: "rgba(196,181,253,.7)" }}
-            >
-              Insight siswa bimbingan
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="text-4xl font-semibold text-white leading-none">
-                  {loading ? "—" : `${pct}%`}
-                </div>
-                <div
-                  className="text-sm mt-1"
-                  style={{ color: "rgba(196,181,253,.8)" }}
-                >
-                  Rata-rata kehadiran
-                </div>
-              </div>
-              <div
-                className="text-sm pt-2 sm:pt-0 sm:border-l sm:pl-4"
-                style={{
-                  borderColor: "rgba(255,255,255,.12)",
-                  color: "rgba(196,181,253,.7)",
-                }}
-              >
-                <p className="mb-1">Terbaik</p>
-                <p className="text-white font-medium text-base">
-                  {bestSiswa?.siswa ?? "—"}
-                </p>
-                {bestSiswa && (
-                  <p
-                    style={{ color: "rgba(196,181,253,.6)" }}
-                    className="text-xs"
-                  >
-                    {bestSiswa.tempatPKL}
-                  </p>
-                )}
-              </div>
-              <div
-                className="text-sm sm:border-l sm:pl-4"
-                style={{
-                  borderColor: "rgba(255,255,255,.12)",
-                  color: "rgba(196,181,253,.7)",
-                }}
-              >
-                <p className="mb-1">Perlu perhatian</p>
-                <p
-                  style={{ color: "#fca5a5" }}
-                  className="font-medium text-base"
-                >
-                  {worstSiswa?.siswa ?? "—"}
-                </p>
-                {worstSiswa && (
-                  <p
-                    style={{ color: "rgba(252,165,165,.6)" }}
-                    className="text-xs"
-                  >
-                    {worstSiswa.tempatPKL}
-                  </p>
-                )}
-              </div>
             </div>
           </div>
         </main>

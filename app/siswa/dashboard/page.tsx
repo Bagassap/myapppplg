@@ -9,7 +9,7 @@ import {
   Megaphone,
   Info,
   AlertCircle,
-  Users,
+  TrendingUp,
 } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
@@ -23,34 +23,15 @@ interface Informasi {
   createdAt: string;
 }
 
-const DONUT_COLORS = ["#6366f1", "#a78bfa", "#e24b4a"];
+const DONUT_COLORS = ["#10b981", "#f59e0b", "#f43f5e"];
 
 const DonutTooltip = ({ active, payload }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div
-      style={{
-        background: "var(--color-background-primary)",
-        border: "0.5px solid var(--color-border-tertiary)",
-        borderRadius: 10,
-        padding: "8px 12px",
-        fontSize: 13,
-      }}
-    >
-      <p
-        style={{
-          fontWeight: 500,
-          margin: "0 0 2px",
-          color: "var(--color-text-primary)",
-        }}
-      >
-        {payload[0].name}
-      </p>
-      <p style={{ margin: 0, color: "var(--color-text-secondary)" }}>
-        Jumlah:{" "}
-        <strong style={{ color: "var(--color-text-primary)" }}>
-          {payload[0].value}
-        </strong>
+    <div className="bg-white border border-gray-100 rounded-xl px-3 py-2 text-xs shadow-lg">
+      <p className="font-semibold text-gray-800">{payload[0].name}</p>
+      <p className="text-gray-500">
+        Jumlah: <strong className="text-gray-900">{payload[0].value}</strong>
       </p>
     </div>
   );
@@ -62,22 +43,22 @@ const getTipeConfig = (tipe: string) => {
       return {
         icon: <Megaphone className="w-3.5 h-3.5" />,
         pill: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
-        iconBg: "bg-amber-50 ring-1 ring-amber-200",
+        iconBg: "bg-amber-50",
         iconText: "text-amber-600",
       };
     case "peringatan":
       return {
         icon: <AlertCircle className="w-3.5 h-3.5" />,
         pill: "bg-red-50 text-red-700 ring-1 ring-red-200",
-        iconBg: "bg-red-50 ring-1 ring-red-200",
+        iconBg: "bg-red-50",
         iconText: "text-red-600",
       };
     default:
       return {
         icon: <Info className="w-3.5 h-3.5" />,
-        pill: "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200",
-        iconBg: "bg-indigo-50 ring-1 ring-indigo-200",
-        iconText: "text-indigo-600",
+        pill: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
+        iconBg: "bg-emerald-50",
+        iconText: "text-emerald-600",
       };
   }
 };
@@ -158,46 +139,6 @@ export default function SiswaDashboard() {
     year: "numeric",
   });
 
-  const miniCards = [
-    {
-      v: `${pct}%`,
-      l: "Kehadiran",
-      bg: "#eef2ff",
-      border: "#c7d2fe",
-      tc: "#4338ca",
-    },
-    {
-      v: pct >= 80 ? "Baik" : pct >= 60 ? "Cukup" : "Kurang",
-      l: "Status PKL",
-      bg: pct >= 80 ? "#f0fdf4" : pct >= 60 ? "#fff7ed" : "#fef2f2",
-      border: pct >= 80 ? "#bbf7d0" : pct >= 60 ? "#fed7aa" : "#fecaca",
-      tc: pct >= 80 ? "#166534" : pct >= 60 ? "#9a3412" : "#991b1b",
-    },
-    {
-      v: `${stats.hadirBulanIni}`,
-      l: "Hari hadir",
-      bg: "#f5f3ff",
-      border: "#ddd6fe",
-      tc: "#5b21b6",
-    },
-  ];
-
-  const breakdown = [
-    {
-      label: "Hadir",
-      val: stats.hadirBulanIni,
-      color: "#6366f1",
-      barBg: "#e0e7ff",
-    },
-    { label: "Izin/Sakit", val: izin, color: "#a78bfa", barBg: "#ede9fe" },
-    {
-      label: "Tidak hadir",
-      val: stats.tidakHadirBulanIni,
-      color: "#e24b4a",
-      barBg: "#fee2e2",
-    },
-  ];
-
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
@@ -205,68 +146,37 @@ export default function SiswaDashboard() {
         <TopBar />
         <main className="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 px-4 sm:px-6 lg:px-8 py-7">
           <GreetingBanner />
-          <p className="text-gray-500 text-sm -mt-4 mb-5">
-            Pantau kehadiran PKL pribadi Anda.
-          </p>
 
-          <div
-            className="rounded-2xl p-6 mb-5 relative overflow-hidden"
-            style={{
-              background:
-                "linear-gradient(135deg,#1e1b4b 0%,#312e81 60%,#4c1d95 100%)",
-            }}
-          >
-            <div
-              className="absolute w-64 h-64 rounded-full -right-16 -top-16"
-              style={{ background: "rgba(129,140,248,.15)" }}
-            />
-            <div
-              className="absolute w-40 h-40 rounded-full"
-              style={{
-                background: "rgba(196,181,253,.1)",
-                left: "32%",
-                bottom: "-60px",
-              }}
-            />
-            <div
-              className="absolute w-20 h-20 rounded-full left-2 top-2"
-              style={{ background: "rgba(167,139,250,.18)" }}
-            />
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 p-6 shadow-xl mb-5">
+            <div className="absolute w-64 h-64 rounded-full right-[-50px] top-[-80px] bg-emerald-500/10 pointer-events-none" />
+            <div className="absolute w-40 h-40 rounded-full left-[32%] bottom-[-60px] bg-amber-500/8 pointer-events-none" />
             <div className="relative z-10">
-              <h2 className="text-xl font-medium text-white mb-1">Halo 👋</h2>
-              <p
-                className="text-sm mb-4"
-                style={{ color: "rgba(199,210,254,.75)" }}
-              >
-                {hariIni} · Rekap kehadiran bulan ini
+              <p className="text-slate-400 text-xs mb-1">{hariIni}</p>
+              <p className="text-white text-sm mb-4">
+                Pantau kehadiran PKL Anda bulan ini
               </p>
               <div className="flex gap-3 flex-wrap">
                 {[
-                  { v: stats.totalHariBulanIni, l: "Total hari" },
-                  { v: stats.hadirBulanIni, l: "Hadir", c: "#86efac" },
+                  { v: stats.totalHariBulanIni, l: "Total hari", c: "#94a3b8" },
+                  { v: stats.hadirBulanIni, l: "Hadir", c: "#34d399" },
                   { v: izin, l: "Izin", c: "#fbbf24" },
                   { v: stats.tidakHadirBulanIni, l: "Alfa", c: "#f87171" },
                 ].map((s, i) => (
                   <div
-                    key={s.l}
-                    className="rounded-xl px-4 py-2.5 text-center"
+                    key={i}
+                    className="rounded-xl px-4 py-2.5 text-center min-w-[64px]"
                     style={{
-                      background: "rgba(255,255,255,.1)",
-                      border: "1px solid rgba(255,255,255,.12)",
+                      background: "rgba(255,255,255,.08)",
+                      border: "1px solid rgba(255,255,255,.1)",
                     }}
                   >
-                    <div
-                      className="text-lg font-medium leading-none"
-                      style={{ color: s.c ?? "#fff" }}
+                    <p
+                      className="text-xl font-black leading-none"
+                      style={{ color: s.c }}
                     >
                       {loading ? "—" : s.v}
-                    </div>
-                    <div
-                      className="text-xs mt-1"
-                      style={{ color: "rgba(199,210,254,.65)" }}
-                    >
-                      {s.l}
-                    </div>
+                    </p>
+                    <p className="text-[10px] mt-1 text-slate-400">{s.l}</p>
                   </div>
                 ))}
               </div>
@@ -274,218 +184,276 @@ export default function SiswaDashboard() {
           </div>
 
           <div className="grid grid-cols-3 gap-3 mb-4">
-            {miniCards.map((c) => (
+            {[
+              {
+                v: `${pct}%`,
+                l: "Kehadiran",
+                bg: pct >= 80 ? "#f0fdf4" : pct >= 60 ? "#fefce8" : "#fef2f2",
+                tc: pct >= 80 ? "#166534" : pct >= 60 ? "#854d0e" : "#991b1b",
+                border:
+                  pct >= 80 ? "#bbf7d0" : pct >= 60 ? "#fef08a" : "#fecaca",
+              },
+              {
+                v: "Hadir",
+                l: "Status hari ini",
+                bg: "#f0fdf4",
+                tc: "#166534",
+                border: "#bbf7d0",
+              },
+              {
+                v: stats.hadirBulanIni,
+                l: "Hari hadir",
+                bg: "#f1f5f9",
+                tc: "#475569",
+                border: "#e2e8f0",
+              },
+            ].map((c, i) => (
               <div
-                key={c.l}
-                className="rounded-xl p-3 text-center border"
+                key={i}
+                className="rounded-2xl p-4 border text-center"
                 style={{ background: c.bg, borderColor: c.border }}
               >
-                <div
-                  className="text-lg font-semibold leading-none"
+                <p
+                  className="text-xl font-black leading-none"
                   style={{ color: c.tc }}
                 >
                   {loading ? "—" : c.v}
-                </div>
-                <div
+                </p>
+                <p
                   className="text-[10px] mt-1.5"
                   style={{ color: c.tc, opacity: 0.7 }}
                 >
                   {c.l}
-                </div>
+                </p>
               </div>
             ))}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-            <div className="bg-white border border-indigo-50 rounded-2xl p-5">
-              <p className="text-xs font-medium text-indigo-400 uppercase tracking-wider mb-3">
-                Distribusi bulan ini
+            <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-1.5">
+                <TrendingUp className="w-3 h-3 text-emerald-500" /> Distribusi
+                bulan ini
               </p>
               {loading ? (
-                <div className="w-32 h-32 rounded-full bg-gray-100 animate-pulse mx-auto mb-3" />
-              ) : donutData.length === 0 ? (
-                <div className="flex flex-col items-center gap-2 py-8 text-gray-300">
-                  <Users className="w-8 h-8" />
-                  <p className="text-sm">Belum ada data</p>
-                </div>
+                <div className="w-32 h-32 rounded-full bg-gray-100 animate-pulse mx-auto" />
               ) : (
-                <div className="relative w-32 h-32 mx-auto mb-4">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={donutData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={40}
-                        outerRadius={60}
-                        paddingAngle={3}
-                        dataKey="value"
-                        startAngle={90}
-                        endAngle={-270}
-                      >
-                        {donutData.map((_, i) => (
-                          <Cell key={i} fill={DONUT_COLORS[i]} />
-                        ))}
-                      </Pie>
-                      <Tooltip content={<DonutTooltip />} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-xl font-semibold text-indigo-900 leading-none">
-                      {pct}%
-                    </span>
-                    <span className="text-[10px] text-gray-400 mt-1">
-                      hadir
-                    </span>
+                <div className="flex items-center gap-5">
+                  <div className="relative w-32 h-32 shrink-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={
+                            donutData.length > 0
+                              ? donutData
+                              : [{ name: "Kosong", value: 1 }]
+                          }
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={40}
+                          outerRadius={60}
+                          paddingAngle={3}
+                          dataKey="value"
+                          startAngle={90}
+                          endAngle={-270}
+                        >
+                          {(donutData.length > 0
+                            ? donutData
+                            : [{ name: "Kosong", value: 1 }]
+                          ).map((_, i) => (
+                            <Cell
+                              key={i}
+                              fill={
+                                donutData.length > 0
+                                  ? DONUT_COLORS[i]
+                                  : "#e5e7eb"
+                              }
+                            />
+                          ))}
+                        </Pie>
+                        {donutData.length > 0 && (
+                          <Tooltip content={<DonutTooltip />} />
+                        )}
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                      <span className="text-xl font-black text-slate-800 leading-none">
+                        {pct}%
+                      </span>
+                      <span className="text-[9px] text-gray-400 mt-0.5">
+                        hadir
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2 flex-1">
+                    {[
+                      {
+                        label: "Hadir",
+                        val: stats.hadirBulanIni,
+                        color: "#10b981",
+                      },
+                      { label: "Izin/Sakit", val: izin, color: "#f59e0b" },
+                      {
+                        label: "Alfa",
+                        val: stats.tidakHadirBulanIni,
+                        color: "#f43f5e",
+                      },
+                    ].map((b) => (
+                      <div key={b.label} className="flex items-center gap-2">
+                        <span
+                          className="w-2 h-2 rounded-sm shrink-0"
+                          style={{ background: b.color }}
+                        />
+                        <span className="text-xs text-gray-600 flex-1">
+                          {b.label}
+                        </span>
+                        <span className="text-xs font-bold text-gray-800">
+                          {b.val}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
-              <div className="space-y-2">
-                {[
-                  {
-                    label: "Hadir",
-                    val: stats.hadirBulanIni,
-                    color: "#6366f1",
-                  },
-                  { label: "Izin/Sakit", val: izin, color: "#a78bfa" },
-                  {
-                    label: "Alfa",
-                    val: stats.tidakHadirBulanIni,
-                    color: "#e24b4a",
-                  },
-                ].map((b) => (
-                  <div
-                    key={b.label}
-                    className="flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="w-2 h-2 rounded-sm"
-                        style={{ background: b.color }}
-                      />
-                      <span className="text-sm text-gray-600">{b.label}</span>
-                    </div>
-                    <span className="text-sm font-medium text-gray-800">
-                      {loading ? "—" : b.val}
-                    </span>
-                  </div>
-                ))}
-              </div>
             </div>
 
-            <div className="bg-white border border-indigo-50 rounded-2xl p-5">
-              <p className="text-xs font-medium text-indigo-400 uppercase tracking-wider mb-4">
-                Progres kehadiran
+            <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-1.5">
+                <TrendingUp className="w-3 h-3 text-emerald-500" /> Progres
+                kehadiran
               </p>
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between items-center mb-1.5">
-                    <span className="text-sm text-gray-700 font-medium">
+                    <span className="text-xs font-medium text-gray-600">
                       Total kehadiran
                     </span>
                     <span
-                      className="text-sm font-semibold"
+                      className="text-xs font-bold px-2 py-0.5 rounded-full"
                       style={{
+                        background:
+                          pct >= 80
+                            ? "#f0fdf4"
+                            : pct >= 60
+                              ? "#fefce8"
+                              : "#fef2f2",
                         color:
                           pct >= 80
-                            ? "#6366f1"
+                            ? "#166534"
                             : pct >= 60
-                              ? "#a78bfa"
-                              : "#e24b4a",
+                              ? "#854d0e"
+                              : "#991b1b",
                       }}
                     >
                       {pct}%
                     </span>
                   </div>
-                  <div className="h-2.5 bg-indigo-50 rounded-full overflow-hidden relative">
+                  <div className="relative h-2.5 bg-gray-100 rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-700"
                       style={{
-                        width: `${Math.min(pct, 100)}%`,
+                        width: loading ? "0%" : `${Math.min(pct, 100)}%`,
                         background:
                           pct >= 80
-                            ? "#6366f1"
+                            ? "#10b981"
                             : pct >= 60
-                              ? "#a78bfa"
-                              : "#e24b4a",
+                              ? "#f59e0b"
+                              : "#f43f5e",
                       }}
                     />
                     <div
-                      className="absolute top-0 h-full w-0.5 bg-indigo-400 opacity-40"
+                      className="absolute top-0 h-full w-0.5 bg-slate-400 opacity-40"
                       style={{ left: "80%" }}
                     />
                   </div>
                   <div className="flex justify-between mt-1">
                     <span className="text-[10px] text-gray-400">0%</span>
-                    <span className="text-[10px] text-indigo-400">
+                    <span className="text-[10px] text-gray-400">
                       Target 80%
                     </span>
                     <span className="text-[10px] text-gray-400">100%</span>
                   </div>
-                  {pct >= 80 && (
-                    <p className="text-[10px] text-indigo-500 mt-1">
-                      Target tercapai 🎉
+                  {!loading && pct >= 80 && (
+                    <p className="text-[10px] text-emerald-600 mt-1 font-semibold">
+                      Anda melampaui target kehadiran 🎉
                     </p>
                   )}
-                  {pct < 80 && (
-                    <p className="text-[10px] text-red-400 mt-1">
+                  {!loading && pct < 80 && (
+                    <p className="text-[10px] text-amber-600 mt-1 font-semibold">
                       Butuh {80 - pct}% lagi untuk mencapai target
                     </p>
                   )}
                 </div>
-                <div className="border-t border-gray-100 pt-3 space-y-2.5">
-                  {breakdown.map((b) => {
-                    const bPct =
-                      stats.totalHariBulanIni > 0
-                        ? Math.round((b.val / stats.totalHariBulanIni) * 100)
-                        : 0;
-                    return (
-                      <div key={b.label}>
-                        <div className="flex justify-between mb-1">
-                          <div className="flex items-center gap-1.5">
-                            <span
-                              className="w-1.5 h-1.5 rounded-full"
-                              style={{ background: b.color }}
-                            />
-                            <span className="text-xs text-gray-600">
-                              {b.label}
-                            </span>
-                          </div>
+                {[
+                  {
+                    label: "Hadir",
+                    val: stats.hadirBulanIni,
+                    color: "#10b981",
+                    bg: "#f0fdf4",
+                  },
+                  {
+                    label: "Izin/Sakit",
+                    val: izin,
+                    color: "#f59e0b",
+                    bg: "#fefce8",
+                  },
+                  {
+                    label: "Alfa",
+                    val: stats.tidakHadirBulanIni,
+                    color: "#f43f5e",
+                    bg: "#fef2f2",
+                  },
+                ].map((b) => {
+                  const bPct =
+                    stats.totalHariBulanIni > 0
+                      ? Math.round((b.val / stats.totalHariBulanIni) * 100)
+                      : 0;
+                  return (
+                    <div key={b.label}>
+                      <div className="flex justify-between items-center mb-1">
+                        <div className="flex items-center gap-1.5">
                           <span
-                            className="text-xs font-medium"
-                            style={{ color: b.color }}
-                          >
-                            {loading ? "—" : `${b.val} hari (${bPct}%)`}
+                            className="w-1.5 h-1.5 rounded-full"
+                            style={{ background: b.color }}
+                          />
+                          <span className="text-xs text-gray-600">
+                            {b.label}
                           </span>
                         </div>
-                        <div
-                          className="h-1.5 rounded-full overflow-hidden"
-                          style={{ background: b.barBg }}
+                        <span
+                          className="text-xs font-semibold"
+                          style={{ color: b.color }}
                         >
-                          <div
-                            className="h-full rounded-full transition-all duration-700"
-                            style={{
-                              width: loading ? "0%" : `${bPct}%`,
-                              background: b.color,
-                            }}
-                          />
-                        </div>
+                          {loading ? "—" : `${b.val} hari (${bPct}%)`}
+                        </span>
                       </div>
-                    );
-                  })}
-                </div>
+                      <div
+                        className="h-1.5 rounded-full overflow-hidden"
+                        style={{ background: b.bg }}
+                      >
+                        <div
+                          className="h-full rounded-full transition-all duration-700"
+                          style={{
+                            width: loading ? "0%" : `${bPct}%`,
+                            background: b.color,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
 
-          <div className="bg-white border border-indigo-50 rounded-2xl overflow-hidden">
+          <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
             <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="font-medium text-gray-700 text-sm flex items-center gap-2">
-                <Bell className="w-4 h-4 text-indigo-500" /> Informasi terbaru
+              <h3 className="font-semibold text-gray-700 text-sm flex items-center gap-2">
+                <Bell className="w-4 h-4 text-emerald-500" /> Informasi terbaru
               </h3>
               <a
                 href="/siswa/informasi"
-                className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-full"
+                className="flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-900 font-medium bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full transition-colors"
               >
                 Lihat semua <ChevronRight className="w-3.5 h-3.5" />
               </a>
@@ -493,12 +461,12 @@ export default function SiswaDashboard() {
             <div className="divide-y divide-gray-50">
               {loadingInfo ? (
                 <div className="p-8 flex justify-center">
-                  <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-indigo-500" />
+                  <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-emerald-500" />
                 </div>
               ) : informasiList.length === 0 ? (
                 <div className="py-14 flex flex-col items-center text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mb-3">
-                    <Bell className="w-5 h-5 text-gray-400" />
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center mb-3">
+                    <Bell className="w-5 h-5 text-emerald-300" />
                   </div>
                   <p className="text-sm text-gray-500">
                     Belum ada informasi terbaru.
@@ -539,7 +507,7 @@ export default function SiswaDashboard() {
                               {formatTanggal(item.tanggal)}
                             </span>
                           </div>
-                          <p className="font-medium text-gray-800 text-sm truncate">
+                          <p className="font-semibold text-gray-800 text-sm truncate">
                             {item.judul}
                           </p>
                           {isExpanded ? (
