@@ -1,18 +1,17 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
 import Sidebar from "@/components/layout/SidebarAdmin";
 import TopBar from "@/components/layout/TopBar";
 import GreetingBanner from "@/components/GreetingBanner";
+import { useState, useEffect, useMemo } from "react";
 import {
   Users,
   TrendingUp,
   CheckCircle2,
   XCircle,
+  AlertTriangle,
   BookOpen,
   Award,
   Activity,
-  Sparkles,
-  BarChart3,
 } from "lucide-react";
 import {
   PieChart,
@@ -26,33 +25,55 @@ import {
   CartesianGrid,
 } from "recharts";
 
-/* ─────────────────────────────────────────
-   CONSTANTS & HELPERS
-───────────────────────────────────────── */
-const DONUT_COLORS = ["#6366f1", "#f59e0b", "#f43f5e"];
+const DONUT_COLORS = ["#10b981", "#f59e0b", "#f43f5e"];
 
 const CLASS_THEMES = [
-  { accent: "#6366f1", glow: "rgba(99,102,241,0.15)", ring: "rgba(99,102,241,0.25)" },
-  { accent: "#10b981", glow: "rgba(16,185,129,0.15)", ring: "rgba(16,185,129,0.25)" },
-  { accent: "#f97316", glow: "rgba(249,115,22,0.15)", ring: "rgba(249,115,22,0.25)" },
-  { accent: "#f43f5e", glow: "rgba(244,63,94,0.15)",  ring: "rgba(244,63,94,0.25)"  },
-  { accent: "#8b5cf6", glow: "rgba(139,92,246,0.15)", ring: "rgba(139,92,246,0.25)" },
-  { accent: "#0ea5e9", glow: "rgba(14,165,233,0.15)", ring: "rgba(14,165,233,0.25)" },
+  {
+    bg: "#f0fdf4",
+    border: "#bbf7d0",
+    av: ["#dcfce7", "#166534"],
+    bar: "#10b981",
+  },
+  {
+    bg: "#fefce8",
+    border: "#fef08a",
+    av: ["#fef9c3", "#854d0e"],
+    bar: "#eab308",
+  },
+  {
+    bg: "#fff7ed",
+    border: "#fed7aa",
+    av: ["#ffedd5", "#9a3412"],
+    bar: "#f97316",
+  },
+  {
+    bg: "#fef2f2",
+    border: "#fecaca",
+    av: ["#fee2e2", "#991b1b"],
+    bar: "#f43f5e",
+  },
+  {
+    bg: "#eef2ff",
+    border: "#c7d2fe",
+    av: ["#e0e7ff", "#3730a3"],
+    bar: "#6366f1",
+  },
+  {
+    bg: "#f5f3ff",
+    border: "#ddd6fe",
+    av: ["#ede9fe", "#5b21b6"],
+    bar: "#7c3aed",
+  },
 ];
 
 const DonutTooltip = ({ active, payload }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{
-      background: "rgba(15,15,30,0.95)",
-      border: "1px solid rgba(255,255,255,0.1)",
-      borderRadius: 12,
-      padding: "8px 14px",
-      fontSize: 12,
-      backdropFilter: "blur(20px)",
-    }}>
-      <p style={{ color: "#e2e8f0", fontWeight: 700 }}>{payload[0].name}</p>
-      <p style={{ color: "#94a3b8" }}>Jumlah: <strong style={{ color: "#fff" }}>{payload[0].value}</strong></p>
+    <div className="bg-white border border-gray-100 rounded-xl px-3 py-2 text-xs shadow-lg">
+      <p className="font-semibold text-gray-800">{payload[0].name}</p>
+      <p className="text-gray-500">
+        Jumlah: <strong className="text-gray-900">{payload[0].value}</strong>
+      </p>
     </div>
   );
 };
@@ -60,141 +81,22 @@ const DonutTooltip = ({ active, payload }: any) => {
 const TrendTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{
-      background: "rgba(15,15,30,0.95)",
-      border: "1px solid rgba(255,255,255,0.1)",
-      borderRadius: 12,
-      padding: "8px 14px",
-      fontSize: 12,
-      backdropFilter: "blur(20px)",
-    }}>
-      <p style={{ color: "#94a3b8", fontWeight: 600, marginBottom: 4 }}>{label}</p>
+    <div className="bg-white border border-gray-100 rounded-xl px-3 py-2 text-xs shadow-lg">
+      <p className="font-semibold text-gray-700 mb-1">{label}</p>
       {payload.map((p: any) => (
-        <p key={p.name} style={{ color: p.fill, fontWeight: 700 }}>{p.name}: {p.value}</p>
+        <p key={p.name} style={{ color: p.fill }} className="font-medium">
+          {p.name}: {p.value}
+        </p>
       ))}
     </div>
   );
 };
 
-const Skeleton = ({ className, style }: { className?: string; style?: React.CSSProperties }) => (
-  <div
-    className={className}
-    style={{
-      background: "rgba(255,255,255,0.06)",
-      borderRadius: 12,
-      animation: "pulse 2s cubic-bezier(0.4,0,0.6,1) infinite",
-      ...style,
-    }}
-  />
+/* ── Skeleton loader ── */
+const Skeleton = ({ className }: { className?: string }) => (
+  <div className={`animate-pulse rounded-xl bg-gray-100 ${className ?? ""}`} />
 );
 
-/* ─────────────────────────────────────────
-   STAT CARD COMPONENT
-───────────────────────────────────────── */
-function StatCard({
-  label, value, icon, gradient, glow, glowHover, sub, pct, loading,
-}: {
-  label: string; value: number | null; icon: React.ReactNode;
-  gradient: string; glow: string; glowHover: string; sub: string;
-  pct?: string; loading: boolean;
-}) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        background: gradient,
-        borderRadius: 20,
-        padding: "22px 20px",
-        position: "relative",
-        overflow: "hidden",
-        cursor: "pointer",
-        transition: "transform 0.3s ease, box-shadow 0.3s ease",
-        transform: hovered ? "translateY(-5px) scale(1.025)" : "translateY(0) scale(1)",
-        boxShadow: hovered
-          ? `0 20px 50px ${glowHover}`
-          : `0 8px 28px ${glow}`,
-      }}
-    >
-      {/* Decorative circles */}
-      <div style={{
-        position: "absolute", width: 110, height: 110,
-        right: -28, top: -28, borderRadius: "50%",
-        background: "rgba(255,255,255,0.1)",
-        pointerEvents: "none",
-      }} />
-      <div style={{
-        position: "absolute", width: 65, height: 65,
-        right: 12, top: 48, borderRadius: "50%",
-        background: "rgba(255,255,255,0.06)",
-        border: "1px solid rgba(255,255,255,0.12)",
-        pointerEvents: "none",
-      }} />
-
-      {/* Icon */}
-      <div style={{
-        position: "absolute", top: 18, right: 18,
-        padding: 9, borderRadius: 13,
-        background: "rgba(255,255,255,0.18)",
-        backdropFilter: "blur(10px)",
-        color: "#fff",
-        display: "flex", alignItems: "center", justifyContent: "center",
-      }}>
-        {icon}
-      </div>
-
-      {/* Label */}
-      <p style={{
-        fontSize: 10, fontWeight: 800, letterSpacing: "0.12em",
-        textTransform: "uppercase", color: "rgba(255,255,255,0.75)",
-        marginBottom: 10,
-      }}>
-        {label}
-      </p>
-
-      {/* Value */}
-      {loading ? (
-        <div style={{
-          height: 40, width: 72, borderRadius: 10,
-          background: "rgba(255,255,255,0.2)",
-          marginBottom: 8,
-          animation: "pulse 2s infinite",
-        }} />
-      ) : (
-        <p style={{
-          fontSize: 42, fontWeight: 900, color: "#fff",
-          lineHeight: 1, marginBottom: 6,
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
-        }}>
-          {value}
-        </p>
-      )}
-
-      {/* Sub */}
-      <p style={{ fontSize: 12, color: "rgba(255,255,255,0.65)", fontWeight: 500 }}>
-        {pct ? `${pct} · ` : ""}{sub}
-      </p>
-
-      {/* Bottom progress bar */}
-      <div style={{
-        position: "absolute", bottom: 0, left: 0, right: 0,
-        height: 3, background: "rgba(255,255,255,0.15)",
-      }}>
-        <div style={{
-          height: "100%",
-          width: pct ? `${pct.replace("%", "")}%` : "100%",
-          background: "rgba(255,255,255,0.5)",
-          transition: "width 1s ease",
-        }} />
-      </div>
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────
-   MAIN DASHBOARD
-───────────────────────────────────────── */
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -233,9 +135,9 @@ export default function AdminDashboard() {
   const donutData = useMemo(
     () =>
       [
-        { name: "Hadir",       value: stats.hadirHariIni },
-        { name: "Izin/Sakit",  value: izin              },
-        { name: "Tidak Hadir", value: stats.tidakHadir  },
+        { name: "Hadir", value: stats.hadirHariIni },
+        { name: "Izin/Sakit", value: izin },
+        { name: "Tidak Hadir", value: stats.tidakHadir },
       ].filter((d) => d.value > 0),
     [stats, izin],
   );
@@ -250,505 +152,719 @@ export default function AdminDashboard() {
     { day: "Min", hadir: 0, absen: 0 },
   ];
 
-  const bestClass  = classData.length > 0 ? classData.reduce((a, b) => (a.persentase > b.persentase ? a : b), classData[0]) : null;
-  const worstClass = classData.length > 0 ? classData.reduce((a, b) => (a.persentase < b.persentase ? a : b), classData[0]) : null;
+  const bestClass =
+    classData.length > 0
+      ? classData.reduce(
+          (a, b) => (a.persentase > b.persentase ? a : b),
+          classData[0],
+        )
+      : null;
+  const worstClass =
+    classData.length > 0
+      ? classData.reduce(
+          (a, b) => (a.persentase < b.persentase ? a : b),
+          classData[0],
+        )
+      : null;
 
   const hariIni = new Date().toLocaleDateString("id-ID", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
 
+  /* ── Stat card config ── */
   const statCards = [
     {
       label: "Total Siswa",
-      value: stats.totalSiswa,
+      value: loading ? null : stats.totalSiswa,
       icon: <Users className="w-5 h-5" />,
-      gradient: "linear-gradient(135deg, #4f46e5 0%, #6366f1 60%, #818cf8 100%)",
-      glow: "rgba(99,102,241,0.4)",
-      glowHover: "rgba(99,102,241,0.65)",
+      gradient: "from-[#6366f1] to-[#4f46e5]",
+      glow: "rgba(99,102,241,0.35)",
+      glowHover: "rgba(99,102,241,0.55)",
       sub: "Terdaftar aktif",
-      pct: "100%",
+      iconBg: "rgba(255,255,255,0.18)",
     },
     {
       label: "Hadir Hari Ini",
-      value: stats.hadirHariIni,
+      value: loading ? null : stats.hadirHariIni,
       icon: <CheckCircle2 className="w-5 h-5" />,
-      gradient: "linear-gradient(135deg, #0d9488 0%, #10b981 60%, #34d399 100%)",
-      glow: "rgba(16,185,129,0.4)",
-      glowHover: "rgba(16,185,129,0.65)",
-      sub: "dari total siswa",
-      pct: `${pct}%`,
+      gradient: "from-[#10b981] to-[#0d9488]",
+      glow: "rgba(16,185,129,0.35)",
+      glowHover: "rgba(16,185,129,0.55)",
+      sub: `${pct}% dari total`,
+      iconBg: "rgba(255,255,255,0.18)",
     },
     {
       label: "Izin / Sakit",
-      value: izin,
+      value: loading ? null : izin,
       icon: <BookOpen className="w-5 h-5" />,
-      gradient: "linear-gradient(135deg, #f97316 0%, #f59e0b 60%, #fbbf24 100%)",
-      glow: "rgba(245,158,11,0.4)",
-      glowHover: "rgba(245,158,11,0.65)",
-      sub: "Ada keterangan",
-      pct: stats.totalSiswa > 0 ? `${Math.round((izin / stats.totalSiswa) * 100)}%` : "0%",
+      gradient: "from-[#f59e0b] to-[#f97316]",
+      glow: "rgba(245,158,11,0.35)",
+      glowHover: "rgba(245,158,11,0.55)",
+      sub: "Keterangan ada",
+      iconBg: "rgba(255,255,255,0.18)",
     },
     {
       label: "Alfa",
-      value: stats.tidakHadir,
+      value: loading ? null : stats.tidakHadir,
       icon: <XCircle className="w-5 h-5" />,
-      gradient: "linear-gradient(135deg, #e11d48 0%, #f43f5e 60%, #fb7185 100%)",
-      glow: "rgba(244,63,94,0.4)",
-      glowHover: "rgba(244,63,94,0.65)",
+      gradient: "from-[#f43f5e] to-[#e11d48]",
+      glow: "rgba(244,63,94,0.35)",
+      glowHover: "rgba(244,63,94,0.55)",
       sub: "Tanpa keterangan",
-      pct: stats.totalSiswa > 0 ? `${Math.round((stats.tidakHadir / stats.totalSiswa) * 100)}%` : "0%",
+      iconBg: "rgba(255,255,255,0.18)",
     },
   ];
 
   return (
-    <div style={{ display: "flex", height: "100vh", background: "#0a0a14", overflow: "hidden" }}>
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+      <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
-        <main style={{
-          flex: 1,
-          padding: "28px 32px",
-          overflowY: "auto",
-          overflowX: "hidden",
-          background: "linear-gradient(160deg, #0a0a14 0%, #0d0d1f 50%, #0a0f1a 100%)",
-        }}>
-          {/* Ambient background blobs */}
-          <div style={{
-            position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
-          }}>
-            <div style={{
-              position: "absolute", width: 600, height: 600, borderRadius: "50%",
-              left: -150, top: -150,
-              background: "radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 65%)",
-              filter: "blur(40px)",
-            }} />
-            <div style={{
-              position: "absolute", width: 500, height: 500, borderRadius: "50%",
-              right: -100, bottom: -100,
-              background: "radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 65%)",
-              filter: "blur(40px)",
-            }} />
-          </div>
+        <main className="flex-1 p-6 sm:p-8 overflow-y-auto overflow-x-hidden">
+          <GreetingBanner />
 
-          <div style={{ position: "relative", zIndex: 1 }}>
-            <GreetingBanner />
+          {/* ═══════════════════════════════════════════
+              HERO HEADER — dark gradient, campuran
+          ═══════════════════════════════════════════ */}
+          <div
+            className="relative overflow-hidden rounded-3xl p-7 mb-6 shadow-2xl"
+            style={{
+              background:
+                "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)",
+            }}
+          >
+            {/* decorative orbs */}
+            <div
+              className="absolute rounded-full pointer-events-none"
+              style={{
+                width: 280,
+                height: 280,
+                right: -60,
+                top: -100,
+                background:
+                  "radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%)",
+              }}
+            />
+            <div
+              className="absolute rounded-full pointer-events-none"
+              style={{
+                width: 180,
+                height: 180,
+                left: "30%",
+                bottom: -80,
+                background:
+                  "radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%)",
+              }}
+            />
+            <div
+              className="absolute rounded-full pointer-events-none"
+              style={{
+                width: 100,
+                height: 100,
+                left: 20,
+                top: 20,
+                background:
+                  "radial-gradient(circle, rgba(245,158,11,0.12) 0%, transparent 70%)",
+              }}
+            />
+            {/* grid texture */}
+            <div
+              className="absolute inset-0 pointer-events-none opacity-5"
+              style={{
+                backgroundImage:
+                  "linear-gradient(rgba(255,255,255,.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.4) 1px, transparent 1px)",
+                backgroundSize: "40px 40px",
+              }}
+            />
 
-            {/* ─── HERO HEADER ─── */}
-            <div style={{
-              position: "relative",
-              background: "linear-gradient(135deg, #0f0c29 0%, #302b63 45%, #1a1a3e 100%)",
-              borderRadius: 24,
-              padding: "28px 32px",
-              marginBottom: 24,
-              overflow: "hidden",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
-              border: "1px solid rgba(99,102,241,0.2)",
-            }}>
-              {/* Orbs */}
-              <div style={{ position: "absolute", width: 300, height: 300, borderRadius: "50%", right: -60, top: -120, background: "radial-gradient(circle, rgba(99,102,241,0.3) 0%, transparent 70%)", pointerEvents: "none" }} />
-              <div style={{ position: "absolute", width: 200, height: 200, borderRadius: "50%", left: "35%", bottom: -100, background: "radial-gradient(circle, rgba(16,185,129,0.18) 0%, transparent 70%)", pointerEvents: "none" }} />
-              <div style={{ position: "absolute", width: 120, height: 120, borderRadius: "50%", left: 24, top: 16, background: "radial-gradient(circle, rgba(245,158,11,0.15) 0%, transparent 70%)", pointerEvents: "none" }} />
-              {/* Grid texture */}
-              <div style={{
-                position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.04,
-                backgroundImage: "linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px)",
-                backgroundSize: "36px 36px",
-              }} />
-
-              <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 20 }}>
-                <div>
-                  {/* Badge */}
-                  <span style={{
-                    display: "inline-flex", alignItems: "center", gap: 6,
-                    fontSize: 10, fontWeight: 800, letterSpacing: "0.14em",
-                    textTransform: "uppercase",
+            <div className="relative z-10 flex items-start justify-between flex-wrap gap-5">
+              <div>
+                {/* badge */}
+                <span
+                  className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full mb-4"
+                  style={{
                     background: "rgba(99,102,241,0.2)",
                     color: "#a5b4fc",
                     border: "1px solid rgba(99,102,241,0.35)",
-                    padding: "4px 12px",
-                    borderRadius: 20,
-                    marginBottom: 16,
-                  }}>
-                    <Activity style={{ width: 12, height: 12 }} />
-                    Dashboard Admin
-                  </span>
-
-                  <h1 style={{
-                    fontSize: 32, fontWeight: 900, lineHeight: 1.1, marginBottom: 6,
-                    background: "linear-gradient(90deg, #ffffff 0%, #c7d2fe 60%, #a5b4fc 100%)",
+                  }}
+                >
+                  <Activity className="w-3 h-3" />
+                  Dashboard Admin
+                </span>
+                <p
+                  className="text-3xl font-black mb-1 leading-tight"
+                  style={{
+                    background: "linear-gradient(90deg, #fff 0%, #c7d2fe 100%)",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  }}>
-                    Pantau Kehadiran Siswa
-                  </h1>
-                  <p style={{ fontSize: 13, color: "#64748b", marginBottom: 20 }}>{hariIni}</p>
-
-                  {/* Chips */}
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    {[
-                      { label: `${pct}% kehadiran`, color: "#34d399", bg: "rgba(52,211,153,0.15)", border: "rgba(52,211,153,0.3)" },
-                      { label: `${loading ? "—" : stats.totalSiswa} siswa`, color: "#94a3b8", bg: "rgba(148,163,184,0.1)", border: "rgba(148,163,184,0.2)" },
-                      { label: `${loading ? "—" : stats.tidakHadir + izin} tidak hadir`, color: "#f87171", bg: "rgba(248,113,113,0.12)", border: "rgba(248,113,113,0.25)" },
-                    ].map((b) => (
-                      <span key={b.label} style={{
-                        padding: "5px 14px", borderRadius: 20, fontSize: 12, fontWeight: 600,
-                        background: b.bg, color: b.color, border: `1px solid ${b.border}`,
-                      }}>
-                        {b.label}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Quick stats panel */}
-                <div style={{
-                  display: "flex", borderRadius: 18, overflow: "hidden",
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  backdropFilter: "blur(20px)",
-                }}>
-                  {[
-                    { v: stats.hadirHariIni, l: "Hadir", c: "#34d399" },
-                    { v: izin,               l: "Izin",  c: "#fbbf24" },
-                    { v: stats.tidakHadir,   l: "Alfa",  c: "#f87171" },
-                  ].map((s, i) => (
-                    <div key={i} style={{
-                      padding: "18px 24px", textAlign: "center",
-                      borderRight: i < 2 ? "1px solid rgba(255,255,255,0.08)" : "none",
-                    }}>
-                      <p style={{ fontSize: 28, fontWeight: 900, lineHeight: 1, color: s.c, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                        {loading ? "—" : s.v}
-                      </p>
-                      <p style={{ fontSize: 10, marginTop: 6, color: "#475569", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                        {s.l}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* ─── STAT CARDS ─── */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
-              {statCards.map((card, i) => (
-                <StatCard key={i} {...card} loading={loading} />
-              ))}
-            </div>
-
-            {/* ─── MIDDLE ROW ─── */}
-            <div style={{ display: "grid", gridTemplateColumns: "2fr 3fr", gap: 16, marginBottom: 16 }}>
-
-              {/* Left: Donut + Summary */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-
-                {/* Donut card */}
-                <div style={{
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: 20,
-                  padding: "22px 24px",
-                  backdropFilter: "blur(20px)",
-                }}>
-                  <p style={{
-                    fontSize: 10, fontWeight: 800, letterSpacing: "0.12em",
-                    textTransform: "uppercase", color: "#4ade80", marginBottom: 18,
-                    display: "flex", alignItems: "center", gap: 6,
-                  }}>
-                    <TrendingUp style={{ width: 12, height: 12 }} />
-                    Distribusi Kehadiran
-                  </p>
-
-                  {loading ? (
-                    <Skeleton style={{ borderRadius: "50%", height: 128, width: 128, display: "block", margin: "0 auto" }} />
-                  ) : (
-                    <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-                      <div style={{ position: "relative", width: 130, height: 130, flexShrink: 0 }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={donutData}
-                              cx="50%" cy="50%"
-                              innerRadius={38} outerRadius={58}
-                              paddingAngle={4} dataKey="value"
-                              startAngle={90} endAngle={-270}
-                              animationBegin={0} animationDuration={900}
-                            >
-                              {donutData.map((_, i) => (
-                                <Cell key={i} fill={DONUT_COLORS[i]} />
-                              ))}
-                            </Pie>
-                            <Tooltip content={<DonutTooltip />} />
-                          </PieChart>
-                        </ResponsiveContainer>
-                        {/* Center text */}
-                        <div style={{
-                          position: "absolute", inset: 0,
-                          display: "flex", flexDirection: "column",
-                          alignItems: "center", justifyContent: "center",
-                          pointerEvents: "none",
-                        }}>
-                          <span style={{ fontSize: 22, fontWeight: 900, color: "#f1f5f9", lineHeight: 1, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                            {pct}%
-                          </span>
-                          <span style={{ fontSize: 9, color: "#64748b", marginTop: 3, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600 }}>
-                            hadir
-                          </span>
-                        </div>
-                      </div>
-
-                      <div style={{ display: "flex", flexDirection: "column", gap: 12, flex: 1 }}>
-                        {[
-                          { label: "Hadir",      val: stats.hadirHariIni, color: "#6366f1", bg: "rgba(99,102,241,0.15)",  tc: "#a5b4fc" },
-                          { label: "Izin/Sakit", val: izin,               color: "#f59e0b", bg: "rgba(245,158,11,0.15)", tc: "#fbbf24" },
-                          { label: "Alfa",       val: stats.tidakHadir,   color: "#f43f5e", bg: "rgba(244,63,94,0.15)",  tc: "#fb7185" },
-                        ].map((b) => (
-                          <div key={b.label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <span style={{ width: 10, height: 10, borderRadius: 3, background: b.color, flexShrink: 0 }} />
-                            <span style={{ fontSize: 12, color: "#94a3b8", flex: 1 }}>{b.label}</span>
-                            <span style={{
-                              fontSize: 11, fontWeight: 700, padding: "2px 8px",
-                              borderRadius: 20, background: b.bg, color: b.tc,
-                            }}>
-                              {b.val}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Summary dark card */}
-                <div style={{
-                  borderRadius: 20,
-                  padding: "22px 24px",
-                  background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)",
-                  boxShadow: "0 12px 40px rgba(79,70,229,0.25)",
-                  border: "1px solid rgba(99,102,241,0.2)",
-                  position: "relative",
-                  overflow: "hidden",
-                }}>
-                  <div style={{
-                    position: "absolute", width: 160, height: 160, borderRadius: "50%",
-                    right: -50, bottom: -50,
-                    background: "radial-gradient(circle, rgba(99,102,241,0.35) 0%, transparent 70%)",
-                    pointerEvents: "none",
-                  }} />
-
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                    <Award style={{ width: 16, height: 16, color: "#a5b4fc" }} />
-                    <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "#6366f1" }}>
-                      Ringkasan Hari Ini
-                    </p>
-                  </div>
-
-                  <p style={{ fontSize: 52, fontWeight: 900, color: "#fff", lineHeight: 1, marginBottom: 4, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                    {pct}%
-                  </p>
-                  <p style={{ fontSize: 12, color: "#64748b", marginBottom: 20 }}>Rata-rata kehadiran hari ini</p>
-
-                  {bestClass && (
-                    <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ade80", display: "inline-block" }} />
-                        <p style={{ fontSize: 12, color: "#64748b" }}>
-                          Terbaik: <strong style={{ color: "#4ade80" }}>{bestClass.kelas}</strong>
-                          <span style={{ color: "#475569" }}> — {bestClass.persentase}%</span>
-                        </p>
-                      </div>
-                      {worstClass && worstClass.kelas !== bestClass.kelas && (
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#f87171", display: "inline-block" }} />
-                          <p style={{ fontSize: 12, color: "#64748b" }}>
-                            Perhatian: <strong style={{ color: "#f87171" }}>{worstClass.kelas}</strong>
-                            <span style={{ color: "#475569" }}> — {worstClass.persentase}%</span>
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Right: Per Kelas */}
-              <div style={{
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 20,
-                padding: "22px 24px",
-                backdropFilter: "blur(20px)",
-              }}>
-                <p style={{
-                  fontSize: 10, fontWeight: 800, letterSpacing: "0.12em",
-                  textTransform: "uppercase", color: "#818cf8", marginBottom: 18,
-                  display: "flex", alignItems: "center", gap: 6,
-                }}>
-                  <Users style={{ width: 12, height: 12 }} />
-                  Kehadiran Per Kelas
+                  }}
+                >
+                  Pantau Kehadiran
                 </p>
-
-                {loading ? (
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                    {[...Array(4)].map((_, i) => (
-                      <div key={i} style={{ height: 100, background: "rgba(255,255,255,0.05)", borderRadius: 14, animation: "pulse 2s infinite" }} />
-                    ))}
-                  </div>
-                ) : classData.length === 0 ? (
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 120, color: "#475569", fontSize: 13 }}>
-                    Tidak ada data.
-                  </div>
-                ) : (
-                  <>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
-                      {classData.map((item, i) => {
-                        const th = CLASS_THEMES[i % CLASS_THEMES.length];
-                        const barC = item.persentase >= 80 ? "#10b981" : item.persentase >= 60 ? "#f59e0b" : "#f43f5e";
-                        const initials = item.kelas.split(" ").map((w: string) => w[0]).join("").slice(0, 2);
-                        const izinKelas = Math.max(0, (item.total || 0) - (item.hadir || 0) - (item.tidakHadir || 0));
-
-                        return (
-                          <div key={i} style={{
-                            borderRadius: 16, padding: "14px 16px",
-                            background: th.glow,
-                            border: `1px solid ${th.ring}`,
-                            position: "relative", overflow: "hidden",
-                            transition: "transform 0.2s, box-shadow 0.2s",
-                            cursor: "default",
-                          }}
-                          onMouseEnter={(e) => {
-                            (e.currentTarget as HTMLDivElement).style.transform = "translateY(-2px)";
-                            (e.currentTarget as HTMLDivElement).style.boxShadow = `0 8px 24px ${th.glow}`;
-                          }}
-                          onMouseLeave={(e) => {
-                            (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
-                            (e.currentTarget as HTMLDivElement).style.boxShadow = "none";
-                          }}>
-                            {/* Decorative blob */}
-                            <div style={{
-                              position: "absolute", width: 70, height: 70, borderRadius: "50%",
-                              right: -18, bottom: -18, background: th.accent, opacity: 0.15,
-                              pointerEvents: "none",
-                            }} />
-
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                <div style={{
-                                  width: 32, height: 32, borderRadius: 10,
-                                  background: th.accent, color: "#fff",
-                                  display: "flex", alignItems: "center", justifyContent: "center",
-                                  fontSize: 11, fontWeight: 800,
-                                  opacity: 0.9,
-                                }}>
-                                  {initials}
-                                </div>
-                                <div>
-                                  <p style={{ fontSize: 12, fontWeight: 700, color: "#e2e8f0" }}>{item.kelas}</p>
-                                  <p style={{ fontSize: 10, color: "#64748b" }}>{item.hadir}/{item.total}</p>
-                                </div>
-                              </div>
-                              <span style={{
-                                fontSize: 11, fontWeight: 800, padding: "3px 8px",
-                                borderRadius: 20,
-                                background: item.persentase >= 80 ? "rgba(74,222,128,0.15)" : item.persentase >= 60 ? "rgba(251,191,36,0.15)" : "rgba(248,113,113,0.15)",
-                                color: item.persentase >= 80 ? "#4ade80" : item.persentase >= 60 ? "#fbbf24" : "#f87171",
-                              }}>
-                                {item.persentase}%
-                              </span>
-                            </div>
-
-                            {/* Progress bar */}
-                            <div style={{ height: 5, background: "rgba(255,255,255,0.1)", borderRadius: 99, overflow: "hidden", marginBottom: 10 }}>
-                              <div style={{ height: "100%", width: `${item.persentase}%`, background: barC, borderRadius: 99, transition: "width 1s ease" }} />
-                            </div>
-
-                            {/* Mini badges */}
-                            <div style={{ display: "flex", gap: 5 }}>
-                              {[
-                                { v: item.hadir, l: "H", color: "#4ade80" },
-                                { v: izinKelas, l: "I", color: "#fbbf24" },
-                                { v: item.tidakHadir || 0, l: "A", color: "#f87171" },
-                              ].map((c) => (
-                                <span key={c.l} style={{
-                                  fontSize: 10, fontWeight: 700,
-                                  padding: "2px 7px", borderRadius: 8,
-                                  background: "rgba(255,255,255,0.08)",
-                                  color: c.color,
-                                }}>
-                                  {c.l}: {c.v}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Summary row */}
-                    <div style={{
-                      display: "flex", gap: 8,
-                      background: "rgba(255,255,255,0.03)",
-                      border: "1px solid rgba(255,255,255,0.06)",
-                      borderRadius: 14, padding: 4,
-                    }}>
-                      {[
-                        { v: stats.totalSiswa,   l: "Total", color: "#94a3b8" },
-                        { v: stats.hadirHariIni, l: "Hadir", color: "#4ade80" },
-                        { v: izin,               l: "Izin",  color: "#fbbf24" },
-                        { v: stats.tidakHadir,   l: "Alfa",  color: "#f87171" },
-                      ].map((s) => (
-                        <div key={s.l} style={{ flex: 1, textAlign: "center", padding: "10px 0", borderRadius: 10 }}>
-                          <p style={{ fontSize: 16, fontWeight: 900, color: s.color, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{s.v}</p>
-                          <p style={{ fontSize: 10, color: "#475569", marginTop: 2, fontWeight: 600 }}>{s.l}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* ─── TREND BAR CHART ─── */}
-            <div style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: 20,
-              padding: "22px 24px",
-              backdropFilter: "blur(20px)",
-            }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-                <p style={{
-                  fontSize: 10, fontWeight: 800, letterSpacing: "0.12em",
-                  textTransform: "uppercase", color: "#818cf8",
-                  display: "flex", alignItems: "center", gap: 6,
-                }}>
-                  <BarChart3 style={{ width: 12, height: 12 }} />
-                  Tren Kehadiran 7 Hari Terakhir
+                <p className="text-sm mb-5" style={{ color: "#94a3b8" }}>
+                  {hariIni}
                 </p>
-                <div style={{ display: "flex", gap: 16 }}>
+                <div className="flex gap-2 flex-wrap">
                   {[
-                    { color: "#6366f1", label: "Hadir" },
-                    { color: "#f87171", label: "Tidak hadir" },
-                  ].map((l) => (
-                    <span key={l.label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#64748b" }}>
-                      <span style={{ width: 10, height: 10, borderRadius: 3, background: l.color, display: "inline-block" }} />
-                      {l.label}
+                    {
+                      label: `${pct}% hadir`,
+                      color: "#34d399",
+                      bg: "rgba(52,211,153,0.15)",
+                      border: "rgba(52,211,153,0.3)",
+                    },
+                    {
+                      label: `${loading ? "—" : stats.totalSiswa} siswa`,
+                      color: "#94a3b8",
+                      bg: "rgba(148,163,184,0.1)",
+                      border: "rgba(148,163,184,0.2)",
+                    },
+                    {
+                      label: `${loading ? "—" : stats.tidakHadir + izin} tidak hadir`,
+                      color: "#fca5a5",
+                      bg: "rgba(252,165,165,0.12)",
+                      border: "rgba(252,165,165,0.25)",
+                    },
+                  ].map((b) => (
+                    <span
+                      key={b.label}
+                      className="px-3 py-1 rounded-full text-xs font-semibold"
+                      style={{
+                        background: b.bg,
+                        color: b.color,
+                        border: `1px solid ${b.border}`,
+                      }}
+                    >
+                      {b.label}
                     </span>
                   ))}
                 </div>
               </div>
 
-              <div style={{ height: 148 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={trendData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="35%">
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                    <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#475569" }} axisLine={false} tickLine={false} />
-                    <Tooltip content={<TrendTooltip />} />
-                    <Bar dataKey="hadir"  name="Hadir"       fill="#6366f1" radius={[6,6,0,0]} maxBarSize={30} />
-                    <Bar dataKey="absen"  name="Tidak hadir" fill="#f87171" radius={[6,6,0,0]} maxBarSize={30} />
-                  </BarChart>
-                </ResponsiveContainer>
+              {/* quick stats panel */}
+              <div
+                className="flex rounded-2xl overflow-hidden"
+                style={{
+                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                }}
+              >
+                {[
+                  { v: stats.hadirHariIni, l: "Hadir", c: "#34d399" },
+                  { v: izin, l: "Izin", c: "#fbbf24" },
+                  { v: stats.tidakHadir, l: "Alfa", c: "#f87171" },
+                ].map((s, i) => (
+                  <div
+                    key={i}
+                    className="px-5 py-4 text-center"
+                    style={{
+                      borderRight:
+                        i < 2 ? "1px solid rgba(255,255,255,0.08)" : "none",
+                    }}
+                  >
+                    <p
+                      className="text-2xl font-black leading-none"
+                      style={{ color: s.c }}
+                    >
+                      {loading ? "—" : s.v}
+                    </p>
+                    <p
+                      className="text-[10px] mt-1.5 font-medium"
+                      style={{ color: "#64748b" }}
+                    >
+                      {s.l}
+                    </p>
+                  </div>
+                ))}
               </div>
+            </div>
+          </div>
+
+          {/* ═══════════════════════════════════════════
+              STAT CARDS — gradient, hover glow
+          ═══════════════════════════════════════════ */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {statCards.map((card, i) => (
+              <div
+                key={i}
+                className={`relative overflow-hidden rounded-2xl p-5 text-white cursor-pointer transition-all duration-300 bg-gradient-to-br ${card.gradient}`}
+                style={{
+                  boxShadow: `0 8px 24px ${card.glow}`,
+                  animationDelay: `${i * 80}ms`,
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLDivElement).style.transform =
+                    "translateY(-4px) scale(1.02)";
+                  (e.currentTarget as HTMLDivElement).style.boxShadow =
+                    `0 16px 40px ${card.glowHover}`;
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLDivElement).style.transform =
+                    "translateY(0) scale(1)";
+                  (e.currentTarget as HTMLDivElement).style.boxShadow =
+                    `0 8px 24px ${card.glow}`;
+                }}
+              >
+                {/* pattern circles */}
+                <div
+                  className="absolute rounded-full pointer-events-none"
+                  style={{
+                    width: 100,
+                    height: 100,
+                    right: -25,
+                    top: -25,
+                    background: "rgba(255,255,255,0.1)",
+                  }}
+                />
+                <div
+                  className="absolute rounded-full pointer-events-none"
+                  style={{
+                    width: 60,
+                    height: 60,
+                    right: 10,
+                    top: 40,
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                  }}
+                />
+                {/* icon */}
+                <div
+                  className="absolute top-4 right-4 p-2 rounded-xl"
+                  style={{
+                    background: card.iconBg,
+                    backdropFilter: "blur(8px)",
+                  }}
+                >
+                  {card.icon}
+                </div>
+                <p className="text-[10px] font-bold tracking-widest uppercase opacity-80 mb-2">
+                  {card.label}
+                </p>
+                {loading ? (
+                  <div className="h-9 w-16 rounded-lg bg-white/20 animate-pulse mb-2" />
+                ) : (
+                  <p className="text-4xl font-black leading-none mb-2">
+                    {card.value}
+                  </p>
+                )}
+                <p className="text-xs opacity-70">{card.sub}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* ═══════════════════════════════════════════
+              DONUT + RINGKASAN + PER KELAS
+          ═══════════════════════════════════════════ */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
+            {/* left column: donut + summary */}
+            <div className="lg:col-span-2 flex flex-col gap-4">
+              {/* Donut card */}
+              <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-1.5">
+                  <TrendingUp className="w-3 h-3 text-emerald-500" />
+                  Distribusi kehadiran
+                </p>
+                {loading ? (
+                  <Skeleton className="w-32 h-32 rounded-full mx-auto" />
+                ) : (
+                  <div className="flex items-center gap-5">
+                    <div className="relative w-32 h-32 shrink-0">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={donutData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={38}
+                            outerRadius={58}
+                            paddingAngle={3}
+                            dataKey="value"
+                            startAngle={90}
+                            endAngle={-270}
+                            animationBegin={0}
+                            animationDuration={800}
+                          >
+                            {donutData.map((_, i) => (
+                              <Cell key={i} fill={DONUT_COLORS[i]} />
+                            ))}
+                          </Pie>
+                          <Tooltip content={<DonutTooltip />} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span className="text-xl font-black text-slate-800 leading-none">
+                          {pct}%
+                        </span>
+                        <span className="text-[9px] text-gray-400 mt-0.5 uppercase tracking-wide">
+                          hadir
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-3 flex-1">
+                      {[
+                        {
+                          label: "Hadir",
+                          val: stats.hadirHariIni,
+                          color: "#10b981",
+                          bg: "#f0fdf4",
+                          tc: "#166534",
+                        },
+                        {
+                          label: "Izin/Sakit",
+                          val: izin,
+                          color: "#f59e0b",
+                          bg: "#fefce8",
+                          tc: "#854d0e",
+                        },
+                        {
+                          label: "Alfa",
+                          val: stats.tidakHadir,
+                          color: "#f43f5e",
+                          bg: "#fef2f2",
+                          tc: "#991b1b",
+                        },
+                      ].map((b) => (
+                        <div key={b.label} className="flex items-center gap-2">
+                          <span
+                            className="w-2.5 h-2.5 rounded-sm shrink-0"
+                            style={{ background: b.color }}
+                          />
+                          <span className="text-xs text-gray-600 flex-1">
+                            {b.label}
+                          </span>
+                          <span
+                            className="text-xs font-bold px-2 py-0.5 rounded-full"
+                            style={{ background: b.bg, color: b.tc }}
+                          >
+                            {b.val}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Summary dark card */}
+              <div
+                className="rounded-2xl p-5 shadow-lg relative overflow-hidden"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)",
+                }}
+              >
+                <div
+                  className="absolute rounded-full pointer-events-none"
+                  style={{
+                    width: 140,
+                    height: 140,
+                    right: -40,
+                    bottom: -40,
+                    background:
+                      "radial-gradient(circle, rgba(99,102,241,0.3) 0%, transparent 70%)",
+                  }}
+                />
+                <div className="flex items-center gap-2 mb-3">
+                  <Award className="w-4 h-4 text-indigo-400" />
+                  <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">
+                    Ringkasan
+                  </p>
+                </div>
+                <p className="text-5xl font-black text-white leading-none mb-1">
+                  {pct}%
+                </p>
+                <p className="text-xs text-slate-400 mb-5">
+                  Rata-rata kehadiran hari ini
+                </p>
+                {bestClass && (
+                  <div
+                    className="border-t pt-4 space-y-2"
+                    style={{ borderColor: "rgba(255,255,255,0.1)" }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      <p className="text-xs text-slate-400">
+                        Terbaik:{" "}
+                        <strong className="text-emerald-400">
+                          {bestClass.kelas}
+                        </strong>{" "}
+                        <span className="text-slate-500">
+                          — {bestClass.persentase}%
+                        </span>
+                      </p>
+                    </div>
+                    {worstClass && worstClass.kelas !== bestClass.kelas && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                        <p className="text-xs text-slate-400">
+                          Perhatian:{" "}
+                          <strong className="text-red-400">
+                            {worstClass.kelas}
+                          </strong>{" "}
+                          <span className="text-slate-500">
+                            — {worstClass.persentase}%
+                          </span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Per-kelas card */}
+            <div className="lg:col-span-3 bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-1.5">
+                <Users className="w-3 h-3 text-indigo-500" />
+                Kehadiran per kelas
+              </p>
+              {loading ? (
+                <div className="grid grid-cols-2 gap-3">
+                  {[...Array(4)].map((_, i) => (
+                    <Skeleton key={i} className="h-24" />
+                  ))}
+                </div>
+              ) : classData.length === 0 ? (
+                <div className="flex items-center justify-center h-32 text-gray-400 text-sm">
+                  Tidak ada data.
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    {classData.map((item, i) => {
+                      const th = CLASS_THEMES[i % CLASS_THEMES.length];
+                      const barC =
+                        item.persentase >= 80
+                          ? "#10b981"
+                          : item.persentase >= 60
+                            ? "#f59e0b"
+                            : "#f43f5e";
+                      const badgeBg =
+                        item.persentase >= 80
+                          ? "#f0fdf4"
+                          : item.persentase >= 60
+                            ? "#fefce8"
+                            : "#fef2f2";
+                      const badgeTc =
+                        item.persentase >= 80
+                          ? "#166534"
+                          : item.persentase >= 60
+                            ? "#854d0e"
+                            : "#991b1b";
+                      const initials = item.kelas
+                        .split(" ")
+                        .map((w: string) => w[0])
+                        .join("")
+                        .slice(0, 2);
+                      const izinKelas = Math.max(
+                        0,
+                        (item.total || 0) -
+                          (item.hadir || 0) -
+                          (item.tidakHadir || 0),
+                      );
+                      return (
+                        <div
+                          key={i}
+                          className="rounded-xl p-3.5 relative overflow-hidden border transition-all duration-200 hover:shadow-md cursor-default"
+                          style={{ background: th.bg, borderColor: th.border }}
+                        >
+                          <div
+                            className="absolute right-[-14px] bottom-[-14px] w-16 h-16 rounded-full opacity-20 pointer-events-none"
+                            style={{ background: th.bar }}
+                          />
+                          <div className="flex items-center justify-between mb-2.5 relative z-10">
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold"
+                                style={{
+                                  background: th.av[0],
+                                  color: th.av[1],
+                                }}
+                              >
+                                {initials}
+                              </div>
+                              <div>
+                                <p
+                                  className="text-xs font-semibold"
+                                  style={{ color: th.av[1] }}
+                                >
+                                  {item.kelas}
+                                </p>
+                                <p
+                                  className="text-[10px] opacity-60"
+                                  style={{ color: th.av[1] }}
+                                >
+                                  {item.hadir}/{item.total}
+                                </p>
+                              </div>
+                            </div>
+                            <span
+                              className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                              style={{ background: badgeBg, color: badgeTc }}
+                            >
+                              {item.persentase}%
+                            </span>
+                          </div>
+                          <div
+                            className="h-1.5 rounded-full overflow-hidden relative z-10"
+                            style={{ background: "rgba(0,0,0,0.08)" }}
+                          >
+                            <div
+                              className="h-full rounded-full transition-all duration-700"
+                              style={{
+                                width: `${item.persentase}%`,
+                                background: barC,
+                              }}
+                            />
+                          </div>
+                          <div className="flex gap-1.5 mt-2.5 relative z-10">
+                            {[
+                              {
+                                v: item.hadir,
+                                l: "hadir",
+                                bg: "#f0fdf4",
+                                tc: "#166534",
+                              },
+                              {
+                                v: izinKelas,
+                                l: "izin",
+                                bg: "#fefce8",
+                                tc: "#854d0e",
+                              },
+                              {
+                                v: item.tidakHadir || 0,
+                                l: "alfa",
+                                bg: "#fef2f2",
+                                tc: "#991b1b",
+                              },
+                            ].map((c) => (
+                              <span
+                                key={c.l}
+                                className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md"
+                                style={{ background: c.bg, color: c.tc }}
+                              >
+                                {c.v} {c.l}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* summary row */}
+                  <div className="flex gap-2">
+                    {[
+                      {
+                        v: stats.totalSiswa,
+                        l: "Total",
+                        bg: "#f1f5f9",
+                        tc: "#475569",
+                      },
+                      {
+                        v: stats.hadirHariIni,
+                        l: "Hadir",
+                        bg: "#f0fdf4",
+                        tc: "#166534",
+                      },
+                      { v: izin, l: "Izin", bg: "#fefce8", tc: "#854d0e" },
+                      {
+                        v: stats.tidakHadir,
+                        l: "Alfa",
+                        bg: "#fef2f2",
+                        tc: "#991b1b",
+                      },
+                    ].map((s) => (
+                      <div
+                        key={s.l}
+                        className="flex-1 rounded-xl py-2.5 text-center"
+                        style={{ background: s.bg }}
+                      >
+                        <p
+                          className="text-sm font-black"
+                          style={{ color: s.tc }}
+                        >
+                          {s.v}
+                        </p>
+                        <p
+                          className="text-[9px] mt-0.5"
+                          style={{ color: s.tc, opacity: 0.7 }}
+                        >
+                          {s.l}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* ═══════════════════════════════════════════
+              TREND BAR CHART
+          ═══════════════════════════════════════════ */}
+          <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <TrendingUp className="w-3 h-3 text-indigo-500" />
+                  Tren kehadiran 7 hari terakhir
+                </p>
+              </div>
+              <div className="flex gap-3">
+                {[
+                  { color: "#6366f1", label: "Hadir" },
+                  { color: "#fecaca", label: "Tidak hadir" },
+                ].map((l) => (
+                  <span
+                    key={l.label}
+                    className="flex items-center gap-1.5 text-xs text-gray-400"
+                  >
+                    <span
+                      className="w-2.5 h-2.5 rounded-sm"
+                      style={{ background: l.color }}
+                    />
+                    {l.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="h-36">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={trendData}
+                  margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
+                  barCategoryGap="30%"
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#f1f5f9"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="day"
+                    tick={{ fontSize: 11, fill: "#94a3b8" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip content={<TrendTooltip />} />
+                  <Bar
+                    dataKey="hadir"
+                    name="Hadir"
+                    fill="#6366f1"
+                    radius={[5, 5, 0, 0]}
+                    maxBarSize={32}
+                  />
+                  <Bar
+                    dataKey="absen"
+                    name="Tidak hadir"
+                    fill="#fecaca"
+                    radius={[5, 5, 0, 0]}
+                    maxBarSize={32}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </main>
