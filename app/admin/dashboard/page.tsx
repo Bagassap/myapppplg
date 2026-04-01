@@ -11,7 +11,6 @@ import {
   BookOpen,
   Activity,
   Award,
-  ChevronRight,
 } from "lucide-react";
 import {
   PieChart,
@@ -25,54 +24,36 @@ import {
   CartesianGrid,
 } from "recharts";
 
+/* ─── Constants ─── */
 const DONUT_COLORS = ["#10b981", "#f59e0b", "#f43f5e"];
-
-const CLASS_THEMES = [
-  {
-    bg: "#f0fdf4",
-    border: "#bbf7d0",
-    av: ["#dcfce7", "#166534"],
-    bar: "#10b981",
-  },
-  {
-    bg: "#fefce8",
-    border: "#fef08a",
-    av: ["#fef9c3", "#854d0e"],
-    bar: "#eab308",
-  },
-  {
-    bg: "#fff7ed",
-    border: "#fed7aa",
-    av: ["#ffedd5", "#9a3412"],
-    bar: "#f97316",
-  },
-  {
-    bg: "#fef2f2",
-    border: "#fecaca",
-    av: ["#fee2e2", "#991b1b"],
-    bar: "#f43f5e",
-  },
-  {
-    bg: "#eef2ff",
-    border: "#c7d2fe",
-    av: ["#e0e7ff", "#3730a3"],
-    bar: "#6366f1",
-  },
-  {
-    bg: "#f5f3ff",
-    border: "#ddd6fe",
-    av: ["#ede9fe", "#5b21b6"],
-    bar: "#7c3aed",
-  },
-];
 
 const DonutTooltip = ({ active, payload }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white border border-gray-100 rounded-xl px-3 py-2 text-xs shadow-lg">
-      <p className="font-semibold text-gray-800">{payload[0].name}</p>
-      <p className="text-gray-500">
-        Jumlah: <strong className="text-gray-900">{payload[0].value}</strong>
+    <div
+      style={{
+        background: "var(--color-background-primary)",
+        border: "0.5px solid var(--color-border-secondary)",
+        borderRadius: 10,
+        padding: "8px 12px",
+        fontSize: 12,
+        boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+      }}
+    >
+      <p
+        style={{
+          fontWeight: 600,
+          color: "var(--color-text-primary)",
+          margin: "0 0 2px",
+        }}
+      >
+        {payload[0].name}
+      </p>
+      <p style={{ color: "var(--color-text-secondary)", margin: 0 }}>
+        Jumlah:{" "}
+        <strong style={{ color: "var(--color-text-primary)" }}>
+          {payload[0].value}
+        </strong>
       </p>
     </div>
   );
@@ -81,10 +62,27 @@ const DonutTooltip = ({ active, payload }: any) => {
 const TrendTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white border border-gray-100 rounded-xl px-3 py-2 text-xs shadow-lg">
-      <p className="font-semibold text-gray-700 mb-1">{label}</p>
+    <div
+      style={{
+        background: "var(--color-background-primary)",
+        border: "0.5px solid var(--color-border-secondary)",
+        borderRadius: 10,
+        padding: "8px 12px",
+        fontSize: 12,
+        boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+      }}
+    >
+      <p
+        style={{
+          fontWeight: 600,
+          color: "var(--color-text-secondary)",
+          margin: "0 0 4px",
+        }}
+      >
+        {label}
+      </p>
       {payload.map((p: any) => (
-        <p key={p.name} style={{ color: p.fill }} className="font-medium">
+        <p key={p.name} style={{ color: p.fill, fontWeight: 500, margin: 0 }}>
           {p.name}: {p.value}
         </p>
       ))}
@@ -92,10 +90,288 @@ const TrendTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-const Skeleton = ({ className }: { className?: string }) => (
-  <div className={`animate-pulse rounded-xl bg-gray-100 ${className ?? ""}`} />
+/* ─── Skeleton ─── */
+const Sk = ({
+  w = "100%",
+  h = 20,
+  r = 8,
+}: {
+  w?: string | number;
+  h?: number;
+  r?: number;
+}) => (
+  <div
+    style={{
+      width: w,
+      height: h,
+      borderRadius: r,
+      background: "var(--color-background-tertiary)",
+      animation: "pulse 1.5s ease-in-out infinite",
+    }}
+  />
 );
 
+/* ─── Stat Card ─── */
+type StatCardProps = {
+  label: string;
+  value: number | null;
+  icon: React.ReactNode;
+  accent: string;
+  sub: string;
+  loading: boolean;
+};
+
+function StatCard({ label, value, icon, accent, sub, loading }: StatCardProps) {
+  return (
+    <div
+      style={{
+        background: "var(--color-background-primary)",
+        border: "0.5px solid var(--color-border-tertiary)",
+        borderRadius: 16,
+        padding: "20px 20px 16px",
+        position: "relative",
+        overflow: "hidden",
+        transition: "border-color 0.2s, transform 0.2s",
+        cursor: "default",
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLDivElement).style.borderColor =
+          "var(--color-border-secondary)";
+        (e.currentTarget as HTMLDivElement).style.transform =
+          "translateY(-2px)";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLDivElement).style.borderColor =
+          "var(--color-border-tertiary)";
+        (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
+      }}
+    >
+      {/* accent bar */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 3,
+          background: accent,
+          borderRadius: "16px 16px 0 0",
+        }}
+      />
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          marginBottom: 12,
+        }}
+      >
+        <p
+          style={{
+            fontSize: 11,
+            fontWeight: 500,
+            color: "var(--color-text-secondary)",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+            margin: 0,
+          }}
+        >
+          {label}
+        </p>
+        <div
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            background: accent + "18",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: accent,
+          }}
+        >
+          {icon}
+        </div>
+      </div>
+      {loading ? (
+        <Sk h={36} r={8} />
+      ) : (
+        <p
+          style={{
+            fontSize: 32,
+            fontWeight: 700,
+            color: "var(--color-text-primary)",
+            margin: "0 0 4px",
+            lineHeight: 1,
+          }}
+        >
+          {value}
+        </p>
+      )}
+      <p
+        style={{
+          fontSize: 12,
+          color: "var(--color-text-secondary)",
+          margin: 0,
+        }}
+      >
+        {sub}
+      </p>
+    </div>
+  );
+}
+
+/* ─── Class Card ─── */
+function ClassCard({ item, index }: { item: any; index: number }) {
+  const izinKelas = Math.max(
+    0,
+    (item.total || 0) - (item.hadir || 0) - (item.tidakHadir || 0),
+  );
+  const p = item.persentase || 0;
+  const barColor = p >= 80 ? "#10b981" : p >= 60 ? "#f59e0b" : "#f43f5e";
+  const initials = item.kelas
+    .split(" ")
+    .map((w: string) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  const avatarColors = [
+    { bg: "#eef2ff", text: "#4338ca" },
+    { bg: "#f0fdf4", text: "#15803d" },
+    { bg: "#fff7ed", text: "#c2410c" },
+    { bg: "#fdf4ff", text: "#7e22ce" },
+  ];
+  const av = avatarColors[index % avatarColors.length];
+
+  return (
+    <div
+      style={{
+        background: "var(--color-background-primary)",
+        border: "0.5px solid var(--color-border-tertiary)",
+        borderRadius: 14,
+        padding: "14px 16px",
+        transition: "border-color 0.2s, transform 0.2s",
+        cursor: "default",
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLDivElement).style.borderColor =
+          "var(--color-border-secondary)";
+        (e.currentTarget as HTMLDivElement).style.transform =
+          "translateY(-1px)";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLDivElement).style.borderColor =
+          "var(--color-border-tertiary)";
+        (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 10,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: 8,
+              background: av.bg,
+              color: av.text,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 12,
+              fontWeight: 600,
+            }}
+          >
+            {initials}
+          </div>
+          <div>
+            <p
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: "var(--color-text-primary)",
+                margin: 0,
+              }}
+            >
+              {item.kelas}
+            </p>
+            <p
+              style={{
+                fontSize: 11,
+                color: "var(--color-text-secondary)",
+                margin: 0,
+              }}
+            >
+              {item.hadir}/{item.total} siswa
+            </p>
+          </div>
+        </div>
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 600,
+            padding: "3px 8px",
+            borderRadius: 20,
+            background: p >= 80 ? "#f0fdf4" : p >= 60 ? "#fefce8" : "#fef2f2",
+            color: p >= 80 ? "#15803d" : p >= 60 ? "#a16207" : "#be123c",
+          }}
+        >
+          {p}%
+        </span>
+      </div>
+      {/* progress bar */}
+      <div
+        style={{
+          height: 4,
+          borderRadius: 4,
+          background: "var(--color-background-tertiary)",
+          marginBottom: 10,
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            height: "100%",
+            width: `${p}%`,
+            background: barColor,
+            borderRadius: 4,
+            transition: "width 0.7s ease",
+          }}
+        />
+      </div>
+      {/* badges */}
+      <div style={{ display: "flex", gap: 6 }}>
+        {[
+          { v: item.hadir, l: "hadir", bg: "#f0fdf4", tc: "#15803d" },
+          { v: izinKelas, l: "izin", bg: "#fefce8", tc: "#a16207" },
+          { v: item.tidakHadir || 0, l: "alfa", bg: "#fef2f2", tc: "#be123c" },
+        ].map((c) => (
+          <span
+            key={c.l}
+            style={{
+              fontSize: 10,
+              fontWeight: 500,
+              padding: "2px 7px",
+              borderRadius: 6,
+              background: c.bg,
+              color: c.tc,
+            }}
+          >
+            {c.v} {c.l}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Main Component ─── */
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -107,7 +383,7 @@ export default function AdminDashboard() {
   const [classData, setClassData] = useState<any[]>([]);
 
   useEffect(() => {
-    const fetchDashboard = async () => {
+    (async () => {
       setLoading(true);
       try {
         const res = await fetch(`/api/dashboard?t=${Date.now()}`);
@@ -121,8 +397,7 @@ export default function AdminDashboard() {
       } finally {
         setLoading(false);
       }
-    };
-    fetchDashboard();
+    })();
   }, []);
 
   const izin = useMemo(
@@ -173,76 +448,296 @@ export default function AdminDashboard() {
     year: "numeric",
   });
 
+  const statCards = [
+    {
+      label: "Total Siswa",
+      value: stats.totalSiswa,
+      icon: <Users size={15} />,
+      accent: "#6366f1",
+      sub: "Terdaftar aktif",
+    },
+    {
+      label: "Hadir Hari Ini",
+      value: stats.hadirHariIni,
+      icon: <CheckCircle2 size={15} />,
+      accent: "#10b981",
+      sub: `${pct}% dari total`,
+    },
+    {
+      label: "Izin / Sakit",
+      value: izin,
+      icon: <BookOpen size={15} />,
+      accent: "#f59e0b",
+      sub: "Ada keterangan",
+    },
+    {
+      label: "Alfa",
+      value: stats.tidakHadir,
+      icon: <XCircle size={15} />,
+      accent: "#f43f5e",
+      sub: "Tanpa keterangan",
+    },
+  ];
+
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
-        <main className="flex-1 p-6 sm:p-8 overflow-y-auto overflow-x-hidden">
+        <main
+          className="flex-1 overflow-y-auto overflow-x-hidden"
+          style={{
+            padding: "28px 32px",
+            background: "var(--color-background-tertiary)",
+          }}
+        >
           <GreetingBanner />
 
-          {/* ── PAGE HEADER ── */}
-          <div className="flex items-start justify-between mb-6 flex-wrap gap-3">
+          {/* ── Hero Header ── */}
+          <div
+            style={{
+              background: "var(--color-background-primary)",
+              border: "0.5px solid var(--color-border-tertiary)",
+              borderRadius: 20,
+              padding: "24px 28px",
+              marginBottom: 20,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 16,
+            }}
+          >
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-wide uppercase px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
-                  <Activity className="w-3 h-3" />
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  marginBottom: 6,
+                }}
+              >
+                <div
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 8,
+                    background: "#eef2ff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Activity size={14} color="#6366f1" />
+                </div>
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: "#6366f1",
+                    letterSpacing: "0.07em",
+                    textTransform: "uppercase",
+                  }}
+                >
                   Dashboard Admin
                 </span>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 leading-tight">
+              <p
+                style={{
+                  fontSize: 22,
+                  fontWeight: 700,
+                  color: "var(--color-text-primary)",
+                  margin: "0 0 4px",
+                }}
+              >
                 Pantau Kehadiran
-              </h1>
-              <p className="text-sm text-gray-400 mt-0.5">{hariIni}</p>
+              </p>
+              <p
+                style={{
+                  fontSize: 13,
+                  color: "var(--color-text-secondary)",
+                  margin: 0,
+                }}
+              >
+                {hariIni}
+              </p>
             </div>
-            <div className="flex items-center gap-2">
+            {/* quick stats pill row */}
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {[
                 {
-                  label: `${pct}% hadir`,
-                  color: "text-emerald-700 bg-emerald-50 border-emerald-200",
+                  v: loading ? "—" : `${pct}%`,
+                  l: "hadir",
+                  bg: "#f0fdf4",
+                  tc: "#15803d",
+                  bc: "#bbf7d0",
                 },
                 {
-                  label: `${loading ? "—" : stats.totalSiswa} siswa`,
-                  color: "text-gray-500 bg-gray-50 border-gray-200",
+                  v: loading ? "—" : stats.totalSiswa,
+                  l: "total siswa",
+                  bg: "var(--color-background-secondary)",
+                  tc: "var(--color-text-secondary)",
+                  bc: "var(--color-border-tertiary)",
+                },
+                {
+                  v: loading ? "—" : stats.tidakHadir + izin,
+                  l: "tidak hadir",
+                  bg: "#fef2f2",
+                  tc: "#be123c",
+                  bc: "#fecaca",
                 },
               ].map((b) => (
-                <span
-                  key={b.label}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${b.color}`}
+                <div
+                  key={b.l}
+                  style={{
+                    background: b.bg,
+                    border: `0.5px solid ${b.bc}`,
+                    borderRadius: 12,
+                    padding: "8px 16px",
+                    textAlign: "center",
+                  }}
                 >
-                  {b.label}
-                </span>
+                  <p
+                    style={{
+                      fontSize: 18,
+                      fontWeight: 700,
+                      color: b.tc,
+                      margin: 0,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {b.v}
+                  </p>
+                  <p
+                    style={{
+                      fontSize: 11,
+                      color: b.tc,
+                      opacity: 0.7,
+                      margin: "3px 0 0",
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {b.l}
+                  </p>
+                </div>
               ))}
             </div>
           </div>
 
-          {/* ── TOP SECTION: Donut + Summary + Ringkasan ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-            {/* Card 1: Donut Chart */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-1.5">
-                <TrendingUp className="w-3 h-3 text-emerald-500" />
-                Distribusi kehadiran
-              </p>
+          {/* ── Stat Cards ── */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              gap: 12,
+              marginBottom: 20,
+            }}
+          >
+            {statCards.map((c, i) => (
+              <StatCard
+                key={i}
+                loading={loading}
+                {...c}
+                value={loading ? null : c.value}
+              />
+            ))}
+          </div>
+
+          {/* ── Middle Row: Donut+Summary | Per Kelas ── */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "2fr 3fr",
+              gap: 12,
+              marginBottom: 12,
+            }}
+          >
+            {/* Left: Donut + Summary combined */}
+            <div
+              style={{
+                background: "var(--color-background-primary)",
+                border: "0.5px solid var(--color-border-tertiary)",
+                borderRadius: 16,
+                padding: "20px 22px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  marginBottom: 16,
+                }}
+              >
+                <TrendingUp size={13} color="#10b981" />
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: "var(--color-text-secondary)",
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Distribusi &amp; Ringkasan
+                </span>
+              </div>
+
+              {/* Donut row */}
               {loading ? (
-                <Skeleton className="w-32 h-32 rounded-full mx-auto" />
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 16,
+                    marginBottom: 20,
+                  }}
+                >
+                  <Sk w={96} h={96} r={48} />
+                  <div
+                    style={{
+                      flex: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 8,
+                    }}
+                  >
+                    <Sk h={14} />
+                    <Sk h={14} />
+                    <Sk h={14} />
+                  </div>
+                </div>
               ) : (
-                <div className="flex items-center gap-4">
-                  <div className="relative w-32 h-32 shrink-0">
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 16,
+                    marginBottom: 20,
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "relative",
+                      width: 96,
+                      height: 96,
+                      flexShrink: 0,
+                    }}
+                  >
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={donutData}
                           cx="50%"
                           cy="50%"
-                          innerRadius={36}
-                          outerRadius={56}
+                          innerRadius={30}
+                          outerRadius={46}
                           paddingAngle={3}
                           dataKey="value"
                           startAngle={90}
                           endAngle={-270}
                           animationBegin={0}
-                          animationDuration={800}
+                          animationDuration={700}
                         >
                           {donutData.map((_, i) => (
                             <Cell key={i} fill={DONUT_COLORS[i]} />
@@ -251,50 +746,104 @@ export default function AdminDashboard() {
                         <Tooltip content={<DonutTooltip />} />
                       </PieChart>
                     </ResponsiveContainer>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <span className="text-xl font-black text-slate-800 leading-none">
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        pointerEvents: "none",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: 16,
+                          fontWeight: 700,
+                          color: "var(--color-text-primary)",
+                          lineHeight: 1,
+                        }}
+                      >
                         {pct}%
                       </span>
-                      <span className="text-[9px] text-gray-400 mt-0.5 uppercase tracking-wide">
+                      <span
+                        style={{
+                          fontSize: 9,
+                          color: "var(--color-text-secondary)",
+                          marginTop: 2,
+                        }}
+                      >
                         hadir
                       </span>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-3 flex-1">
+                  <div
+                    style={{
+                      flex: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 8,
+                    }}
+                  >
                     {[
                       {
                         label: "Hadir",
                         val: stats.hadirHariIni,
                         color: "#10b981",
                         bg: "#f0fdf4",
-                        tc: "#166534",
+                        tc: "#15803d",
                       },
                       {
                         label: "Izin/Sakit",
                         val: izin,
                         color: "#f59e0b",
                         bg: "#fefce8",
-                        tc: "#854d0e",
+                        tc: "#a16207",
                       },
                       {
                         label: "Alfa",
                         val: stats.tidakHadir,
                         color: "#f43f5e",
                         bg: "#fef2f2",
-                        tc: "#991b1b",
+                        tc: "#be123c",
                       },
                     ].map((b) => (
-                      <div key={b.label} className="flex items-center gap-2">
+                      <div
+                        key={b.label}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                        }}
+                      >
                         <span
-                          className="w-2.5 h-2.5 rounded-sm shrink-0"
-                          style={{ background: b.color }}
+                          style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: 2,
+                            background: b.color,
+                            flexShrink: 0,
+                          }}
                         />
-                        <span className="text-xs text-gray-500 flex-1">
+                        <span
+                          style={{
+                            fontSize: 12,
+                            color: "var(--color-text-secondary)",
+                            flex: 1,
+                          }}
+                        >
                           {b.label}
                         </span>
                         <span
-                          className="text-xs font-bold px-2 py-0.5 rounded-full"
-                          style={{ background: b.bg, color: b.tc }}
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 600,
+                            padding: "2px 8px",
+                            borderRadius: 6,
+                            background: b.bg,
+                            color: b.tc,
+                          }}
                         >
                           {b.val}
                         </span>
@@ -303,533 +852,332 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               )}
-            </div>
 
-            {/* Card 2: Ringkasan angka (2x2 grid) */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-1.5">
-                <Users className="w-3 h-3 text-indigo-500" />
-                Ringkasan angka
-              </p>
-              <div className="grid grid-cols-2 gap-3 h-full">
-                {[
-                  {
-                    label: "Total Siswa",
-                    value: stats.totalSiswa,
-                    icon: <Users className="w-4 h-4" />,
-                    bg: "#eef2ff",
-                    ic: "#6366f1",
-                    tc: "#3730a3",
-                    dot: "#6366f1",
-                  },
-                  {
-                    label: "Hadir",
-                    value: stats.hadirHariIni,
-                    icon: <CheckCircle2 className="w-4 h-4" />,
-                    bg: "#f0fdf4",
-                    ic: "#10b981",
-                    tc: "#166534",
-                    dot: "#10b981",
-                  },
-                  {
-                    label: "Izin",
-                    value: izin,
-                    icon: <BookOpen className="w-4 h-4" />,
-                    bg: "#fefce8",
-                    ic: "#f59e0b",
-                    tc: "#854d0e",
-                    dot: "#f59e0b",
-                  },
-                  {
-                    label: "Alfa",
-                    value: stats.tidakHadir,
-                    icon: <XCircle className="w-4 h-4" />,
-                    bg: "#fef2f2",
-                    ic: "#f43f5e",
-                    tc: "#991b1b",
-                    dot: "#f43f5e",
-                  },
-                ].map((item, i) => (
-                  <div
-                    key={i}
-                    className="rounded-xl p-3.5 flex flex-col gap-2 transition-transform hover:scale-[1.02]"
-                    style={{ background: item.bg }}
-                  >
-                    <div
-                      className="w-8 h-8 rounded-lg flex items-center justify-center"
-                      style={{ background: "white", color: item.ic }}
-                    >
-                      {item.icon}
-                    </div>
-                    {loading ? (
-                      <div className="h-7 w-12 rounded-lg animate-pulse bg-white/60" />
-                    ) : (
-                      <span
-                        className="text-2xl font-black leading-none"
-                        style={{ color: item.tc }}
-                      >
-                        {item.value}
-                      </span>
-                    )}
-                    <span
-                      className="text-[11px] font-medium"
-                      style={{ color: item.tc, opacity: 0.75 }}
-                    >
-                      {item.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Card 3: Ringkasan % + best/worst */}
-            <div
-              className="rounded-2xl p-5 shadow-sm relative overflow-hidden flex flex-col justify-between"
-              style={{
-                background:
-                  "linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #1e40af 100%)",
-              }}
-            >
+              {/* Divider */}
               <div
-                className="absolute w-48 h-48 rounded-full pointer-events-none"
                 style={{
-                  right: -40,
-                  bottom: -40,
-                  background:
-                    "radial-gradient(circle, rgba(99,102,241,0.3) 0%, transparent 70%)",
+                  height: "0.5px",
+                  background: "var(--color-border-tertiary)",
+                  marginBottom: 16,
                 }}
               />
-              <div
-                className="absolute w-24 h-24 rounded-full pointer-events-none"
-                style={{
-                  left: 20,
-                  top: 10,
-                  background:
-                    "radial-gradient(circle, rgba(52,211,153,0.15) 0%, transparent 70%)",
-                }}
-              />
-              <div className="relative z-10">
-                <div className="flex items-center gap-2 mb-3">
-                  <Award className="w-4 h-4 text-indigo-400" />
-                  <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">
-                    Ringkasan harian
-                  </p>
-                </div>
-                <p className="text-5xl font-black text-white leading-none mb-1">
-                  {pct}%
-                </p>
-                <p className="text-xs text-slate-400 mb-5">
-                  Rata-rata kehadiran hari ini
-                </p>
-                {/* progress bar */}
+
+              {/* Summary strip */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div
-                  className="h-1.5 rounded-full overflow-hidden mb-4"
-                  style={{ background: "rgba(255,255,255,0.1)" }}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    background: "#eef2ff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
                 >
-                  <div
-                    className="h-full rounded-full transition-all duration-700"
+                  <Award size={16} color="#6366f1" />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p
                     style={{
-                      width: `${Math.min(pct, 100)}%`,
-                      background: "linear-gradient(90deg, #34d399, #6366f1)",
+                      fontSize: 11,
+                      color: "var(--color-text-secondary)",
+                      margin: "0 0 2px",
                     }}
-                  />
+                  >
+                    Rata-rata kehadiran hari ini
+                  </p>
+                  <p
+                    style={{
+                      fontSize: 22,
+                      fontWeight: 700,
+                      color: "var(--color-text-primary)",
+                      margin: 0,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {pct}%
+                  </p>
                 </div>
               </div>
               {bestClass && (
                 <div
-                  className="relative z-10 space-y-2 border-t pt-4"
-                  style={{ borderColor: "rgba(255,255,255,0.1)" }}
+                  style={{
+                    marginTop: 12,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                  }}
                 >
-                  <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                    <p className="text-xs text-slate-400">
-                      Terbaik:{" "}
-                      <strong className="text-emerald-400">
-                        {bestClass.kelas}
-                      </strong>{" "}
-                      <span className="text-slate-500">
-                        — {bestClass.persentase}%
-                      </span>
-                    </p>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "8px 12px",
+                      background: "#f0fdf4",
+                      borderRadius: 10,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: "50%",
+                        background: "#10b981",
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span style={{ fontSize: 11, color: "#15803d" }}>
+                      Terbaik: <strong>{bestClass.kelas}</strong> —{" "}
+                      {bestClass.persentase}%
+                    </span>
                   </div>
                   {worstClass && worstClass.kelas !== bestClass.kelas && (
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
-                      <p className="text-xs text-slate-400">
-                        Perhatian:{" "}
-                        <strong className="text-red-400">
-                          {worstClass.kelas}
-                        </strong>{" "}
-                        <span className="text-slate-500">
-                          — {worstClass.persentase}%
-                        </span>
-                      </p>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        padding: "8px 12px",
+                        background: "#fef2f2",
+                        borderRadius: 10,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: "50%",
+                          background: "#f43f5e",
+                          flexShrink: 0,
+                        }}
+                      />
+                      <span style={{ fontSize: 11, color: "#be123c" }}>
+                        Perhatian: <strong>{worstClass.kelas}</strong> —{" "}
+                        {worstClass.persentase}%
+                      </span>
                     </div>
                   )}
                 </div>
               )}
             </div>
-          </div>
 
-          {/* ── KEHADIRAN PER KELAS ── */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm mb-4">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                <Users className="w-3 h-3 text-indigo-500" />
-                Kehadiran per kelas
-              </p>
-            </div>
-            {loading ? (
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-                {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="h-28" />
-                ))}
+            {/* Right: Per Kelas */}
+            <div
+              style={{
+                background: "var(--color-background-primary)",
+                border: "0.5px solid var(--color-border-tertiary)",
+                borderRadius: 16,
+                padding: "20px 22px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  marginBottom: 16,
+                }}
+              >
+                <Users size={13} color="#6366f1" />
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: "var(--color-text-secondary)",
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Kehadiran per Kelas
+                </span>
               </div>
-            ) : classData.length === 0 ? (
-              <div className="flex items-center justify-center h-28 text-gray-400 text-sm">
-                Tidak ada data.
-              </div>
-            ) : (
-              <>
-                {/* 3 kelas cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
-                  {classData.slice(0, 3).map((item, i) => {
-                    const th = CLASS_THEMES[i % CLASS_THEMES.length];
-                    const barC =
-                      item.persentase >= 80
-                        ? "#10b981"
-                        : item.persentase >= 60
-                          ? "#f59e0b"
-                          : "#f43f5e";
-                    const badgeBg =
-                      item.persentase >= 80
-                        ? "#f0fdf4"
-                        : item.persentase >= 60
-                          ? "#fefce8"
-                          : "#fef2f2";
-                    const badgeTc =
-                      item.persentase >= 80
-                        ? "#166534"
-                        : item.persentase >= 60
-                          ? "#854d0e"
-                          : "#991b1b";
-                    const initials = item.kelas
-                      .split(" ")
-                      .map((w: string) => w[0])
-                      .join("")
-                      .slice(0, 2);
-                    const izinKelas = Math.max(
-                      0,
-                      (item.total || 0) -
-                        (item.hadir || 0) -
-                        (item.tidakHadir || 0),
-                    );
-                    return (
-                      <div
-                        key={i}
-                        className="rounded-xl p-4 border relative overflow-hidden transition-all duration-200 hover:shadow-md hover:scale-[1.02] cursor-default"
-                        style={{ background: th.bg, borderColor: th.border }}
-                      >
-                        <div
-                          className="absolute right-[-14px] bottom-[-14px] w-20 h-20 rounded-full opacity-15 pointer-events-none"
-                          style={{ background: th.bar }}
-                        />
-                        <div className="flex items-center justify-between mb-3 relative z-10">
-                          <div className="flex items-center gap-2.5">
-                            <div
-                              className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold"
-                              style={{ background: th.av[0], color: th.av[1] }}
-                            >
-                              {initials}
-                            </div>
-                            <div>
-                              <p
-                                className="text-sm font-semibold"
-                                style={{ color: th.av[1] }}
-                              >
-                                {item.kelas}
-                              </p>
-                              <p
-                                className="text-[11px] opacity-60"
-                                style={{ color: th.av[1] }}
-                              >
-                                {item.hadir}/{item.total} siswa
-                              </p>
-                            </div>
-                          </div>
-                          <span
-                            className="text-[11px] font-bold px-2.5 py-1 rounded-full"
-                            style={{ background: badgeBg, color: badgeTc }}
-                          >
-                            {item.persentase}%
-                          </span>
-                        </div>
-                        <div
-                          className="h-2 rounded-full overflow-hidden relative z-10"
-                          style={{ background: "rgba(0,0,0,0.08)" }}
-                        >
-                          <div
-                            className="h-full rounded-full transition-all duration-700"
-                            style={{
-                              width: `${item.persentase}%`,
-                              background: barC,
-                            }}
-                          />
-                        </div>
-                        <div className="flex gap-1.5 mt-3 relative z-10">
-                          {[
-                            {
-                              v: item.hadir,
-                              l: "hadir",
-                              bg: "#f0fdf4",
-                              tc: "#166534",
-                            },
-                            {
-                              v: izinKelas,
-                              l: "izin",
-                              bg: "#fefce8",
-                              tc: "#854d0e",
-                            },
-                            {
-                              v: item.tidakHadir || 0,
-                              l: "alfa",
-                              bg: "#fef2f2",
-                              tc: "#991b1b",
-                            },
-                          ].map((c) => (
-                            <span
-                              key={c.l}
-                              className="text-[10px] font-semibold px-2 py-0.5 rounded-md"
-                              style={{ background: c.bg, color: c.tc }}
-                            >
-                              {c.v} {c.l}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
+
+              {loading ? (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr 1fr",
+                    gap: 10,
+                  }}
+                >
+                  {[...Array(3)].map((_, i) => (
+                    <Sk key={i} h={90} />
+                  ))}
                 </div>
-
-                {/* kelas tambahan jika ada lebih dari 3 */}
-                {classData.length > 3 && (
-                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
-                    {classData.slice(3).map((item, i) => {
-                      const th = CLASS_THEMES[(i + 3) % CLASS_THEMES.length];
-                      const barC =
-                        item.persentase >= 80
-                          ? "#10b981"
-                          : item.persentase >= 60
-                            ? "#f59e0b"
-                            : "#f43f5e";
-                      const badgeBg =
-                        item.persentase >= 80
-                          ? "#f0fdf4"
-                          : item.persentase >= 60
-                            ? "#fefce8"
-                            : "#fef2f2";
-                      const badgeTc =
-                        item.persentase >= 80
-                          ? "#166534"
-                          : item.persentase >= 60
-                            ? "#854d0e"
-                            : "#991b1b";
-                      const initials = item.kelas
-                        .split(" ")
-                        .map((w: string) => w[0])
-                        .join("")
-                        .slice(0, 2);
-                      const izinKelas = Math.max(
-                        0,
-                        (item.total || 0) -
-                          (item.hadir || 0) -
-                          (item.tidakHadir || 0),
-                      );
-                      return (
-                        <div
-                          key={i}
-                          className="rounded-xl p-3.5 border relative overflow-hidden transition-all duration-200 hover:shadow-md hover:scale-[1.02] cursor-default"
-                          style={{ background: th.bg, borderColor: th.border }}
-                        >
-                          <div
-                            className="absolute right-[-10px] bottom-[-10px] w-14 h-14 rounded-full opacity-15 pointer-events-none"
-                            style={{ background: th.bar }}
-                          />
-                          <div className="flex items-center justify-between mb-2.5 relative z-10">
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold"
-                                style={{
-                                  background: th.av[0],
-                                  color: th.av[1],
-                                }}
-                              >
-                                {initials}
-                              </div>
-                              <div>
-                                <p
-                                  className="text-xs font-semibold"
-                                  style={{ color: th.av[1] }}
-                                >
-                                  {item.kelas}
-                                </p>
-                                <p
-                                  className="text-[10px] opacity-60"
-                                  style={{ color: th.av[1] }}
-                                >
-                                  {item.hadir}/{item.total}
-                                </p>
-                              </div>
-                            </div>
-                            <span
-                              className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                              style={{ background: badgeBg, color: badgeTc }}
-                            >
-                              {item.persentase}%
-                            </span>
-                          </div>
-                          <div
-                            className="h-1.5 rounded-full overflow-hidden relative z-10"
-                            style={{ background: "rgba(0,0,0,0.08)" }}
-                          >
-                            <div
-                              className="h-full rounded-full transition-all duration-700"
-                              style={{
-                                width: `${item.persentase}%`,
-                                background: barC,
-                              }}
-                            />
-                          </div>
-                          <div className="flex gap-1.5 mt-2 relative z-10">
-                            {[
-                              {
-                                v: item.hadir,
-                                l: "hadir",
-                                bg: "#f0fdf4",
-                                tc: "#166534",
-                              },
-                              {
-                                v: izinKelas,
-                                l: "izin",
-                                bg: "#fefce8",
-                                tc: "#854d0e",
-                              },
-                              {
-                                v: item.tidakHadir || 0,
-                                l: "alfa",
-                                bg: "#fef2f2",
-                                tc: "#991b1b",
-                              },
-                            ].map((c) => (
-                              <span
-                                key={c.l}
-                                className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md"
-                                style={{ background: c.bg, color: c.tc }}
-                              >
-                                {c.v} {c.l}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
+              ) : classData.length === 0 ? (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: 120,
+                    color: "var(--color-text-secondary)",
+                    fontSize: 13,
+                  }}
+                >
+                  Tidak ada data.
+                </div>
+              ) : (
+                <>
+                  {/* top 3 class boxes horizontal */}
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(3, 1fr)",
+                      gap: 10,
+                      marginBottom: 14,
+                    }}
+                  >
+                    {classData.slice(0, 3).map((item, i) => (
+                      <ClassCard key={i} item={item} index={i} />
+                    ))}
                   </div>
-                )}
-
-                {/* Global summary row */}
-                <div className="grid grid-cols-4 gap-2">
-                  {[
-                    {
-                      v: stats.totalSiswa,
-                      l: "Total",
-                      icon: <Users className="w-4 h-4" />,
-                      bg: "#f1f5f9",
-                      ic: "#64748b",
-                      tc: "#475569",
-                    },
-                    {
-                      v: stats.hadirHariIni,
-                      l: "Hadir",
-                      icon: <CheckCircle2 className="w-4 h-4" />,
-                      bg: "#f0fdf4",
-                      ic: "#10b981",
-                      tc: "#166534",
-                    },
-                    {
-                      v: izin,
-                      l: "Izin",
-                      icon: <BookOpen className="w-4 h-4" />,
-                      bg: "#fefce8",
-                      ic: "#f59e0b",
-                      tc: "#854d0e",
-                    },
-                    {
-                      v: stats.tidakHadir,
-                      l: "Alfa",
-                      icon: <XCircle className="w-4 h-4" />,
-                      bg: "#fef2f2",
-                      ic: "#f43f5e",
-                      tc: "#991b1b",
-                    },
-                  ].map((s) => (
+                  {/* remaining classes if any */}
+                  {classData.length > 3 && (
                     <div
-                      key={s.l}
-                      className="rounded-xl py-3 px-3 flex items-center gap-2.5 transition-transform hover:scale-[1.02]"
-                      style={{ background: s.bg }}
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(3, 1fr)",
+                        gap: 10,
+                        marginBottom: 14,
+                      }}
                     >
+                      {classData.slice(3).map((item, i) => (
+                        <ClassCard key={i + 3} item={item} index={i + 3} />
+                      ))}
+                    </div>
+                  )}
+                  {/* Summary row — 4 cols */}
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(4, 1fr)",
+                      gap: 8,
+                    }}
+                  >
+                    {[
+                      {
+                        v: stats.totalSiswa,
+                        l: "Total",
+                        bg: "var(--color-background-secondary)",
+                        tc: "var(--color-text-secondary)",
+                      },
+                      {
+                        v: stats.hadirHariIni,
+                        l: "Hadir",
+                        bg: "#f0fdf4",
+                        tc: "#15803d",
+                      },
+                      { v: izin, l: "Izin", bg: "#fefce8", tc: "#a16207" },
+                      {
+                        v: stats.tidakHadir,
+                        l: "Alfa",
+                        bg: "#fef2f2",
+                        tc: "#be123c",
+                      },
+                    ].map((s) => (
                       <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                        style={{ background: "white", color: s.ic }}
+                        key={s.l}
+                        style={{
+                          background: s.bg,
+                          borderRadius: 10,
+                          padding: "10px 8px",
+                          textAlign: "center",
+                        }}
                       >
-                        {s.icon}
-                      </div>
-                      <div>
                         <p
-                          className="text-sm font-black leading-none"
-                          style={{ color: s.tc }}
+                          style={{
+                            fontSize: 16,
+                            fontWeight: 700,
+                            color: s.tc,
+                            margin: 0,
+                            lineHeight: 1,
+                          }}
                         >
                           {s.v}
                         </p>
                         <p
-                          className="text-[10px] mt-0.5"
-                          style={{ color: s.tc, opacity: 0.7 }}
+                          style={{
+                            fontSize: 10,
+                            color: s.tc,
+                            opacity: 0.7,
+                            margin: "4px 0 0",
+                          }}
                         >
                           {s.l}
                         </p>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
-          {/* ── TREND BAR CHART ── */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-5">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                <TrendingUp className="w-3 h-3 text-indigo-500" />
-                Tren kehadiran 7 hari terakhir
-              </p>
-              <div className="flex gap-3">
+          {/* ── Trend Chart ── */}
+          <div
+            style={{
+              background: "var(--color-background-primary)",
+              border: "0.5px solid var(--color-border-tertiary)",
+              borderRadius: 16,
+              padding: "20px 22px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 16,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <TrendingUp size={13} color="#6366f1" />
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: "var(--color-text-secondary)",
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Tren Kehadiran 7 Hari Terakhir
+                </span>
+              </div>
+              <div style={{ display: "flex", gap: 14 }}>
                 {[
                   { color: "#6366f1", label: "Hadir" },
-                  { color: "#fecaca", label: "Tidak hadir" },
+                  { color: "#fca5a5", label: "Tidak hadir" },
                 ].map((l) => (
                   <span
                     key={l.label}
-                    className="flex items-center gap-1.5 text-xs text-gray-400"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      fontSize: 12,
+                      color: "var(--color-text-secondary)",
+                    }}
                   >
                     <span
-                      className="w-2.5 h-2.5 rounded-sm"
-                      style={{ background: l.color }}
+                      style={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: 3,
+                        background: l.color,
+                        display: "inline-block",
+                      }}
                     />
                     {l.label}
                   </span>
                 ))}
               </div>
             </div>
-            <div className="h-36">
+            <div style={{ height: 140 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={trendData}
@@ -838,12 +1186,17 @@ export default function AdminDashboard() {
                 >
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    stroke="#f1f5f9"
+                    stroke="var(--color-border-tertiary)"
                     vertical={false}
                   />
                   <XAxis
                     dataKey="day"
-                    tick={{ fontSize: 11, fill: "#94a3b8" }}
+                    tick={
+                      {
+                        fontSize: 11,
+                        fill: "var(--color-text-secondary)",
+                      } as any
+                    }
                     axisLine={false}
                     tickLine={false}
                   />
@@ -853,14 +1206,14 @@ export default function AdminDashboard() {
                     name="Hadir"
                     fill="#6366f1"
                     radius={[5, 5, 0, 0]}
-                    maxBarSize={32}
+                    maxBarSize={28}
                   />
                   <Bar
                     dataKey="absen"
                     name="Tidak hadir"
-                    fill="#fecaca"
+                    fill="#fca5a5"
                     radius={[5, 5, 0, 0]}
-                    maxBarSize={32}
+                    maxBarSize={28}
                   />
                 </BarChart>
               </ResponsiveContainer>
