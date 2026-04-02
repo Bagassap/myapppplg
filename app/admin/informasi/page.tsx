@@ -9,7 +9,6 @@ import {
   CheckCircle,
   CheckCircle2,
   Plus,
-  X,
   XCircle,
   Edit,
   Trash2,
@@ -17,9 +16,12 @@ import {
   Loader2,
   FileText,
   Bell,
-  ChevronRight,
-  Sparkles,
   AlertTriangle,
+  BarChart2,
+  Search,
+  Sparkles,
+  ChevronRight,
+  Clock,
 } from "lucide-react";
 
 interface Announcement {
@@ -41,39 +43,59 @@ function formatTanggal(raw: string) {
   });
 }
 
-function getItemAccent(idx: number) {
-  const accents = [
-    {
-      icon: <Info className="w-4 h-4" />,
-      bg: "bg-blue-50",
-      iconColor: "text-blue-600",
-      ring: "ring-blue-100",
-      dot: "bg-blue-400",
-    },
-    {
-      icon: <CheckCircle className="w-4 h-4" />,
-      bg: "bg-emerald-50",
-      iconColor: "text-emerald-600",
-      ring: "ring-emerald-100",
-      dot: "bg-emerald-400",
-    },
-    {
-      icon: <AlertTriangle className="w-4 h-4" />,
-      bg: "bg-amber-50",
-      iconColor: "text-amber-600",
-      ring: "ring-amber-100",
-      dot: "bg-amber-400",
-    },
-    {
-      icon: <Megaphone className="w-4 h-4" />,
-      bg: "bg-indigo-50",
-      iconColor: "text-indigo-600",
-      ring: "ring-indigo-100",
-      dot: "bg-indigo-400",
-    },
-  ];
-  return accents[idx % accents.length];
+function formatTanggalShort(raw: string) {
+  if (!raw) return "-";
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return raw;
+  return d.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
+
+const ITEM_STYLES = [
+  {
+    accentCls: "border-l-indigo-500",
+    numCls: "bg-indigo-50 text-indigo-700",
+    iconBg: "bg-indigo-50",
+    iconColor: "text-indigo-600",
+    badgeCls: "bg-indigo-50 text-indigo-700 border-indigo-200",
+    hoverCls: "hover:bg-indigo-50/30",
+    icon: <Info className="w-4 h-4" />,
+    label: "Pengumuman",
+  },
+  {
+    accentCls: "border-l-emerald-500",
+    numCls: "bg-emerald-50 text-emerald-700",
+    iconBg: "bg-emerald-50",
+    iconColor: "text-emerald-600",
+    badgeCls: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    hoverCls: "hover:bg-emerald-50/30",
+    icon: <CheckCircle className="w-4 h-4" />,
+    label: "Update",
+  },
+  {
+    accentCls: "border-l-amber-500",
+    numCls: "bg-amber-50 text-amber-700",
+    iconBg: "bg-amber-50",
+    iconColor: "text-amber-600",
+    badgeCls: "bg-amber-50 text-amber-700 border-amber-200",
+    hoverCls: "hover:bg-amber-50/30",
+    icon: <AlertTriangle className="w-4 h-4" />,
+    label: "Perhatian",
+  },
+  {
+    accentCls: "border-l-rose-500",
+    numCls: "bg-rose-50 text-rose-700",
+    iconBg: "bg-rose-50",
+    iconColor: "text-rose-600",
+    badgeCls: "bg-rose-50 text-rose-700 border-rose-200",
+    hoverCls: "hover:bg-rose-50/30",
+    icon: <Bell className="w-4 h-4" />,
+    label: "Penting",
+  },
+];
 
 function AnnouncementItem({
   p,
@@ -84,58 +106,58 @@ function AnnouncementItem({
 }: {
   p: Announcement;
   idx: number;
-  onEdit: (idx: number) => void;
-  onDelete: (idx: number) => void;
+  onEdit: (i: number) => void;
+  onDelete: (i: number) => void;
   isLast: boolean;
 }) {
-  const accent = getItemAccent(idx);
+  const s = ITEM_STYLES[idx % ITEM_STYLES.length];
   return (
     <div
-      className={`group flex items-start gap-4 px-6 py-5 hover:bg-slate-50 transition-colors duration-150 ${!isLast ? "border-b border-gray-100" : ""}`}
+      className={`group relative flex items-start gap-4 px-6 py-5 border-l-[3px] ${s.accentCls} ${s.hoverCls} transition-all duration-150 ${!isLast ? "border-b border-gray-100" : ""}`}
     >
-      {/* Icon */}
-      <div
-        className={`shrink-0 mt-0.5 w-9 h-9 rounded-xl ${accent.bg} ring-1 ${accent.ring} flex items-center justify-center`}
+      <span
+        className={`shrink-0 mt-0.5 w-7 h-7 rounded-lg text-[11px] font-bold flex items-center justify-center ${s.numCls}`}
       >
-        <span className={accent.iconColor}>{accent.icon}</span>
+        {String(idx + 1).padStart(2, "0")}
+      </span>
+      <div
+        className={`shrink-0 mt-0.5 w-9 h-9 rounded-xl ${s.iconBg} flex items-center justify-center`}
+      >
+        <span className={s.iconColor}>{s.icon}</span>
       </div>
-
-      {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap mb-1.5">
           <span
-            className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${accent.bg} ${accent.iconColor} ring-1 ${accent.ring}`}
+            className={`inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full border ${s.badgeCls}`}
           >
-            Pengumuman
+            {s.label}
           </span>
-          <span className="flex items-center gap-1 text-xs text-gray-400">
+          <span className="flex items-center gap-1 text-[11px] text-gray-400">
             <Calendar className="w-3 h-3" />
             {formatTanggal(p.tanggal)}
           </span>
+          <span className="w-1 h-1 rounded-full bg-gray-300" />
+          <span className="text-[11px] text-gray-400">Admin PKL</span>
         </div>
-        <h4 className="font-semibold text-gray-800 text-sm leading-snug mb-1.5 break-words">
+        <h4 className="font-bold text-gray-800 text-sm leading-snug mb-1.5">
           {p.judul}
         </h4>
-        <p className="text-gray-500 text-sm leading-relaxed break-words whitespace-pre-wrap line-clamp-2 group-hover:line-clamp-none transition-all duration-200">
+        <p className="text-gray-500 text-[12.5px] leading-relaxed whitespace-pre-wrap line-clamp-2 group-hover:line-clamp-none transition-all duration-200">
           {p.isi}
         </p>
       </div>
-
-      {/* Actions */}
       <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150 mt-0.5">
         <button
           onClick={() => onEdit(idx)}
-          title="Edit"
-          className="p-2 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-colors"
+          className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-colors"
         >
-          <Edit className="w-4 h-4" />
+          <Edit className="w-3.5 h-3.5" />
         </button>
         <button
           onClick={() => onDelete(idx)}
-          title="Hapus"
-          className="p-2 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+          className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="w-3.5 h-3.5" />
         </button>
       </div>
     </div>
@@ -174,12 +196,14 @@ export default function AdminInformasi() {
     setIsLoading(true);
     try {
       if (editingAnnouncement !== null) {
-        const idToUpdate = pengumuman[editingAnnouncement].id;
-        const res = await fetch(`/api/informasi/${idToUpdate}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newAnnouncement),
-        });
+        const res = await fetch(
+          `/api/informasi/${pengumuman[editingAnnouncement].id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(newAnnouncement),
+          },
+        );
         if (!res.ok) throw new Error("Gagal update");
       } else {
         const res = await fetch("/api/informasi", {
@@ -191,7 +215,7 @@ export default function AdminInformasi() {
       }
       await fetchInformasi();
       handleCloseModal();
-    } catch (error) {
+    } catch {
       alert("Terjadi kesalahan saat menyimpan data.");
     } finally {
       setIsLoading(false);
@@ -211,11 +235,12 @@ export default function AdminInformasi() {
 
   const handleDeleteAnnouncement = async (idx: number) => {
     if (confirm("Apakah Anda yakin ingin menghapus pengumuman ini?")) {
-      const idToDelete = pengumuman[idx].id;
       try {
-        await fetch(`/api/informasi/${idToDelete}`, { method: "DELETE" });
+        await fetch(`/api/informasi/${pengumuman[idx].id}`, {
+          method: "DELETE",
+        });
         await fetchInformasi();
-      } catch (error) {
+      } catch {
         alert("Gagal menghapus data");
       }
     }
@@ -233,114 +258,187 @@ export default function AdminInformasi() {
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-100 overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 px-4 sm:px-6 lg:px-8 py-7">
-          {/* ── Page Header ── */}
-          <div className="mb-7 flex items-start justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2.5 mb-1">
-                <span className="block w-1 h-6 bg-indigo-600 rounded-full" />
-                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-                  Informasi PKL
-                </h1>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-100 px-4 sm:px-6 lg:px-8 py-6">
+          {/* Breadcrumb */}
+          <nav className="flex items-center gap-1.5 mb-5 text-[11px]">
+            <span className="text-gray-400">absensipkl</span>
+            <ChevronRight className="w-3 h-3 text-gray-300" />
+            <span className="text-gray-400">dashboard</span>
+            <ChevronRight className="w-3 h-3 text-gray-300" />
+            <span className="font-semibold text-gray-700">informasi</span>
+          </nav>
+
+          {/* ── Hero Banner ── */}
+          <div className="relative bg-[#1e2d5a] rounded-2xl overflow-hidden mb-5 p-6 sm:p-8">
+            {/* Decorative */}
+            <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-[#2d4070] opacity-70 pointer-events-none" />
+            <div className="absolute -bottom-12 right-20 w-36 h-36 rounded-full bg-[#253660] opacity-60 pointer-events-none" />
+            <div className="absolute top-5 right-32 w-16 h-16 rounded-full bg-[#3a5090] opacity-40 pointer-events-none" />
+            <div className="absolute -top-5 left-[58%] w-56 h-56 rounded-full border border-white/5 pointer-events-none" />
+            <div className="absolute -bottom-16 left-[48%] w-44 h-44 rounded-full border border-white/[0.04] pointer-events-none" />
+            <div className="absolute top-4 right-8 grid grid-cols-5 gap-1.5 opacity-20 pointer-events-none">
+              {Array.from({ length: 15 }).map((_, i) => (
+                <div key={i} className="w-1 h-1 rounded-full bg-white" />
+              ))}
+            </div>
+
+            {/* Top row */}
+            <div className="relative z-10 flex items-start justify-between gap-4 mb-6">
+              <span className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-3 py-1.5 text-[11px] font-semibold text-white/90 tracking-wide">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                Informasi PKL Aktif
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="flex items-center gap-1.5 bg-white text-[#1e2d5a] rounded-xl px-4 py-2 text-xs font-bold shadow-sm hover:bg-gray-50 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Tambah Informasi
+                </button>
+                <button className="flex items-center gap-1.5 bg-white/10 border border-white/20 text-white/85 rounded-xl px-3.5 py-2 text-xs font-semibold hover:bg-white/15 transition-colors">
+                  <Search className="w-3.5 h-3.5" /> Filter
+                </button>
               </div>
-              <p className="text-gray-500 text-sm pl-3.5">
-                Kelola pengumuman dan informasi terkait Program Kerja Lapangan.
+            </div>
+
+            {/* Title */}
+            <div className="relative z-10 mb-6">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-2">
+                Informasi PKL
+              </h1>
+              <p className="text-sm text-white/55 max-w-md leading-relaxed">
+                Pusat pengumuman &amp; informasi resmi Program Kerja Lapangan
+                semester ini.
               </p>
             </div>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors shrink-0"
-            >
-              <Plus className="w-4 h-4" /> Tambah
-            </button>
+
+            {/* Stats */}
+            <div className="relative z-10 grid grid-cols-3 gap-3">
+              {[
+                {
+                  icon: <BarChart2 className="w-3.5 h-3.5" />,
+                  val: pengumuman.length,
+                  label: "TOTAL INFORMASI",
+                },
+                {
+                  icon: <FileText className="w-3.5 h-3.5" />,
+                  val: pengumuman.length,
+                  label: "PENGUMUMAN",
+                },
+                {
+                  icon: <Calendar className="w-3.5 h-3.5" />,
+                  val:
+                    pengumuman.length > 0
+                      ? formatTanggalShort(pengumuman[0].tanggal)
+                      : "—",
+                  label: "DIPOSTING TERBARU",
+                  small: true,
+                },
+              ].map((st, i) => (
+                <div
+                  key={i}
+                  className="bg-white/[0.08] border border-white/10 rounded-2xl p-4"
+                >
+                  <div className="w-7 h-7 rounded-lg bg-white/[0.12] flex items-center justify-center mb-3 text-white/75">
+                    {st.icon}
+                  </div>
+                  <div
+                    className={`font-bold text-white leading-none ${st.small ? "text-base mt-1" : "text-2xl"}`}
+                  >
+                    {st.val}
+                  </div>
+                  <div className="text-[10px] font-semibold text-white/45 mt-1.5 tracking-wider">
+                    {st.label}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
+          {/* ── Ticker Strip ── */}
+          {pengumuman.length > 0 && (
+            <div className="flex items-center gap-3 bg-white border border-gray-200 rounded-2xl px-4 py-3 mb-4 shadow-sm">
+              <div className="shrink-0 w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-indigo-600" />
+              </div>
+              <p className="flex-1 text-[12px] text-gray-600 truncate">
+                <span className="font-semibold text-gray-800">Terbaru: </span>
+                {pengumuman[0].judul} — {formatTanggal(pengumuman[0].tanggal)}
+              </p>
+              <span className="shrink-0 text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-1 rounded-full">
+                Baru
+              </span>
+            </div>
+          )}
+
           {/* ── Main Card ── */}
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden animate-fade-in">
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
             {/* Card Header */}
-            <div className="px-6 py-5 border-b border-gray-100">
-              <div className="flex items-center justify-between gap-4">
+            <div className="px-6 pt-5 pb-0 border-b border-gray-100">
+              <div className="flex items-center justify-between gap-4 mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-50 ring-1 ring-indigo-100 flex items-center justify-center shrink-0">
-                    <Megaphone className="w-5 h-5 text-indigo-600" />
+                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center shadow-sm">
+                    <Bell className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h2 className="font-semibold text-gray-800 text-base">
-                      Informasi PKL
+                    <h2 className="font-bold text-gray-800 text-base">
+                      Daftar Informasi PKL
                     </h2>
-                    <p className="text-xs text-gray-400 mt-0.5">
+                    <p className="text-[11px] text-gray-400 mt-0.5">
                       Pengumuman &amp; informasi terkini seputar PKL
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full">
-                    <Sparkles className="w-3 h-3" />
-                    Terbaru
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    Live
                   </span>
-                  <span className="text-xs text-gray-500 bg-gray-100 border border-gray-200 px-2.5 py-1 rounded-full font-medium">
+                  <span className="text-[11px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-full">
                     {pengumuman.length} item
+                  </span>
+                  <span className="hidden sm:inline text-[11px] font-semibold text-gray-500 bg-gray-100 border border-gray-200 px-2.5 py-1 rounded-full">
+                    Apr 2025
                   </span>
                 </div>
               </div>
-
-              {/* Stats mini row */}
-              <div className="grid grid-cols-3 gap-3 mt-4">
-                <div className="bg-slate-50 rounded-xl px-4 py-3 flex items-center gap-3 border border-gray-100">
-                  <div className="p-1.5 rounded-lg bg-indigo-50">
-                    <Bell className="w-3.5 h-3.5 text-indigo-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400">Total</p>
-                    <p className="text-base font-bold text-gray-800 leading-none mt-0.5">
-                      {pengumuman.length}
-                    </p>
-                  </div>
-                </div>
-                <div className="bg-slate-50 rounded-xl px-4 py-3 flex items-center gap-3 border border-gray-100">
-                  <div className="p-1.5 rounded-lg bg-emerald-50">
-                    <FileText className="w-3.5 h-3.5 text-emerald-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400">Pengumuman</p>
-                    <p className="text-base font-bold text-gray-800 leading-none mt-0.5">
-                      {pengumuman.length}
-                    </p>
-                  </div>
-                </div>
-                <div className="bg-slate-50 rounded-xl px-4 py-3 flex items-center gap-3 border border-gray-100">
-                  <div className="p-1.5 rounded-lg bg-amber-50">
-                    <Calendar className="w-3.5 h-3.5 text-amber-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400">Terbaru</p>
-                    <p className="text-sm font-semibold text-gray-700 leading-none mt-0.5 truncate">
-                      {pengumuman.length > 0
-                        ? formatTanggal(pengumuman[0].tanggal)
-                        : "—"}
-                    </p>
-                  </div>
-                </div>
+              {/* Tabs */}
+              <div className="flex -mb-px">
+                {["Semua", "Pengumuman", "Penting"].map((tab, i) => (
+                  <button
+                    key={tab}
+                    className={`px-5 py-2.5 text-[12px] font-semibold border-b-2 transition-colors whitespace-nowrap ${i === 0 ? "text-indigo-600 border-indigo-500" : "text-gray-400 border-transparent hover:text-gray-600"}`}
+                  >
+                    {tab}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Card Body — List */}
+            {/* List */}
             {pengumuman.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center px-6">
-                <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
-                  <Megaphone className="w-6 h-6 text-gray-400" />
+                <div className="w-20 h-20 rounded-full border-2 border-dashed border-gray-200 flex items-center justify-center mb-5">
+                  <div className="w-14 h-14 rounded-full bg-gray-50 flex items-center justify-center">
+                    <Megaphone className="w-6 h-6 text-gray-300" />
+                  </div>
                 </div>
-                <p className="text-gray-600 text-sm font-semibold mb-1">
+                <p className="font-bold text-gray-700 text-sm mb-1.5">
                   Belum ada informasi
                 </p>
-                <p className="text-gray-400 text-xs max-w-xs">
+                <p className="text-gray-400 text-[12px] max-w-xs leading-relaxed">
                   Klik tombol{" "}
-                  <span className="font-medium text-indigo-500">Tambah</span> di
-                  atas untuk membuat pengumuman baru.
+                  <button
+                    onClick={() => setShowAddModal(true)}
+                    className="font-semibold text-indigo-500 underline underline-offset-2"
+                  >
+                    Tambah Informasi
+                  </button>{" "}
+                  untuk membuat pengumuman baru.
                 </p>
               </div>
             ) : (
@@ -358,17 +456,22 @@ export default function AdminInformasi() {
               </div>
             )}
 
-            {/* Card Footer */}
+            {/* Footer */}
             {pengumuman.length > 0 && (
-              <div className="px-6 py-3.5 border-t border-gray-100 flex items-center justify-between bg-slate-50/60">
-                <p className="text-xs text-gray-400">
-                  Menampilkan {pengumuman.length} informasi
-                </p>
+              <div className="flex items-center justify-between flex-wrap gap-3 px-6 py-4 bg-slate-50 border-t border-gray-100">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-3.5 h-3.5 text-gray-400" />
+                  <span className="text-[11px] text-gray-400">Menampilkan</span>
+                  <span className="w-1 h-1 rounded-full bg-gray-300" />
+                  <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg">
+                    {pengumuman.length} informasi aktif
+                  </span>
+                </div>
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+                  className="flex items-center gap-2 bg-[#1e2d5a] text-white rounded-xl px-4 py-2 text-[11px] font-bold hover:bg-[#16234a] transition-colors shadow-sm"
                 >
-                  <Plus className="w-3.5 h-3.5" /> Tambah baru
+                  <Plus className="w-3.5 h-3.5" /> Tambah Informasi
                 </button>
               </div>
             )}
@@ -387,13 +490,12 @@ export default function AdminInformasi() {
                   animation: "slideUp .25s cubic-bezier(.32,1.25,.6,1)",
                 }}
               >
-                {/* Modal Header */}
                 <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-indigo-50">
-                      <CheckCircle2 className="w-4 h-4 text-indigo-600" />
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center">
+                      <CheckCircle2 className="w-4 h-4 text-white" />
                     </div>
-                    <p className="font-semibold text-gray-800">
+                    <p className="font-bold text-gray-800">
                       {editingAnnouncement !== null
                         ? "Edit Pengumuman"
                         : "Tambah Pengumuman"}
@@ -406,8 +508,6 @@ export default function AdminInformasi() {
                     <XCircle className="w-5 h-5 text-gray-400" />
                   </button>
                 </div>
-
-                {/* Modal Body */}
                 <div className="flex-1 overflow-y-auto px-5 py-5">
                   <form
                     onSubmit={(e) => {
@@ -417,55 +517,55 @@ export default function AdminInformasi() {
                     className="space-y-4"
                   >
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider">
                         Judul Pengumuman
                       </label>
                       <input
                         type="text"
                         value={newAnnouncement.judul}
+                        required
                         onChange={(e) =>
                           setNewAnnouncement({
                             ...newAnnouncement,
                             judul: e.target.value,
                           })
                         }
-                        required
                         placeholder="Masukkan judul pengumuman..."
                         className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm focus:ring-2 focus:ring-indigo-300 outline-none transition-all"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider">
                         Isi Pengumuman
                       </label>
                       <textarea
                         value={newAnnouncement.isi}
+                        required
+                        rows={5}
                         onChange={(e) =>
                           setNewAnnouncement({
                             ...newAnnouncement,
                             isi: e.target.value,
                           })
                         }
-                        required
-                        rows={5}
                         placeholder="Tulis isi pengumuman di sini..."
                         className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm focus:ring-2 focus:ring-indigo-300 outline-none resize-none transition-all"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider">
                         Tanggal
                       </label>
                       <input
                         type="date"
                         value={newAnnouncement.tanggal}
+                        required
                         onChange={(e) =>
                           setNewAnnouncement({
                             ...newAnnouncement,
                             tanggal: e.target.value,
                           })
                         }
-                        required
                         className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm focus:ring-2 focus:ring-indigo-300 outline-none transition-all"
                       />
                     </div>
@@ -473,14 +573,14 @@ export default function AdminInformasi() {
                       <button
                         type="button"
                         onClick={handleCloseModal}
-                        className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors text-sm font-medium"
+                        className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors text-sm font-semibold"
                       >
                         Batal
                       </button>
                       <button
                         type="submit"
                         disabled={isLoading}
-                        className="flex-1 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-60 flex justify-center items-center gap-2"
+                        className="flex-1 py-2.5 bg-[#1e2d5a] text-white font-bold rounded-xl hover:bg-[#16234a] transition-colors shadow-sm disabled:opacity-60 flex justify-center items-center gap-2 text-sm"
                       >
                         {isLoading ? (
                           <>
@@ -498,18 +598,9 @@ export default function AdminInformasi() {
                   </form>
                 </div>
               </div>
-              <style>{`
-                @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
-                @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-                .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
-              `}</style>
+              <style>{`@keyframes slideUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}`}</style>
             </div>
           )}
-
-          <style>{`
-            @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-            .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
-          `}</style>
         </main>
       </div>
     </div>
