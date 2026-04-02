@@ -17,6 +17,9 @@ import {
   Loader2,
   FileText,
   Bell,
+  ChevronRight,
+  Sparkles,
+  AlertTriangle,
 } from "lucide-react";
 
 interface Announcement {
@@ -38,60 +41,102 @@ function formatTanggal(raw: string) {
   });
 }
 
-function AnnouncementCard({
+function getItemAccent(idx: number) {
+  const accents = [
+    {
+      icon: <Info className="w-4 h-4" />,
+      bg: "bg-blue-50",
+      iconColor: "text-blue-600",
+      ring: "ring-blue-100",
+      dot: "bg-blue-400",
+    },
+    {
+      icon: <CheckCircle className="w-4 h-4" />,
+      bg: "bg-emerald-50",
+      iconColor: "text-emerald-600",
+      ring: "ring-emerald-100",
+      dot: "bg-emerald-400",
+    },
+    {
+      icon: <AlertTriangle className="w-4 h-4" />,
+      bg: "bg-amber-50",
+      iconColor: "text-amber-600",
+      ring: "ring-amber-100",
+      dot: "bg-amber-400",
+    },
+    {
+      icon: <Megaphone className="w-4 h-4" />,
+      bg: "bg-indigo-50",
+      iconColor: "text-indigo-600",
+      ring: "ring-indigo-100",
+      dot: "bg-indigo-400",
+    },
+  ];
+  return accents[idx % accents.length];
+}
+
+function AnnouncementItem({
   p,
   idx,
   onEdit,
   onDelete,
+  isLast,
 }: {
   p: Announcement;
   idx: number;
   onEdit: (idx: number) => void;
   onDelete: (idx: number) => void;
+  isLast: boolean;
 }) {
+  const accent = getItemAccent(idx);
   return (
-    <div className="group bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-md hover:border-indigo-100 transition-all duration-200">
-      <div className="flex items-start justify-between gap-4">
-        {/* Left accent + content */}
-        <div className="flex gap-4 flex-1 min-w-0">
-          <div className="shrink-0 mt-0.5 w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center ring-1 ring-indigo-200">
-            <Megaphone className="w-4 h-4 text-indigo-600" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-1.5">
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">
-                Pengumuman
-              </span>
-              <span className="flex items-center gap-1 text-xs text-gray-400">
-                <Calendar className="w-3 h-3" />
-                {formatTanggal(p.tanggal)}
-              </span>
-            </div>
-            <h4 className="font-semibold text-gray-800 text-sm sm:text-base leading-snug mb-2 break-words">
-              {p.judul}
-            </h4>
-            <p className="text-gray-600 text-sm leading-relaxed break-words whitespace-pre-wrap line-clamp-3 group-hover:line-clamp-none transition-all">
-              {p.isi}
-            </p>
-          </div>
-        </div>
-        {/* Actions */}
-        <div className="flex gap-1 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={() => onEdit(idx)}
-            title="Edit"
-            className="p-2 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-colors"
+    <div
+      className={`group flex items-start gap-4 px-6 py-5 hover:bg-slate-50 transition-colors duration-150 ${!isLast ? "border-b border-gray-100" : ""}`}
+    >
+      {/* Icon */}
+      <div
+        className={`shrink-0 mt-0.5 w-9 h-9 rounded-xl ${accent.bg} ring-1 ${accent.ring} flex items-center justify-center`}
+      >
+        <span className={accent.iconColor}>{accent.icon}</span>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+          <span
+            className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${accent.bg} ${accent.iconColor} ring-1 ${accent.ring}`}
           >
-            <Edit className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => onDelete(idx)}
-            title="Hapus"
-            className="p-2 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+            Pengumuman
+          </span>
+          <span className="flex items-center gap-1 text-xs text-gray-400">
+            <Calendar className="w-3 h-3" />
+            {formatTanggal(p.tanggal)}
+          </span>
         </div>
+        <h4 className="font-semibold text-gray-800 text-sm leading-snug mb-1.5 break-words">
+          {p.judul}
+        </h4>
+        <p className="text-gray-500 text-sm leading-relaxed break-words whitespace-pre-wrap line-clamp-2 group-hover:line-clamp-none transition-all duration-200">
+          {p.isi}
+        </p>
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150 mt-0.5">
+        <button
+          onClick={() => onEdit(idx)}
+          title="Edit"
+          className="p-2 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-colors"
+        >
+          <Edit className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => onDelete(idx)}
+          title="Hapus"
+          className="p-2 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
       </div>
     </div>
   );
@@ -188,13 +233,13 @@ export default function AdminInformasi() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-50 overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 px-4 sm:px-6 lg:px-8 py-7">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 px-4 sm:px-6 lg:px-8 py-7">
           {/* ── Page Header ── */}
-          <div className="mb-7 flex items-start justify-between">
+          <div className="mb-7 flex items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2.5 mb-1">
                 <span className="block w-1 h-6 bg-indigo-600 rounded-full" />
@@ -208,96 +253,125 @@ export default function AdminInformasi() {
             </div>
             <button
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors shrink-0"
             >
               <Plus className="w-4 h-4" /> Tambah
             </button>
           </div>
 
-          {/* ── Stats Row ── */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex items-center gap-4">
-              <div className="p-2.5 rounded-xl bg-indigo-50 ring-1 ring-indigo-200 shrink-0">
-                <Bell className="w-4 h-4 text-indigo-600" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500 mb-0.5">
-                  Total
-                </p>
-                <p className="text-2xl font-bold text-gray-800">
-                  {pengumuman.length}
-                </p>
-              </div>
-            </div>
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex items-center gap-4">
-              <div className="p-2.5 rounded-xl bg-emerald-50 ring-1 ring-emerald-200 shrink-0">
-                <FileText className="w-4 h-4 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500 mb-0.5">
-                  Pengumuman
-                </p>
-                <p className="text-2xl font-bold text-gray-800">
-                  {pengumuman.length}
-                </p>
-              </div>
-            </div>
-            <div className="hidden sm:flex bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 items-center gap-4">
-              <div className="p-2.5 rounded-xl bg-amber-50 ring-1 ring-amber-200 shrink-0">
-                <Calendar className="w-4 h-4 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500 mb-0.5">
-                  Terbaru
-                </p>
-                <p className="text-sm font-semibold text-gray-700 truncate">
-                  {pengumuman.length > 0
-                    ? formatTanggal(pengumuman[0].tanggal)
-                    : "—"}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* ── Card Container ── */}
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-            <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="font-semibold text-gray-700 text-sm flex items-center gap-2">
-                <Megaphone className="w-4 h-4 text-indigo-500" />
-                Daftar Pengumuman
-              </h2>
-              <span className="text-xs text-gray-500 bg-gray-100 border border-gray-200 px-2.5 py-0.5 rounded-full font-medium">
-                {pengumuman.length} item
-              </span>
-            </div>
-
-            <div className="p-4 sm:p-5">
-              {pengumuman.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
-                    <Megaphone className="w-6 h-6 text-gray-400" />
+          {/* ── Main Card ── */}
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden animate-fade-in">
+            {/* Card Header */}
+            <div className="px-6 py-5 border-b border-gray-100">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-50 ring-1 ring-indigo-100 flex items-center justify-center shrink-0">
+                    <Megaphone className="w-5 h-5 text-indigo-600" />
                   </div>
-                  <p className="text-gray-500 text-sm font-medium mb-1">
-                    Belum ada pengumuman
-                  </p>
-                  <p className="text-gray-400 text-xs">
-                    Klik tombol Tambah untuk membuat pengumuman baru.
-                  </p>
+                  <div>
+                    <h2 className="font-semibold text-gray-800 text-base">
+                      Informasi PKL
+                    </h2>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Pengumuman &amp; informasi terkini seputar PKL
+                    </p>
+                  </div>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {pengumuman.map((p, idx) => (
-                    <AnnouncementCard
-                      key={p.id}
-                      p={p}
-                      idx={idx}
-                      onEdit={handleEditAnnouncement}
-                      onDelete={handleDeleteAnnouncement}
-                    />
-                  ))}
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full">
+                    <Sparkles className="w-3 h-3" />
+                    Terbaru
+                  </span>
+                  <span className="text-xs text-gray-500 bg-gray-100 border border-gray-200 px-2.5 py-1 rounded-full font-medium">
+                    {pengumuman.length} item
+                  </span>
                 </div>
-              )}
+              </div>
+
+              {/* Stats mini row */}
+              <div className="grid grid-cols-3 gap-3 mt-4">
+                <div className="bg-slate-50 rounded-xl px-4 py-3 flex items-center gap-3 border border-gray-100">
+                  <div className="p-1.5 rounded-lg bg-indigo-50">
+                    <Bell className="w-3.5 h-3.5 text-indigo-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Total</p>
+                    <p className="text-base font-bold text-gray-800 leading-none mt-0.5">
+                      {pengumuman.length}
+                    </p>
+                  </div>
+                </div>
+                <div className="bg-slate-50 rounded-xl px-4 py-3 flex items-center gap-3 border border-gray-100">
+                  <div className="p-1.5 rounded-lg bg-emerald-50">
+                    <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Pengumuman</p>
+                    <p className="text-base font-bold text-gray-800 leading-none mt-0.5">
+                      {pengumuman.length}
+                    </p>
+                  </div>
+                </div>
+                <div className="bg-slate-50 rounded-xl px-4 py-3 flex items-center gap-3 border border-gray-100">
+                  <div className="p-1.5 rounded-lg bg-amber-50">
+                    <Calendar className="w-3.5 h-3.5 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Terbaru</p>
+                    <p className="text-sm font-semibold text-gray-700 leading-none mt-0.5 truncate">
+                      {pengumuman.length > 0
+                        ? formatTanggal(pengumuman[0].tanggal)
+                        : "—"}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
+
+            {/* Card Body — List */}
+            {pengumuman.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+                <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
+                  <Megaphone className="w-6 h-6 text-gray-400" />
+                </div>
+                <p className="text-gray-600 text-sm font-semibold mb-1">
+                  Belum ada informasi
+                </p>
+                <p className="text-gray-400 text-xs max-w-xs">
+                  Klik tombol{" "}
+                  <span className="font-medium text-indigo-500">Tambah</span> di
+                  atas untuk membuat pengumuman baru.
+                </p>
+              </div>
+            ) : (
+              <div>
+                {pengumuman.map((p, idx) => (
+                  <AnnouncementItem
+                    key={p.id}
+                    p={p}
+                    idx={idx}
+                    onEdit={handleEditAnnouncement}
+                    onDelete={handleDeleteAnnouncement}
+                    isLast={idx === pengumuman.length - 1}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Card Footer */}
+            {pengumuman.length > 0 && (
+              <div className="px-6 py-3.5 border-t border-gray-100 flex items-center justify-between bg-slate-50/60">
+                <p className="text-xs text-gray-400">
+                  Menampilkan {pengumuman.length} informasi
+                </p>
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Tambah baru
+                </button>
+              </div>
+            )}
           </div>
 
           {/* ── Modal ── */}
@@ -360,7 +434,6 @@ export default function AdminInformasi() {
                         className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm focus:ring-2 focus:ring-indigo-300 outline-none transition-all"
                       />
                     </div>
-
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Isi Pengumuman
@@ -379,7 +452,6 @@ export default function AdminInformasi() {
                         className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm focus:ring-2 focus:ring-indigo-300 outline-none resize-none transition-all"
                       />
                     </div>
-
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Tanggal
@@ -397,7 +469,6 @@ export default function AdminInformasi() {
                         className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm focus:ring-2 focus:ring-indigo-300 outline-none transition-all"
                       />
                     </div>
-
                     <div className="flex gap-3 pt-2">
                       <button
                         type="button"
@@ -427,9 +498,18 @@ export default function AdminInformasi() {
                   </form>
                 </div>
               </div>
-              <style>{`@keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }`}</style>
+              <style>{`
+                @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+                @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+                .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
+              `}</style>
             </div>
           )}
+
+          <style>{`
+            @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+            .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
+          `}</style>
         </main>
       </div>
     </div>
