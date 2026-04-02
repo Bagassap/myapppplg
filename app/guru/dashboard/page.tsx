@@ -3,7 +3,16 @@ import Sidebar from "@/components/layout/SidebarGuru";
 import TopBar from "@/components/layout/TopBar";
 import GreetingBanner from "@/components/GreetingBanner";
 import { useState, useEffect, useMemo } from "react";
-import { Users, TrendingUp, Award, GraduationCap } from "lucide-react";
+import {
+  Users,
+  TrendingUp,
+  Award,
+  GraduationCap,
+  CheckCircle2,
+  XCircle,
+  BookOpen,
+  AlertTriangle,
+} from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
 const DONUT_COLORS = ["#10b981", "#f59e0b", "#f43f5e"];
@@ -77,6 +86,8 @@ function SiswaCard({ item, index }: { item: any; index: number }) {
   const alfaS = item.tidakHadir || 0;
   const av = AVATAR_COLORS[index % AVATAR_COLORS.length];
   const barColor = p >= 80 ? "#10b981" : p >= 60 ? "#f59e0b" : "#f43f5e";
+  const pBg = p >= 80 ? "#f0fdf4" : p >= 60 ? "#fefce8" : "#fef2f2";
+  const pTc = p >= 80 ? "#15803d" : p >= 60 ? "#a16207" : "#be123c";
   const initial = (item.siswa || item.tempatPKL || "?").charAt(0).toUpperCase();
 
   return (
@@ -165,8 +176,8 @@ function SiswaCard({ item, index }: { item: any; index: number }) {
             fontWeight: 600,
             padding: "2px 8px",
             borderRadius: 20,
-            background: p >= 80 ? "#f0fdf4" : p >= 60 ? "#fefce8" : "#fef2f2",
-            color: p >= 80 ? "#15803d" : p >= 60 ? "#a16207" : "#be123c",
+            background: pBg,
+            color: pTc,
             flexShrink: 0,
           }}
         >
@@ -285,6 +296,10 @@ export default function GuruDashboard() {
     month: "long",
     year: "numeric",
   });
+
+  const pctColor = pct >= 80 ? "#10b981" : pct >= 60 ? "#f59e0b" : "#f43f5e";
+  const pctBg = pct >= 80 ? "#f0fdf4" : pct >= 60 ? "#fefce8" : "#fef2f2";
+  const pctTc = pct >= 80 ? "#15803d" : pct >= 60 ? "#a16207" : "#be123c";
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -432,17 +447,18 @@ export default function GuruDashboard() {
 
           {/* ── Content Row ── */}
           <div
-            style={{ display: "grid", gridTemplateColumns: "2fr 3fr", gap: 12 }}
+            style={{ display: "grid", gridTemplateColumns: "5fr 7fr", gap: 14 }}
           >
-            {/* Left: Donut + Summary */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {/* Donut card */}
+            {/* LEFT — Donut Besar + Keterangan */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {/* Donut Card */}
               <div
                 style={{
                   background: "var(--color-background-primary)",
                   border: "0.5px solid var(--color-border-tertiary)",
-                  borderRadius: 16,
-                  padding: "20px 22px",
+                  borderRadius: 18,
+                  padding: "24px",
+                  flex: 1,
                 }}
               >
                 <div
@@ -450,7 +466,7 @@ export default function GuruDashboard() {
                     display: "flex",
                     alignItems: "center",
                     gap: 6,
-                    marginBottom: 14,
+                    marginBottom: 18,
                   }}
                 >
                   <TrendingUp size={13} color="#10b981" />
@@ -466,34 +482,30 @@ export default function GuruDashboard() {
                     Distribusi Kehadiran
                   </span>
                 </div>
+
                 {loading ? (
                   <div
-                    style={{ display: "flex", alignItems: "center", gap: 16 }}
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: 14,
+                    }}
                   >
-                    <Sk w={88} h={88} r={44} />
-                    <div
-                      style={{
-                        flex: 1,
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 8,
-                      }}
-                    >
-                      <Sk h={12} />
-                      <Sk h={12} />
-                      <Sk h={12} />
-                    </div>
+                    <Sk w={160} h={160} r={80} />
+                    <Sk h={14} />
+                    <Sk h={14} />
+                    <Sk h={14} />
                   </div>
                 ) : (
-                  <div
-                    style={{ display: "flex", alignItems: "center", gap: 14 }}
-                  >
+                  <>
+                    {/* Donut besar */}
                     <div
                       style={{
                         position: "relative",
-                        width: 88,
-                        height: 88,
-                        flexShrink: 0,
+                        width: "100%",
+                        height: 180,
+                        marginBottom: 18,
                       }}
                     >
                       <ResponsiveContainer width="100%" height="100%">
@@ -502,12 +514,14 @@ export default function GuruDashboard() {
                             data={donutData}
                             cx="50%"
                             cy="50%"
-                            innerRadius={28}
-                            outerRadius={42}
-                            paddingAngle={3}
+                            innerRadius={56}
+                            outerRadius={82}
+                            paddingAngle={4}
                             dataKey="value"
                             startAngle={90}
                             endAngle={-270}
+                            animationBegin={0}
+                            animationDuration={800}
                           >
                             {donutData.map((_, i) => (
                               <Cell key={i} fill={DONUT_COLORS[i]} />
@@ -529,8 +543,8 @@ export default function GuruDashboard() {
                       >
                         <span
                           style={{
-                            fontSize: 14,
-                            fontWeight: 700,
+                            fontSize: 28,
+                            fontWeight: 800,
                             color: "var(--color-text-primary)",
                             lineHeight: 1,
                           }}
@@ -539,21 +553,22 @@ export default function GuruDashboard() {
                         </span>
                         <span
                           style={{
-                            fontSize: 9,
+                            fontSize: 11,
                             color: "var(--color-text-secondary)",
-                            marginTop: 2,
+                            marginTop: 4,
                           }}
                         >
-                          hadir
+                          kehadiran
                         </span>
                       </div>
                     </div>
+
+                    {/* Legend detail */}
                     <div
                       style={{
-                        flex: 1,
                         display: "flex",
                         flexDirection: "column",
-                        gap: 7,
+                        gap: 8,
                       }}
                     >
                       {[
@@ -563,13 +578,15 @@ export default function GuruDashboard() {
                           color: "#10b981",
                           bg: "#f0fdf4",
                           tc: "#15803d",
+                          icon: <CheckCircle2 size={14} />,
                         },
                         {
-                          label: "Izin/Sakit",
+                          label: "Izin / Sakit",
                           val: izin,
                           color: "#f59e0b",
                           bg: "#fefce8",
                           tc: "#a16207",
+                          icon: <BookOpen size={14} />,
                         },
                         {
                           label: "Alfa",
@@ -577,50 +594,63 @@ export default function GuruDashboard() {
                           color: "#f43f5e",
                           bg: "#fef2f2",
                           tc: "#be123c",
+                          icon: <XCircle size={14} />,
                         },
-                      ].map((b) => (
-                        <div
-                          key={b.label}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 7,
-                          }}
-                        >
-                          <span
+                      ].map((b) => {
+                        const pctItem =
+                          stats.totalSiswaPKL > 0
+                            ? Math.round((b.val / stats.totalSiswaPKL) * 100)
+                            : 0;
+                        return (
+                          <div
+                            key={b.label}
                             style={{
-                              width: 7,
-                              height: 7,
-                              borderRadius: 2,
-                              background: b.color,
-                              flexShrink: 0,
-                            }}
-                          />
-                          <span
-                            style={{
-                              fontSize: 12,
-                              color: "var(--color-text-secondary)",
-                              flex: 1,
-                            }}
-                          >
-                            {b.label}
-                          </span>
-                          <span
-                            style={{
-                              fontSize: 11,
-                              fontWeight: 600,
-                              padding: "2px 8px",
-                              borderRadius: 6,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 10,
+                              padding: "10px 12px",
                               background: b.bg,
-                              color: b.tc,
+                              borderRadius: 12,
+                              border: `1px solid ${b.color}22`,
                             }}
                           >
-                            {b.val}
-                          </span>
-                        </div>
-                      ))}
+                            <div style={{ color: b.tc }}>{b.icon}</div>
+                            <span
+                              style={{
+                                fontSize: 12,
+                                color: b.tc,
+                                fontWeight: 600,
+                                flex: 1,
+                              }}
+                            >
+                              {b.label}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: 17,
+                                fontWeight: 800,
+                                color: b.tc,
+                              }}
+                            >
+                              {b.val}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: 11,
+                                fontWeight: 600,
+                                background: "rgba(0,0,0,0.06)",
+                                padding: "2px 7px",
+                                borderRadius: 20,
+                                color: b.tc,
+                              }}
+                            >
+                              {pctItem}%
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
 
@@ -629,7 +659,7 @@ export default function GuruDashboard() {
                 style={{
                   background: "var(--color-background-primary)",
                   border: "0.5px solid var(--color-border-tertiary)",
-                  borderRadius: 16,
+                  borderRadius: 18,
                   padding: "20px 22px",
                 }}
               >
@@ -659,13 +689,13 @@ export default function GuruDashboard() {
                     display: "flex",
                     alignItems: "center",
                     gap: 12,
-                    marginBottom: 12,
+                    marginBottom: 14,
                   }}
                 >
                   <div
                     style={{
-                      width: 40,
-                      height: 40,
+                      width: 44,
+                      height: 44,
                       borderRadius: 12,
                       background: "#eef2ff",
                       display: "flex",
@@ -674,9 +704,9 @@ export default function GuruDashboard() {
                       flexShrink: 0,
                     }}
                   >
-                    <Award size={18} color="#6366f1" />
+                    <Award size={20} color="#6366f1" />
                   </div>
-                  <div>
+                  <div style={{ flex: 1 }}>
                     <p
                       style={{
                         fontSize: 11,
@@ -689,13 +719,37 @@ export default function GuruDashboard() {
                     <p
                       style={{
                         fontSize: 26,
-                        fontWeight: 700,
+                        fontWeight: 800,
                         color: "var(--color-text-primary)",
                         margin: 0,
                         lineHeight: 1,
                       }}
                     >
                       {pct}%
+                    </p>
+                  </div>
+                  <div
+                    style={{
+                      background: pctBg,
+                      borderRadius: 12,
+                      padding: "8px 12px",
+                      textAlign: "center",
+                    }}
+                  >
+                    {pct >= 80 ? (
+                      <CheckCircle2 size={22} color={pctTc} />
+                    ) : (
+                      <AlertTriangle size={22} color={pctTc} />
+                    )}
+                    <p
+                      style={{
+                        fontSize: 10,
+                        color: pctTc,
+                        margin: "4px 0 0",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {pct >= 80 ? "Baik" : "Perhatian"}
                     </p>
                   </div>
                 </div>
@@ -762,13 +816,13 @@ export default function GuruDashboard() {
               </div>
             </div>
 
-            {/* Right: Siswa PKL list */}
+            {/* RIGHT — Siswa PKL list */}
             <div
               style={{
                 background: "var(--color-background-primary)",
                 border: "0.5px solid var(--color-border-tertiary)",
-                borderRadius: 16,
-                padding: "20px 22px",
+                borderRadius: 18,
+                padding: "24px",
               }}
             >
               <div
@@ -776,7 +830,7 @@ export default function GuruDashboard() {
                   display: "flex",
                   alignItems: "center",
                   gap: 6,
-                  marginBottom: 16,
+                  marginBottom: 18,
                 }}
               >
                 <Users size={13} color="#10b981" />
@@ -815,7 +869,6 @@ export default function GuruDashboard() {
                 </div>
               ) : (
                 <>
-                  {/* grid 3 cols for top row */}
                   <div
                     style={{
                       display: "grid",
@@ -837,42 +890,59 @@ export default function GuruDashboard() {
                       gridTemplateColumns: "repeat(4, 1fr)",
                       gap: 8,
                       marginTop: 4,
+                      padding: "12px",
+                      background: "var(--color-background-secondary)",
+                      borderRadius: 14,
                     }}
                   >
                     {[
                       {
                         v: stats.totalSiswaPKL,
                         l: "Total",
-                        bg: "var(--color-background-secondary)",
-                        tc: "var(--color-text-secondary)",
+                        bg: "#eef2ff",
+                        tc: "#4338ca",
+                        icon: <Users size={14} />,
                       },
                       {
                         v: stats.hadirHariIni,
                         l: "Hadir",
                         bg: "#f0fdf4",
                         tc: "#15803d",
+                        icon: <CheckCircle2 size={14} />,
                       },
-                      { v: izin, l: "Izin", bg: "#fefce8", tc: "#a16207" },
+                      {
+                        v: izin,
+                        l: "Izin",
+                        bg: "#fefce8",
+                        tc: "#a16207",
+                        icon: <BookOpen size={14} />,
+                      },
                       {
                         v: stats.tidakHadir,
                         l: "Alfa",
                         bg: "#fef2f2",
                         tc: "#be123c",
+                        icon: <XCircle size={14} />,
                       },
                     ].map((s) => (
                       <div
                         key={s.l}
                         style={{
                           background: s.bg,
-                          borderRadius: 10,
+                          borderRadius: 12,
                           padding: "10px 8px",
                           textAlign: "center",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: 4,
                         }}
                       >
+                        <div style={{ color: s.tc }}>{s.icon}</div>
                         <p
                           style={{
-                            fontSize: 16,
-                            fontWeight: 700,
+                            fontSize: 18,
+                            fontWeight: 800,
                             color: s.tc,
                             margin: 0,
                             lineHeight: 1,
@@ -884,8 +954,8 @@ export default function GuruDashboard() {
                           style={{
                             fontSize: 10,
                             color: s.tc,
-                            opacity: 0.7,
-                            margin: "4px 0 0",
+                            opacity: 0.75,
+                            margin: 0,
                           }}
                         >
                           {s.l}

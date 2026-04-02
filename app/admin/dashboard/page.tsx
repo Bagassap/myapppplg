@@ -11,6 +11,7 @@ import {
   BookOpen,
   Activity,
   Award,
+  AlertTriangle,
 } from "lucide-react";
 import {
   PieChart,
@@ -111,261 +112,157 @@ const Sk = ({
   />
 );
 
-/* ─── Stat Card ─── */
-type StatCardProps = {
-  label: string;
-  value: number | null;
-  icon: React.ReactNode;
-  accent: string;
-  sub: string;
-  loading: boolean;
-};
+/* ─── Class Card — berwarna per index ─── */
+const CLASS_THEMES = [
+  {
+    gradient: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+    light: "#eff6ff",
+    lightText: "#1d4ed8",
+    label: "Kelas A",
+  },
+  {
+    gradient: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+    light: "#f0fdf4",
+    lightText: "#15803d",
+    label: "Kelas B",
+  },
+  {
+    gradient: "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
+    light: "#fff7ed",
+    lightText: "#c2410c",
+    label: "Kelas C",
+  },
+  {
+    gradient: "linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)",
+    light: "#faf5ff",
+    lightText: "#6d28d9",
+    label: "Kelas D",
+  },
+];
 
-function StatCard({ label, value, icon, accent, sub, loading }: StatCardProps) {
-  return (
-    <div
-      style={{
-        background: "var(--color-background-primary)",
-        border: "0.5px solid var(--color-border-tertiary)",
-        borderRadius: 16,
-        padding: "20px 20px 16px",
-        position: "relative",
-        overflow: "hidden",
-        transition: "border-color 0.2s, transform 0.2s",
-        cursor: "default",
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLDivElement).style.borderColor =
-          "var(--color-border-secondary)";
-        (e.currentTarget as HTMLDivElement).style.transform =
-          "translateY(-2px)";
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLDivElement).style.borderColor =
-          "var(--color-border-tertiary)";
-        (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
-      }}
-    >
-      {/* accent bar */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 3,
-          background: accent,
-          borderRadius: "16px 16px 0 0",
-        }}
-      />
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          marginBottom: 12,
-        }}
-      >
-        <p
-          style={{
-            fontSize: 11,
-            fontWeight: 500,
-            color: "var(--color-text-secondary)",
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-            margin: 0,
-          }}
-        >
-          {label}
-        </p>
-        <div
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: 8,
-            background: accent + "18",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: accent,
-          }}
-        >
-          {icon}
-        </div>
-      </div>
-      {loading ? (
-        <Sk h={36} r={8} />
-      ) : (
-        <p
-          style={{
-            fontSize: 32,
-            fontWeight: 700,
-            color: "var(--color-text-primary)",
-            margin: "0 0 4px",
-            lineHeight: 1,
-          }}
-        >
-          {value}
-        </p>
-      )}
-      <p
-        style={{
-          fontSize: 12,
-          color: "var(--color-text-secondary)",
-          margin: 0,
-        }}
-      >
-        {sub}
-      </p>
-    </div>
-  );
-}
-
-/* ─── Class Card ─── */
 function ClassCard({ item, index }: { item: any; index: number }) {
+  const theme = CLASS_THEMES[index % CLASS_THEMES.length];
   const izinKelas = Math.max(
     0,
     (item.total || 0) - (item.hadir || 0) - (item.tidakHadir || 0),
   );
   const p = item.persentase || 0;
-  const barColor = p >= 80 ? "#10b981" : p >= 60 ? "#f59e0b" : "#f43f5e";
-  const initials = item.kelas
-    .split(" ")
-    .map((w: string) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-  const avatarColors = [
-    { bg: "#eef2ff", text: "#4338ca" },
-    { bg: "#f0fdf4", text: "#15803d" },
-    { bg: "#fff7ed", text: "#c2410c" },
-    { bg: "#fdf4ff", text: "#7e22ce" },
-  ];
-  const av = avatarColors[index % avatarColors.length];
 
   return (
     <div
       style={{
-        background: "var(--color-background-primary)",
-        border: "0.5px solid var(--color-border-tertiary)",
-        borderRadius: 14,
-        padding: "14px 16px",
-        transition: "border-color 0.2s, transform 0.2s",
+        borderRadius: 16,
+        overflow: "hidden",
+        background: theme.gradient,
+        boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
+        transition: "transform 0.2s, box-shadow 0.2s",
         cursor: "default",
+        color: "#fff",
       }}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLDivElement).style.borderColor =
-          "var(--color-border-secondary)";
         (e.currentTarget as HTMLDivElement).style.transform =
-          "translateY(-1px)";
+          "translateY(-3px) scale(1.02)";
+        (e.currentTarget as HTMLDivElement).style.boxShadow =
+          "0 10px 32px rgba(0,0,0,0.2)";
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLDivElement).style.borderColor =
-          "var(--color-border-tertiary)";
-        (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
+        (e.currentTarget as HTMLDivElement).style.transform =
+          "translateY(0) scale(1)";
+        (e.currentTarget as HTMLDivElement).style.boxShadow =
+          "0 4px 20px rgba(0,0,0,0.12)";
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 10,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: 8,
-              background: av.bg,
-              color: av.text,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 12,
-              fontWeight: 600,
-            }}
-          >
-            {initials}
-          </div>
+      {/* Top section */}
+      <div style={{ padding: "18px 18px 14px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 12,
+          }}
+        >
           <div>
-            <p
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: "var(--color-text-primary)",
-                margin: 0,
-              }}
-            >
+            <p style={{ fontSize: 14, fontWeight: 700, margin: 0, opacity: 1 }}>
               {item.kelas}
             </p>
-            <p
-              style={{
-                fontSize: 11,
-                color: "var(--color-text-secondary)",
-                margin: 0,
-              }}
-            >
-              {item.hadir}/{item.total} siswa
-            </p>
           </div>
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 700,
+              background: "rgba(255,255,255,0.25)",
+              padding: "3px 10px",
+              borderRadius: 20,
+              backdropFilter: "blur(4px)",
+            }}
+          >
+            {p}%
+          </span>
         </div>
-        <span
+
+        {/* Big percentage */}
+        <p
           style={{
-            fontSize: 11,
-            fontWeight: 600,
-            padding: "3px 8px",
-            borderRadius: 20,
-            background: p >= 80 ? "#f0fdf4" : p >= 60 ? "#fefce8" : "#fef2f2",
-            color: p >= 80 ? "#15803d" : p >= 60 ? "#a16207" : "#be123c",
+            fontSize: 36,
+            fontWeight: 800,
+            margin: "0 0 2px",
+            lineHeight: 1,
           }}
         >
           {p}%
-        </span>
-      </div>
-      {/* progress bar */}
-      <div
-        style={{
-          height: 4,
-          borderRadius: 4,
-          background: "var(--color-background-tertiary)",
-          marginBottom: 10,
-          overflow: "hidden",
-        }}
-      >
+        </p>
+        <p style={{ fontSize: 11, opacity: 0.8, margin: "0 0 12px" }}>
+          tingkat kehadiran
+        </p>
+
+        {/* Progress bar */}
         <div
           style={{
-            height: "100%",
-            width: `${p}%`,
-            background: barColor,
+            height: 6,
             borderRadius: 4,
-            transition: "width 0.7s ease",
+            background: "rgba(255,255,255,0.25)",
+            marginBottom: 12,
+            overflow: "hidden",
           }}
-        />
-      </div>
-      {/* badges */}
-      <div style={{ display: "flex", gap: 6 }}>
-        {[
-          { v: item.hadir, l: "hadir", bg: "#f0fdf4", tc: "#15803d" },
-          { v: izinKelas, l: "izin", bg: "#fefce8", tc: "#a16207" },
-          { v: item.tidakHadir || 0, l: "alfa", bg: "#fef2f2", tc: "#be123c" },
-        ].map((c) => (
-          <span
-            key={c.l}
+        >
+          <div
             style={{
-              fontSize: 10,
-              fontWeight: 500,
-              padding: "2px 7px",
-              borderRadius: 6,
-              background: c.bg,
-              color: c.tc,
+              height: "100%",
+              width: `${p}%`,
+              background: "rgba(255,255,255,0.85)",
+              borderRadius: 4,
+              transition: "width 0.7s ease",
             }}
-          >
-            {c.v} {c.l}
-          </span>
+          />
+        </div>
+      </div>
+
+      {/* Bottom section — soft bg */}
+      <div
+        style={{
+          background: "rgba(0,0,0,0.15)",
+          padding: "10px 18px",
+          display: "flex",
+          gap: 12,
+        }}
+      >
+        {[
+          { v: item.hadir, l: "Hadir" },
+          { v: izinKelas, l: "Izin" },
+          { v: item.tidakHadir || 0, l: "Alfa" },
+        ].map((c) => (
+          <div key={c.l} style={{ textAlign: "center" }}>
+            <p style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>{c.v}</p>
+            <p style={{ fontSize: 10, opacity: 0.75, margin: 0 }}>{c.l}</p>
+          </div>
         ))}
+        <div style={{ marginLeft: "auto", textAlign: "right" }}>
+          <p style={{ fontSize: 12, opacity: 0.75, margin: 0 }}>Total siswa</p>
+          <p style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>
+            {item.total}
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -448,36 +345,7 @@ export default function AdminDashboard() {
     year: "numeric",
   });
 
-  const statCards = [
-    {
-      label: "Total Siswa",
-      value: stats.totalSiswa,
-      icon: <Users size={15} />,
-      accent: "#6366f1",
-      sub: "Terdaftar aktif",
-    },
-    {
-      label: "Hadir Hari Ini",
-      value: stats.hadirHariIni,
-      icon: <CheckCircle2 size={15} />,
-      accent: "#10b981",
-      sub: `${pct}% dari total`,
-    },
-    {
-      label: "Izin / Sakit",
-      value: izin,
-      icon: <BookOpen size={15} />,
-      accent: "#f59e0b",
-      sub: "Ada keterangan",
-    },
-    {
-      label: "Alfa",
-      value: stats.tidakHadir,
-      icon: <XCircle size={15} />,
-      accent: "#f43f5e",
-      sub: "Tanpa keterangan",
-    },
-  ];
+  const pctColor = pct >= 80 ? "#10b981" : pct >= 60 ? "#f59e0b" : "#f43f5e";
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -624,49 +492,34 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* ── Stat Cards ── */}
+          {/* ── Middle Row: Donut Besar | Per Kelas ── */}
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: 12,
-              marginBottom: 20,
+              gridTemplateColumns: "5fr 7fr",
+              gap: 14,
+              marginBottom: 14,
             }}
           >
-            {statCards.map((c, i) => (
-              <StatCard
-                key={i}
-                loading={loading}
-                {...c}
-                value={loading ? null : c.value}
-              />
-            ))}
-          </div>
-
-          {/* ── Middle Row: Donut+Summary | Per Kelas ── */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "2fr 3fr",
-              gap: 12,
-              marginBottom: 12,
-            }}
-          >
-            {/* Left: Donut + Summary combined */}
+            {/* LEFT — Donut Besar + Keterangan Lengkap */}
             <div
               style={{
                 background: "var(--color-background-primary)",
                 border: "0.5px solid var(--color-border-tertiary)",
-                borderRadius: 16,
-                padding: "20px 22px",
+                borderRadius: 18,
+                padding: "24px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 0,
               }}
             >
+              {/* Header */}
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 6,
-                  marginBottom: 16,
+                  marginBottom: 20,
                 }}
               >
                 <TrendingUp size={13} color="#10b981" />
@@ -679,49 +532,33 @@ export default function AdminDashboard() {
                     textTransform: "uppercase",
                   }}
                 >
-                  Distribusi &amp; Ringkasan
+                  Distribusi Kehadiran Hari Ini
                 </span>
               </div>
 
-              {/* Donut row */}
               {loading ? (
                 <div
                   style={{
                     display: "flex",
+                    flexDirection: "column",
                     alignItems: "center",
                     gap: 16,
-                    marginBottom: 20,
                   }}
                 >
-                  <Sk w={96} h={96} r={48} />
-                  <div
-                    style={{
-                      flex: 1,
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 8,
-                    }}
-                  >
-                    <Sk h={14} />
-                    <Sk h={14} />
-                    <Sk h={14} />
-                  </div>
+                  <Sk w={180} h={180} r={90} />
+                  <Sk h={14} />
+                  <Sk h={14} />
+                  <Sk h={14} />
                 </div>
               ) : (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 16,
-                    marginBottom: 20,
-                  }}
-                >
+                <>
+                  {/* Donut besar + center text */}
                   <div
                     style={{
                       position: "relative",
-                      width: 96,
-                      height: 96,
-                      flexShrink: 0,
+                      width: "100%",
+                      height: 200,
+                      marginBottom: 20,
                     }}
                   >
                     <ResponsiveContainer width="100%" height="100%">
@@ -730,14 +567,14 @@ export default function AdminDashboard() {
                           data={donutData}
                           cx="50%"
                           cy="50%"
-                          innerRadius={30}
-                          outerRadius={46}
-                          paddingAngle={3}
+                          innerRadius={64}
+                          outerRadius={92}
+                          paddingAngle={4}
                           dataKey="value"
                           startAngle={90}
                           endAngle={-270}
                           animationBegin={0}
-                          animationDuration={700}
+                          animationDuration={800}
                         >
                           {donutData.map((_, i) => (
                             <Cell key={i} fill={DONUT_COLORS[i]} />
@@ -759,8 +596,8 @@ export default function AdminDashboard() {
                     >
                       <span
                         style={{
-                          fontSize: 16,
-                          fontWeight: 700,
+                          fontSize: 30,
+                          fontWeight: 800,
                           color: "var(--color-text-primary)",
                           lineHeight: 1,
                         }}
@@ -769,21 +606,23 @@ export default function AdminDashboard() {
                       </span>
                       <span
                         style={{
-                          fontSize: 9,
+                          fontSize: 11,
                           color: "var(--color-text-secondary)",
-                          marginTop: 2,
+                          marginTop: 4,
                         }}
                       >
-                        hadir
+                        kehadiran
                       </span>
                     </div>
                   </div>
+
+                  {/* Legend — 3 baris detail */}
                   <div
                     style={{
-                      flex: 1,
                       display: "flex",
                       flexDirection: "column",
-                      gap: 8,
+                      gap: 10,
+                      marginBottom: 20,
                     }}
                   >
                     {[
@@ -793,13 +632,15 @@ export default function AdminDashboard() {
                         color: "#10b981",
                         bg: "#f0fdf4",
                         tc: "#15803d",
+                        icon: <CheckCircle2 size={14} />,
                       },
                       {
-                        label: "Izin/Sakit",
+                        label: "Izin / Sakit",
                         val: izin,
                         color: "#f59e0b",
                         bg: "#fefce8",
                         tc: "#a16207",
+                        icon: <BookOpen size={14} />,
                       },
                       {
                         label: "Alfa",
@@ -807,170 +648,207 @@ export default function AdminDashboard() {
                         color: "#f43f5e",
                         bg: "#fef2f2",
                         tc: "#be123c",
+                        icon: <XCircle size={14} />,
                       },
-                    ].map((b) => (
-                      <div
-                        key={b.label}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                        }}
-                      >
-                        <span
+                    ].map((b) => {
+                      const pctItem =
+                        stats.totalSiswa > 0
+                          ? Math.round((b.val / stats.totalSiswa) * 100)
+                          : 0;
+                      return (
+                        <div
+                          key={b.label}
                           style={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: 2,
-                            background: b.color,
-                            flexShrink: 0,
-                          }}
-                        />
-                        <span
-                          style={{
-                            fontSize: 12,
-                            color: "var(--color-text-secondary)",
-                            flex: 1,
-                          }}
-                        >
-                          {b.label}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: 11,
-                            fontWeight: 600,
-                            padding: "2px 8px",
-                            borderRadius: 6,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 10,
+                            padding: "10px 14px",
                             background: b.bg,
-                            color: b.tc,
+                            borderRadius: 12,
+                            border: `1px solid ${b.color}22`,
                           }}
                         >
-                          {b.val}
-                        </span>
-                      </div>
-                    ))}
+                          <div style={{ color: b.tc }}>{b.icon}</div>
+                          <span
+                            style={{
+                              fontSize: 13,
+                              color: b.tc,
+                              fontWeight: 600,
+                              flex: 1,
+                            }}
+                          >
+                            {b.label}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: 18,
+                              fontWeight: 800,
+                              color: b.tc,
+                            }}
+                          >
+                            {b.val}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 600,
+                              background: "rgba(0,0,0,0.06)",
+                              padding: "2px 7px",
+                              borderRadius: 20,
+                              color: b.tc,
+                            }}
+                          >
+                            {pctItem}%
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
-                </div>
-              )}
 
-              {/* Divider */}
-              <div
-                style={{
-                  height: "0.5px",
-                  background: "var(--color-border-tertiary)",
-                  marginBottom: 16,
-                }}
-              />
+                  {/* Divider */}
+                  <div
+                    style={{
+                      height: "0.5px",
+                      background: "var(--color-border-tertiary)",
+                      marginBottom: 16,
+                    }}
+                  />
 
-              {/* Summary strip */}
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    background: "#eef2ff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <Award size={16} color="#6366f1" />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <p
-                    style={{
-                      fontSize: 11,
-                      color: "var(--color-text-secondary)",
-                      margin: "0 0 2px",
-                    }}
-                  >
-                    Rata-rata kehadiran hari ini
-                  </p>
-                  <p
-                    style={{
-                      fontSize: 22,
-                      fontWeight: 700,
-                      color: "var(--color-text-primary)",
-                      margin: 0,
-                      lineHeight: 1,
-                    }}
-                  >
-                    {pct}%
-                  </p>
-                </div>
-              </div>
-              {bestClass && (
-                <div
-                  style={{
-                    marginTop: 12,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 6,
-                  }}
-                >
+                  {/* Summary strip — rata-rata + best/worst */}
                   <div
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 8,
-                      padding: "8px 12px",
-                      background: "#f0fdf4",
-                      borderRadius: 10,
+                      gap: 10,
+                      marginBottom: 12,
                     }}
                   >
                     <div
                       style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: "50%",
-                        background: "#10b981",
+                        width: 40,
+                        height: 40,
+                        borderRadius: 12,
+                        background: "#eef2ff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                         flexShrink: 0,
                       }}
-                    />
-                    <span style={{ fontSize: 11, color: "#15803d" }}>
-                      Terbaik: <strong>{bestClass.kelas}</strong> —{" "}
-                      {bestClass.persentase}%
-                    </span>
+                    >
+                      <Award size={18} color="#6366f1" />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <p
+                        style={{
+                          fontSize: 11,
+                          color: "var(--color-text-secondary)",
+                          margin: "0 0 2px",
+                        }}
+                      >
+                        Rata-rata kehadiran hari ini
+                      </p>
+                      <p
+                        style={{
+                          fontSize: 24,
+                          fontWeight: 700,
+                          color: "var(--color-text-primary)",
+                          margin: 0,
+                          lineHeight: 1,
+                        }}
+                      >
+                        {pct}%
+                      </p>
+                    </div>
+                    <div
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 12,
+                        background: pct >= 80 ? "#f0fdf4" : "#fef2f2",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {pct >= 80 ? (
+                        <CheckCircle2 size={20} color="#15803d" />
+                      ) : (
+                        <AlertTriangle size={20} color="#be123c" />
+                      )}
+                    </div>
                   </div>
-                  {worstClass && worstClass.kelas !== bestClass.kelas && (
+
+                  {bestClass && (
                     <div
                       style={{
                         display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        padding: "8px 12px",
-                        background: "#fef2f2",
-                        borderRadius: 10,
+                        flexDirection: "column",
+                        gap: 6,
                       }}
                     >
                       <div
                         style={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: "50%",
-                          background: "#f43f5e",
-                          flexShrink: 0,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          padding: "8px 12px",
+                          background: "#f0fdf4",
+                          borderRadius: 10,
                         }}
-                      />
-                      <span style={{ fontSize: 11, color: "#be123c" }}>
-                        Perhatian: <strong>{worstClass.kelas}</strong> —{" "}
-                        {worstClass.persentase}%
-                      </span>
+                      >
+                        <div
+                          style={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: "50%",
+                            background: "#10b981",
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span style={{ fontSize: 11, color: "#15803d" }}>
+                          Terbaik: <strong>{bestClass.kelas}</strong> —{" "}
+                          {bestClass.persentase}%
+                        </span>
+                      </div>
+                      {worstClass && worstClass.kelas !== bestClass.kelas && (
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            padding: "8px 12px",
+                            background: "#fef2f2",
+                            borderRadius: 10,
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: 6,
+                              height: 6,
+                              borderRadius: "50%",
+                              background: "#f43f5e",
+                              flexShrink: 0,
+                            }}
+                          />
+                          <span style={{ fontSize: 11, color: "#be123c" }}>
+                            Perhatian: <strong>{worstClass.kelas}</strong> —{" "}
+                            {worstClass.persentase}%
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
+                </>
               )}
             </div>
 
-            {/* Right: Per Kelas */}
+            {/* RIGHT — Per Kelas (card berwarna) */}
             <div
               style={{
                 background: "var(--color-background-primary)",
                 border: "0.5px solid var(--color-border-tertiary)",
-                borderRadius: 16,
-                padding: "20px 22px",
+                borderRadius: 18,
+                padding: "24px",
               }}
             >
               <div
@@ -978,7 +856,7 @@ export default function AdminDashboard() {
                   display: "flex",
                   alignItems: "center",
                   gap: 6,
-                  marginBottom: 16,
+                  marginBottom: 18,
                 }}
               >
                 <Users size={13} color="#6366f1" />
@@ -999,12 +877,12 @@ export default function AdminDashboard() {
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr 1fr 1fr",
-                    gap: 10,
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 12,
                   }}
                 >
-                  {[...Array(3)].map((_, i) => (
-                    <Sk key={i} h={90} />
+                  {[...Array(4)].map((_, i) => (
+                    <Sk key={i} h={140} />
                   ))}
                 </div>
               ) : classData.length === 0 ? (
@@ -1013,7 +891,7 @@ export default function AdminDashboard() {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    height: 120,
+                    height: 180,
                     color: "var(--color-text-secondary)",
                     fontSize: 13,
                   }}
@@ -1022,76 +900,80 @@ export default function AdminDashboard() {
                 </div>
               ) : (
                 <>
-                  {/* top 3 class boxes horizontal */}
+                  {/* Grid 2-col untuk card berwarna */}
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(3, 1fr)",
-                      gap: 10,
-                      marginBottom: 14,
+                      gridTemplateColumns:
+                        classData.length <= 2 ? "1fr 1fr" : "repeat(3, 1fr)",
+                      gap: 12,
+                      marginBottom: 16,
                     }}
                   >
-                    {classData.slice(0, 3).map((item, i) => (
+                    {classData.slice(0, 6).map((item, i) => (
                       <ClassCard key={i} item={item} index={i} />
                     ))}
                   </div>
-                  {/* remaining classes if any */}
-                  {classData.length > 3 && (
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(3, 1fr)",
-                        gap: 10,
-                        marginBottom: 14,
-                      }}
-                    >
-                      {classData.slice(3).map((item, i) => (
-                        <ClassCard key={i + 3} item={item} index={i + 3} />
-                      ))}
-                    </div>
-                  )}
-                  {/* Summary row — 4 cols */}
+
+                  {/* Summary 4 cols */}
                   <div
                     style={{
                       display: "grid",
                       gridTemplateColumns: "repeat(4, 1fr)",
                       gap: 8,
+                      padding: "14px",
+                      background: "var(--color-background-secondary)",
+                      borderRadius: 14,
                     }}
                   >
                     {[
                       {
                         v: stats.totalSiswa,
                         l: "Total",
-                        bg: "var(--color-background-secondary)",
-                        tc: "var(--color-text-secondary)",
+                        bg: "#eef2ff",
+                        tc: "#4338ca",
+                        icon: <Users size={14} />,
                       },
                       {
                         v: stats.hadirHariIni,
                         l: "Hadir",
                         bg: "#f0fdf4",
                         tc: "#15803d",
+                        icon: <CheckCircle2 size={14} />,
                       },
-                      { v: izin, l: "Izin", bg: "#fefce8", tc: "#a16207" },
+                      {
+                        v: izin,
+                        l: "Izin",
+                        bg: "#fefce8",
+                        tc: "#a16207",
+                        icon: <BookOpen size={14} />,
+                      },
                       {
                         v: stats.tidakHadir,
                         l: "Alfa",
                         bg: "#fef2f2",
                         tc: "#be123c",
+                        icon: <XCircle size={14} />,
                       },
                     ].map((s) => (
                       <div
                         key={s.l}
                         style={{
                           background: s.bg,
-                          borderRadius: 10,
-                          padding: "10px 8px",
+                          borderRadius: 12,
+                          padding: "12px 8px",
                           textAlign: "center",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: 4,
                         }}
                       >
+                        <div style={{ color: s.tc }}>{s.icon}</div>
                         <p
                           style={{
-                            fontSize: 16,
-                            fontWeight: 700,
+                            fontSize: 20,
+                            fontWeight: 800,
                             color: s.tc,
                             margin: 0,
                             lineHeight: 1,
@@ -1103,8 +985,8 @@ export default function AdminDashboard() {
                           style={{
                             fontSize: 10,
                             color: s.tc,
-                            opacity: 0.7,
-                            margin: "4px 0 0",
+                            opacity: 0.75,
+                            margin: 0,
                           }}
                         >
                           {s.l}
