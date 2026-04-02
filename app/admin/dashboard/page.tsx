@@ -25,36 +25,15 @@ import {
   CartesianGrid,
 } from "recharts";
 
-/* ─── Constants ─── */
 const DONUT_COLORS = ["#10b981", "#f59e0b", "#f43f5e"];
 
 const DonutTooltip = ({ active, payload }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div
-      style={{
-        background: "var(--color-background-primary)",
-        border: "0.5px solid var(--color-border-secondary)",
-        borderRadius: 10,
-        padding: "8px 12px",
-        fontSize: 12,
-        boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
-      }}
-    >
-      <p
-        style={{
-          fontWeight: 600,
-          color: "var(--color-text-primary)",
-          margin: "0 0 2px",
-        }}
-      >
-        {payload[0].name}
-      </p>
-      <p style={{ color: "var(--color-text-secondary)", margin: 0 }}>
-        Jumlah:{" "}
-        <strong style={{ color: "var(--color-text-primary)" }}>
-          {payload[0].value}
-        </strong>
+    <div className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs shadow-lg">
+      <p className="font-semibold text-gray-800 mb-0.5">{payload[0].name}</p>
+      <p className="text-gray-500 m-0">
+        Jumlah: <strong className="text-gray-800">{payload[0].value}</strong>
       </p>
     </div>
   );
@@ -63,27 +42,10 @@ const DonutTooltip = ({ active, payload }: any) => {
 const TrendTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div
-      style={{
-        background: "var(--color-background-primary)",
-        border: "0.5px solid var(--color-border-secondary)",
-        borderRadius: 10,
-        padding: "8px 12px",
-        fontSize: 12,
-        boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
-      }}
-    >
-      <p
-        style={{
-          fontWeight: 600,
-          color: "var(--color-text-secondary)",
-          margin: "0 0 4px",
-        }}
-      >
-        {label}
-      </p>
+    <div className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs shadow-lg">
+      <p className="font-semibold text-gray-500 mb-1">{label}</p>
       {payload.map((p: any) => (
-        <p key={p.name} style={{ color: p.fill, fontWeight: 500, margin: 0 }}>
+        <p key={p.name} className="font-medium m-0" style={{ color: p.fill }}>
           {p.name}: {p.value}
         </p>
       ))}
@@ -91,58 +53,47 @@ const TrendTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-/* ─── Skeleton ─── */
-const Sk = ({
-  w = "100%",
-  h = 20,
-  r = 8,
-}: {
-  w?: string | number;
-  h?: number;
-  r?: number;
-}) => (
-  <div
-    style={{
-      width: w,
-      height: h,
-      borderRadius: r,
-      background: "var(--color-background-tertiary)",
-      animation: "pulse 1.5s ease-in-out infinite",
-    }}
-  />
+const Sk = () => (
+  <div className="w-full h-5 rounded-lg bg-gray-100 animate-pulse" />
 );
 
-/* ─── Class Card — berwarna per index ─── */
-const CLASS_THEMES = [
+/* ── Class Card — solid Tailwind bg ONLY, no gradient ── */
+const CLASS_CONFIGS = [
   {
-    gradient: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-    light: "#eff6ff",
-    lightText: "#1d4ed8",
-    label: "Kelas A",
+    card: "bg-blue-500 hover:bg-blue-600",
+    text: "text-white",
+    footer: "bg-blue-700",
   },
   {
-    gradient: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-    light: "#f0fdf4",
-    lightText: "#15803d",
-    label: "Kelas B",
+    card: "bg-emerald-500 hover:bg-emerald-600",
+    text: "text-white",
+    footer: "bg-emerald-700",
   },
   {
-    gradient: "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
-    light: "#fff7ed",
-    lightText: "#c2410c",
-    label: "Kelas C",
+    card: "bg-orange-400 hover:bg-orange-500",
+    text: "text-white",
+    footer: "bg-orange-600",
   },
   {
-    gradient: "linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)",
-    light: "#faf5ff",
-    lightText: "#6d28d9",
-    label: "Kelas D",
+    card: "bg-violet-500 hover:bg-violet-600",
+    text: "text-white",
+    footer: "bg-violet-700",
+  },
+  {
+    card: "bg-pink-500 hover:bg-pink-600",
+    text: "text-white",
+    footer: "bg-pink-700",
+  },
+  {
+    card: "bg-teal-500 hover:bg-teal-600",
+    text: "text-white",
+    footer: "bg-teal-700",
   },
 ];
 
 function ClassCard({ item, index }: { item: any; index: number }) {
-  const theme = CLASS_THEMES[index % CLASS_THEMES.length];
-  const izinKelas = Math.max(
+  const cfg = CLASS_CONFIGS[index % CLASS_CONFIGS.length];
+  const izin = Math.max(
     0,
     (item.total || 0) - (item.hadir || 0) - (item.tidakHadir || 0),
   );
@@ -150,125 +101,44 @@ function ClassCard({ item, index }: { item: any; index: number }) {
 
   return (
     <div
-      style={{
-        borderRadius: 16,
-        overflow: "hidden",
-        background: theme.gradient,
-        boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
-        transition: "transform 0.2s, box-shadow 0.2s",
-        cursor: "default",
-        color: "#fff",
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLDivElement).style.transform =
-          "translateY(-3px) scale(1.02)";
-        (e.currentTarget as HTMLDivElement).style.boxShadow =
-          "0 10px 32px rgba(0,0,0,0.2)";
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLDivElement).style.transform =
-          "translateY(0) scale(1)";
-        (e.currentTarget as HTMLDivElement).style.boxShadow =
-          "0 4px 20px rgba(0,0,0,0.12)";
-      }}
+      className={`${cfg.card} ${cfg.text} rounded-2xl overflow-hidden shadow-md hover:shadow-xl hover:scale-[1.02] transition-all duration-200 cursor-default`}
     >
-      {/* Top section */}
-      <div style={{ padding: "18px 18px 14px" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: 12,
-          }}
-        >
-          <div>
-            <p style={{ fontSize: 14, fontWeight: 700, margin: 0, opacity: 1 }}>
-              {item.kelas}
-            </p>
-          </div>
-          <span
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              background: "rgba(255,255,255,0.25)",
-              padding: "3px 10px",
-              borderRadius: 20,
-              backdropFilter: "blur(4px)",
-            }}
-          >
+      <div className="p-5">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm font-bold">{item.kelas}</p>
+          <span className="text-xs font-bold bg-white/25 px-2.5 py-1 rounded-full">
             {p}%
           </span>
         </div>
-
-        {/* Big percentage */}
-        <p
-          style={{
-            fontSize: 36,
-            fontWeight: 800,
-            margin: "0 0 2px",
-            lineHeight: 1,
-          }}
-        >
-          {p}%
-        </p>
-        <p style={{ fontSize: 11, opacity: 0.8, margin: "0 0 12px" }}>
-          tingkat kehadiran
-        </p>
-
-        {/* Progress bar */}
-        <div
-          style={{
-            height: 6,
-            borderRadius: 4,
-            background: "rgba(255,255,255,0.25)",
-            marginBottom: 12,
-            overflow: "hidden",
-          }}
-        >
+        <p className="text-4xl font-black leading-none mb-1">{p}%</p>
+        <p className="text-xs opacity-75 mb-4">tingkat kehadiran</p>
+        <div className="h-1.5 rounded-full bg-white/30 overflow-hidden">
           <div
-            style={{
-              height: "100%",
-              width: `${p}%`,
-              background: "rgba(255,255,255,0.85)",
-              borderRadius: 4,
-              transition: "width 0.7s ease",
-            }}
+            className="h-full bg-white/80 rounded-full transition-all duration-700"
+            style={{ width: `${p}%` }}
           />
         </div>
       </div>
-
-      {/* Bottom section — soft bg */}
-      <div
-        style={{
-          background: "rgba(0,0,0,0.15)",
-          padding: "10px 18px",
-          display: "flex",
-          gap: 12,
-        }}
-      >
+      <div className={`${cfg.footer} px-5 py-3 flex gap-4`}>
         {[
           { v: item.hadir, l: "Hadir" },
-          { v: izinKelas, l: "Izin" },
+          { v: izin, l: "Izin" },
           { v: item.tidakHadir || 0, l: "Alfa" },
         ].map((c) => (
-          <div key={c.l} style={{ textAlign: "center" }}>
-            <p style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>{c.v}</p>
-            <p style={{ fontSize: 10, opacity: 0.75, margin: 0 }}>{c.l}</p>
+          <div key={c.l}>
+            <p className="text-base font-bold leading-none">{c.v}</p>
+            <p className="text-[10px] opacity-75 mt-0.5">{c.l}</p>
           </div>
         ))}
-        <div style={{ marginLeft: "auto", textAlign: "right" }}>
-          <p style={{ fontSize: 12, opacity: 0.75, margin: 0 }}>Total siswa</p>
-          <p style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>
-            {item.total}
-          </p>
+        <div className="ml-auto text-right">
+          <p className="text-xs opacity-75">Total</p>
+          <p className="text-base font-bold">{item.total}</p>
         </div>
       </div>
     </div>
   );
 }
 
-/* ─── Main Component ─── */
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -337,7 +207,6 @@ export default function AdminDashboard() {
           classData[0],
         )
       : null;
-
   const hariIni = new Date().toLocaleDateString("id-ID", {
     weekday: "long",
     day: "numeric",
@@ -345,146 +214,54 @@ export default function AdminDashboard() {
     year: "numeric",
   });
 
-  const pctColor = pct >= 80 ? "#10b981" : pct >= 60 ? "#f59e0b" : "#f43f5e";
-
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-100 overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
-        <main
-          className="flex-1 overflow-y-auto overflow-x-hidden"
-          style={{
-            padding: "28px 32px",
-            background: "var(--color-background-tertiary)",
-          }}
-        >
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-5 lg:p-8 bg-slate-100">
           <GreetingBanner />
 
           {/* ── Hero Header ── */}
-          <div
-            style={{
-              background: "var(--color-background-primary)",
-              border: "0.5px solid var(--color-border-tertiary)",
-              borderRadius: 20,
-              padding: "24px 28px",
-              marginBottom: 20,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: 16,
-            }}
-          >
+          <div className="bg-white border border-gray-200 rounded-2xl px-6 py-5 mb-5 flex flex-wrap items-center justify-between gap-4 shadow-sm">
             <div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  marginBottom: 6,
-                }}
-              >
-                <div
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 8,
-                    background: "#eef2ff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Activity size={14} color="#6366f1" />
+              <div className="flex items-center gap-2 mb-1.5">
+                <div className="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center">
+                  <Activity size={14} className="text-indigo-600" />
                 </div>
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: "#6366f1",
-                    letterSpacing: "0.07em",
-                    textTransform: "uppercase",
-                  }}
-                >
+                <span className="text-[11px] font-semibold text-indigo-600 uppercase tracking-widest">
                   Dashboard Admin
                 </span>
               </div>
-              <p
-                style={{
-                  fontSize: 22,
-                  fontWeight: 700,
-                  color: "var(--color-text-primary)",
-                  margin: "0 0 4px",
-                }}
-              >
+              <p className="text-xl font-bold text-gray-900 mb-1">
                 Pantau Kehadiran
               </p>
-              <p
-                style={{
-                  fontSize: 13,
-                  color: "var(--color-text-secondary)",
-                  margin: 0,
-                }}
-              >
-                {hariIni}
-              </p>
+              <p className="text-sm text-gray-400">{hariIni}</p>
             </div>
-            {/* quick stats pill row */}
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div className="flex gap-2 flex-wrap">
               {[
                 {
                   v: loading ? "—" : `${pct}%`,
                   l: "hadir",
-                  bg: "#f0fdf4",
-                  tc: "#15803d",
-                  bc: "#bbf7d0",
+                  cls: "bg-emerald-50 border-emerald-200 text-emerald-700",
                 },
                 {
                   v: loading ? "—" : stats.totalSiswa,
                   l: "total siswa",
-                  bg: "var(--color-background-secondary)",
-                  tc: "var(--color-text-secondary)",
-                  bc: "var(--color-border-tertiary)",
+                  cls: "bg-gray-50 border-gray-200 text-gray-600",
                 },
                 {
                   v: loading ? "—" : stats.tidakHadir + izin,
                   l: "tidak hadir",
-                  bg: "#fef2f2",
-                  tc: "#be123c",
-                  bc: "#fecaca",
+                  cls: "bg-rose-50 border-rose-200 text-rose-700",
                 },
               ].map((b) => (
                 <div
                   key={b.l}
-                  style={{
-                    background: b.bg,
-                    border: `0.5px solid ${b.bc}`,
-                    borderRadius: 12,
-                    padding: "8px 16px",
-                    textAlign: "center",
-                  }}
+                  className={`${b.cls} border rounded-xl px-4 py-2 text-center`}
                 >
-                  <p
-                    style={{
-                      fontSize: 18,
-                      fontWeight: 700,
-                      color: b.tc,
-                      margin: 0,
-                      lineHeight: 1,
-                    }}
-                  >
-                    {b.v}
-                  </p>
-                  <p
-                    style={{
-                      fontSize: 11,
-                      color: b.tc,
-                      opacity: 0.7,
-                      margin: "3px 0 0",
-                      textTransform: "capitalize",
-                    }}
-                  >
+                  <p className="text-lg font-bold leading-none">{b.v}</p>
+                  <p className="text-[11px] opacity-70 mt-1 capitalize">
                     {b.l}
                   </p>
                 </div>
@@ -492,75 +269,27 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* ── Middle Row: Donut Besar | Per Kelas ── */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "5fr 7fr",
-              gap: 14,
-              marginBottom: 14,
-            }}
-          >
-            {/* LEFT — Donut Besar + Keterangan Lengkap */}
-            <div
-              style={{
-                background: "var(--color-background-primary)",
-                border: "0.5px solid var(--color-border-tertiary)",
-                borderRadius: 18,
-                padding: "24px",
-                display: "flex",
-                flexDirection: "column",
-                gap: 0,
-              }}
-            >
-              {/* Header */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  marginBottom: 20,
-                }}
-              >
-                <TrendingUp size={13} color="#10b981" />
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: "var(--color-text-secondary)",
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Distribusi Kehadiran Hari Ini
+          {/* ── Middle Row ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
+            {/* LEFT — Donut */}
+            <div className="lg:col-span-2 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-5">
+                <TrendingUp size={13} className="text-emerald-500" />
+                <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
+                  Distribusi Kehadiran
                 </span>
               </div>
 
               {loading ? (
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: 16,
-                  }}
-                >
-                  <Sk w={180} h={180} r={90} />
-                  <Sk h={14} />
-                  <Sk h={14} />
-                  <Sk h={14} />
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-44 h-44 rounded-full bg-gray-100 animate-pulse" />
+                  <Sk />
+                  <Sk />
+                  <Sk />
                 </div>
               ) : (
                 <>
-                  {/* Donut besar + center text */}
-                  <div
-                    style={{
-                      position: "relative",
-                      width: "100%",
-                      height: 200,
-                      marginBottom: 20,
-                    }}
-                  >
+                  <div className="relative w-full h-52 mb-5">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -568,7 +297,7 @@ export default function AdminDashboard() {
                           cx="50%"
                           cy="50%"
                           innerRadius={64}
-                          outerRadius={92}
+                          outerRadius={90}
                           paddingAngle={4}
                           dataKey="value"
                           startAngle={90}
@@ -583,72 +312,39 @@ export default function AdminDashboard() {
                         <Tooltip content={<DonutTooltip />} />
                       </PieChart>
                     </ResponsiveContainer>
-                    <div
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        pointerEvents: "none",
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: 30,
-                          fontWeight: 800,
-                          color: "var(--color-text-primary)",
-                          lineHeight: 1,
-                        }}
-                      >
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                      <span className="text-3xl font-black text-gray-900 leading-none">
                         {pct}%
                       </span>
-                      <span
-                        style={{
-                          fontSize: 11,
-                          color: "var(--color-text-secondary)",
-                          marginTop: 4,
-                        }}
-                      >
+                      <span className="text-xs text-gray-400 mt-1">
                         kehadiran
                       </span>
                     </div>
                   </div>
 
-                  {/* Legend — 3 baris detail */}
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 10,
-                      marginBottom: 20,
-                    }}
-                  >
+                  {/* Legend */}
+                  <div className="flex flex-col gap-2 mb-5">
                     {[
                       {
                         label: "Hadir",
                         val: stats.hadirHariIni,
-                        color: "#10b981",
-                        bg: "#f0fdf4",
-                        tc: "#15803d",
-                        icon: <CheckCircle2 size={14} />,
+                        bg: "bg-emerald-50",
+                        tc: "text-emerald-700",
+                        icon: <CheckCircle2 size={15} />,
                       },
                       {
                         label: "Izin / Sakit",
                         val: izin,
-                        color: "#f59e0b",
-                        bg: "#fefce8",
-                        tc: "#a16207",
-                        icon: <BookOpen size={14} />,
+                        bg: "bg-amber-50",
+                        tc: "text-amber-700",
+                        icon: <BookOpen size={15} />,
                       },
                       {
                         label: "Alfa",
                         val: stats.tidakHadir,
-                        color: "#f43f5e",
-                        bg: "#fef2f2",
-                        tc: "#be123c",
-                        icon: <XCircle size={14} />,
+                        bg: "bg-rose-50",
+                        tc: "text-rose-700",
+                        icon: <XCircle size={15} />,
                       },
                     ].map((b) => {
                       const pctItem =
@@ -658,45 +354,19 @@ export default function AdminDashboard() {
                       return (
                         <div
                           key={b.label}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 10,
-                            padding: "10px 14px",
-                            background: b.bg,
-                            borderRadius: 12,
-                            border: `1px solid ${b.color}22`,
-                          }}
+                          className={`flex items-center gap-3 ${b.bg} rounded-xl px-3.5 py-2.5`}
                         >
-                          <div style={{ color: b.tc }}>{b.icon}</div>
+                          <span className={b.tc}>{b.icon}</span>
                           <span
-                            style={{
-                              fontSize: 13,
-                              color: b.tc,
-                              fontWeight: 600,
-                              flex: 1,
-                            }}
+                            className={`text-sm font-semibold ${b.tc} flex-1`}
                           >
                             {b.label}
                           </span>
-                          <span
-                            style={{
-                              fontSize: 18,
-                              fontWeight: 800,
-                              color: b.tc,
-                            }}
-                          >
+                          <span className={`text-xl font-black ${b.tc}`}>
                             {b.val}
                           </span>
                           <span
-                            style={{
-                              fontSize: 11,
-                              fontWeight: 600,
-                              background: "rgba(0,0,0,0.06)",
-                              padding: "2px 7px",
-                              borderRadius: 20,
-                              color: b.tc,
-                            }}
+                            className={`text-[11px] font-semibold ${b.tc} bg-black/5 px-2 py-0.5 rounded-full`}
                           >
                             {pctItem}%
                           </span>
@@ -705,290 +375,123 @@ export default function AdminDashboard() {
                     })}
                   </div>
 
-                  {/* Divider */}
-                  <div
-                    style={{
-                      height: "0.5px",
-                      background: "var(--color-border-tertiary)",
-                      marginBottom: 16,
-                    }}
-                  />
-
-                  {/* Summary strip — rata-rata + best/worst */}
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      marginBottom: 12,
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 12,
-                        background: "#eef2ff",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Award size={18} color="#6366f1" />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <p
-                        style={{
-                          fontSize: 11,
-                          color: "var(--color-text-secondary)",
-                          margin: "0 0 2px",
-                        }}
-                      >
-                        Rata-rata kehadiran hari ini
-                      </p>
-                      <p
-                        style={{
-                          fontSize: 24,
-                          fontWeight: 700,
-                          color: "var(--color-text-primary)",
-                          margin: 0,
-                          lineHeight: 1,
-                        }}
-                      >
-                        {pct}%
-                      </p>
-                    </div>
-                    <div
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 12,
-                        background: pct >= 80 ? "#f0fdf4" : "#fef2f2",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      {pct >= 80 ? (
-                        <CheckCircle2 size={20} color="#15803d" />
-                      ) : (
-                        <AlertTriangle size={20} color="#be123c" />
-                      )}
-                    </div>
-                  </div>
-
-                  {bestClass && (
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 6,
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                          padding: "8px 12px",
-                          background: "#f0fdf4",
-                          borderRadius: 10,
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: 6,
-                            height: 6,
-                            borderRadius: "50%",
-                            background: "#10b981",
-                            flexShrink: 0,
-                          }}
-                        />
-                        <span style={{ fontSize: 11, color: "#15803d" }}>
-                          Terbaik: <strong>{bestClass.kelas}</strong> —{" "}
-                          {bestClass.persentase}%
-                        </span>
+                  <div className="border-t border-gray-100 pt-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
+                        <Award size={17} className="text-indigo-600" />
                       </div>
-                      {worstClass && worstClass.kelas !== bestClass.kelas && (
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                            padding: "8px 12px",
-                            background: "#fef2f2",
-                            borderRadius: 10,
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: 6,
-                              height: 6,
-                              borderRadius: "50%",
-                              background: "#f43f5e",
-                              flexShrink: 0,
-                            }}
+                      <div className="flex-1">
+                        <p className="text-xs text-gray-400 mb-0.5">
+                          Rata-rata kehadiran
+                        </p>
+                        <p className="text-2xl font-black text-gray-900 leading-none">
+                          {pct}%
+                        </p>
+                      </div>
+                      <div
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center ${pct >= 80 ? "bg-emerald-100" : "bg-rose-100"}`}
+                      >
+                        {pct >= 80 ? (
+                          <CheckCircle2
+                            size={20}
+                            className="text-emerald-600"
                           />
-                          <span style={{ fontSize: 11, color: "#be123c" }}>
-                            Perhatian: <strong>{worstClass.kelas}</strong> —{" "}
-                            {worstClass.persentase}%
+                        ) : (
+                          <AlertTriangle size={20} className="text-rose-600" />
+                        )}
+                      </div>
+                    </div>
+                    {bestClass && (
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-2 bg-emerald-50 rounded-lg px-3 py-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                          <span className="text-xs text-emerald-700">
+                            Terbaik: <strong>{bestClass.kelas}</strong> —{" "}
+                            {bestClass.persentase}%
                           </span>
                         </div>
-                      )}
-                    </div>
-                  )}
+                        {worstClass && worstClass.kelas !== bestClass.kelas && (
+                          <div className="flex items-center gap-2 bg-rose-50 rounded-lg px-3 py-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                            <span className="text-xs text-rose-700">
+                              Perhatian: <strong>{worstClass.kelas}</strong> —{" "}
+                              {worstClass.persentase}%
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
             </div>
 
-            {/* RIGHT — Per Kelas (card berwarna) */}
-            <div
-              style={{
-                background: "var(--color-background-primary)",
-                border: "0.5px solid var(--color-border-tertiary)",
-                borderRadius: 18,
-                padding: "24px",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  marginBottom: 18,
-                }}
-              >
-                <Users size={13} color="#6366f1" />
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: "var(--color-text-secondary)",
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
-                  }}
-                >
+            {/* RIGHT — Per Kelas */}
+            <div className="lg:col-span-3 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-5">
+                <Users size={13} className="text-indigo-500" />
+                <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
                   Kehadiran per Kelas
                 </span>
               </div>
 
               {loading ? (
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 12,
-                  }}
-                >
-                  {[...Array(4)].map((_, i) => (
-                    <Sk key={i} h={140} />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[...Array(3)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-36 rounded-2xl bg-gray-100 animate-pulse"
+                    />
                   ))}
                 </div>
               ) : classData.length === 0 ? (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: 180,
-                    color: "var(--color-text-secondary)",
-                    fontSize: 13,
-                  }}
-                >
+                <div className="flex items-center justify-center h-32 text-sm text-gray-400">
                   Tidak ada data.
                 </div>
               ) : (
                 <>
-                  {/* Grid 2-col untuk card berwarna */}
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns:
-                        classData.length <= 2 ? "1fr 1fr" : "repeat(3, 1fr)",
-                      gap: 12,
-                      marginBottom: 16,
-                    }}
-                  >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
                     {classData.slice(0, 6).map((item, i) => (
                       <ClassCard key={i} item={item} index={i} />
                     ))}
                   </div>
-
-                  {/* Summary 4 cols */}
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(4, 1fr)",
-                      gap: 8,
-                      padding: "14px",
-                      background: "var(--color-background-secondary)",
-                      borderRadius: 14,
-                    }}
-                  >
+                  {/* Summary */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-50 rounded-2xl p-3">
                     {[
                       {
                         v: stats.totalSiswa,
                         l: "Total",
-                        bg: "#eef2ff",
-                        tc: "#4338ca",
+                        cls: "bg-indigo-100 text-indigo-700",
                         icon: <Users size={14} />,
                       },
                       {
                         v: stats.hadirHariIni,
                         l: "Hadir",
-                        bg: "#f0fdf4",
-                        tc: "#15803d",
+                        cls: "bg-emerald-100 text-emerald-700",
                         icon: <CheckCircle2 size={14} />,
                       },
                       {
                         v: izin,
                         l: "Izin",
-                        bg: "#fefce8",
-                        tc: "#a16207",
+                        cls: "bg-amber-100 text-amber-700",
                         icon: <BookOpen size={14} />,
                       },
                       {
                         v: stats.tidakHadir,
                         l: "Alfa",
-                        bg: "#fef2f2",
-                        tc: "#be123c",
+                        cls: "bg-rose-100 text-rose-700",
                         icon: <XCircle size={14} />,
                       },
                     ].map((s) => (
                       <div
                         key={s.l}
-                        style={{
-                          background: s.bg,
-                          borderRadius: 12,
-                          padding: "12px 8px",
-                          textAlign: "center",
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          gap: 4,
-                        }}
+                        className={`${s.cls} rounded-xl py-3 px-2 flex flex-col items-center gap-1`}
                       >
-                        <div style={{ color: s.tc }}>{s.icon}</div>
-                        <p
-                          style={{
-                            fontSize: 20,
-                            fontWeight: 800,
-                            color: s.tc,
-                            margin: 0,
-                            lineHeight: 1,
-                          }}
-                        >
-                          {s.v}
+                        {s.icon}
+                        <p className="text-xl font-black leading-none">
+                          {loading ? "—" : s.v}
                         </p>
-                        <p
-                          style={{
-                            fontSize: 10,
-                            color: s.tc,
-                            opacity: 0.75,
-                            margin: 0,
-                          }}
-                        >
+                        <p className="text-[10px] font-semibold opacity-75">
                           {s.l}
                         </p>
                       </div>
@@ -1000,66 +503,33 @@ export default function AdminDashboard() {
           </div>
 
           {/* ── Trend Chart ── */}
-          <div
-            style={{
-              background: "var(--color-background-primary)",
-              border: "0.5px solid var(--color-border-tertiary)",
-              borderRadius: 16,
-              padding: "20px 22px",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 16,
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <TrendingUp size={13} color="#6366f1" />
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: "var(--color-text-secondary)",
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Tren Kehadiran 7 Hari Terakhir
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <TrendingUp size={13} className="text-indigo-500" />
+                <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
+                  Tren 7 Hari Terakhir
                 </span>
               </div>
-              <div style={{ display: "flex", gap: 14 }}>
+              <div className="flex gap-4">
                 {[
                   { color: "#6366f1", label: "Hadir" },
                   { color: "#fca5a5", label: "Tidak hadir" },
                 ].map((l) => (
                   <span
                     key={l.label}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      fontSize: 12,
-                      color: "var(--color-text-secondary)",
-                    }}
+                    className="flex items-center gap-1.5 text-xs text-gray-400"
                   >
                     <span
-                      style={{
-                        width: 10,
-                        height: 10,
-                        borderRadius: 3,
-                        background: l.color,
-                        display: "inline-block",
-                      }}
+                      className="w-2.5 h-2.5 rounded-sm inline-block"
+                      style={{ background: l.color }}
                     />
                     {l.label}
                   </span>
                 ))}
               </div>
             </div>
-            <div style={{ height: 140 }}>
+            <div className="h-36">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={trendData}
@@ -1068,17 +538,12 @@ export default function AdminDashboard() {
                 >
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    stroke="var(--color-border-tertiary)"
+                    stroke="#f1f5f9"
                     vertical={false}
                   />
                   <XAxis
                     dataKey="day"
-                    tick={
-                      {
-                        fontSize: 11,
-                        fill: "var(--color-text-secondary)",
-                      } as any
-                    }
+                    tick={{ fontSize: 11, fill: "#94a3b8" } as any}
                     axisLine={false}
                     tickLine={false}
                   />
