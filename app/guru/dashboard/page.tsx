@@ -20,62 +20,26 @@ const DONUT_COLORS = ["#10b981", "#f59e0b", "#f43f5e"];
 const DonutTooltip = ({ active, payload }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div
-      style={{
-        background: "var(--color-background-primary)",
-        border: "0.5px solid var(--color-border-secondary)",
-        borderRadius: 10,
-        padding: "8px 12px",
-        fontSize: 12,
-        boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
-      }}
-    >
-      <p
-        style={{
-          fontWeight: 600,
-          color: "var(--color-text-primary)",
-          margin: "0 0 2px",
-        }}
-      >
-        {payload[0].name}
-      </p>
-      <p style={{ color: "var(--color-text-secondary)", margin: 0 }}>
-        Jumlah:{" "}
-        <strong style={{ color: "var(--color-text-primary)" }}>
-          {payload[0].value}
-        </strong>
+    <div className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs shadow-lg">
+      <p className="font-semibold text-gray-800 mb-0.5">{payload[0].name}</p>
+      <p className="text-gray-500 m-0">
+        Jumlah: <strong className="text-gray-800">{payload[0].value}</strong>
       </p>
     </div>
   );
 };
 
-const Sk = ({
-  w = "100%",
-  h = 20,
-  r = 8,
-}: {
-  w?: string | number;
-  h?: number;
-  r?: number;
-}) => (
-  <div
-    style={{
-      width: w,
-      height: h,
-      borderRadius: r,
-      background: "var(--color-background-tertiary)",
-      animation: "pulse 1.5s ease-in-out infinite",
-    }}
-  />
+const Sk = () => (
+  <div className="w-full h-5 rounded-lg bg-gray-100 animate-pulse" />
 );
 
 const AVATAR_COLORS = [
-  { bg: "#eef2ff", text: "#4338ca" },
-  { bg: "#f0fdf4", text: "#15803d" },
-  { bg: "#fff7ed", text: "#c2410c" },
-  { bg: "#fdf4ff", text: "#7e22ce" },
-  { bg: "#eff6ff", text: "#1d4ed8" },
-  { bg: "#fefce8", text: "#a16207" },
+  "bg-indigo-100 text-indigo-700",
+  "bg-emerald-100 text-emerald-700",
+  "bg-orange-100 text-orange-700",
+  "bg-violet-100 text-violet-700",
+  "bg-blue-100 text-blue-700",
+  "bg-amber-100 text-amber-700",
 ];
 
 function SiswaCard({ item, index }: { item: any; index: number }) {
@@ -86,139 +50,55 @@ function SiswaCard({ item, index }: { item: any; index: number }) {
   const alfaS = item.tidakHadir || 0;
   const av = AVATAR_COLORS[index % AVATAR_COLORS.length];
   const barColor = p >= 80 ? "#10b981" : p >= 60 ? "#f59e0b" : "#f43f5e";
-  const pBg = p >= 80 ? "#f0fdf4" : p >= 60 ? "#fefce8" : "#fef2f2";
-  const pTc = p >= 80 ? "#15803d" : p >= 60 ? "#a16207" : "#be123c";
+  const pBadge =
+    p >= 80
+      ? "bg-emerald-100 text-emerald-700"
+      : p >= 60
+        ? "bg-amber-100 text-amber-700"
+        : "bg-rose-100 text-rose-700";
   const initial = (item.siswa || item.tempatPKL || "?").charAt(0).toUpperCase();
 
   return (
-    <div
-      style={{
-        background: "var(--color-background-primary)",
-        border: "0.5px solid var(--color-border-tertiary)",
-        borderRadius: 14,
-        padding: "12px 14px",
-        transition: "border-color 0.2s, transform 0.2s",
-        cursor: "default",
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLDivElement).style.borderColor =
-          "var(--color-border-secondary)";
-        (e.currentTarget as HTMLDivElement).style.transform =
-          "translateY(-1px)";
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLDivElement).style.borderColor =
-          "var(--color-border-tertiary)";
-        (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 8,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+    <div className="bg-white border border-gray-200 rounded-xl p-3.5 hover:border-gray-300 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-default">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2.5">
           <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: "50%",
-              background: av.bg,
-              color: av.text,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 12,
-              fontWeight: 600,
-              flexShrink: 0,
-            }}
+            className={`w-8 h-8 rounded-full ${av} flex items-center justify-center text-xs font-semibold shrink-0`}
           >
             {initial}
           </div>
-          <div style={{ minWidth: 0 }}>
-            <p
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: "var(--color-text-primary)",
-                margin: 0,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                maxWidth: 130,
-              }}
-            >
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-gray-800 truncate max-w-[120px]">
               {item.siswa || item.tempatPKL}
             </p>
             {item.siswa && item.tempatPKL && (
-              <p
-                style={{
-                  fontSize: 10,
-                  color: "var(--color-text-secondary)",
-                  margin: 0,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  maxWidth: 130,
-                }}
-              >
+              <p className="text-[10px] text-gray-400 truncate max-w-[120px]">
                 {item.tempatPKL}
               </p>
             )}
           </div>
         </div>
         <span
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            padding: "2px 8px",
-            borderRadius: 20,
-            background: pBg,
-            color: pTc,
-            flexShrink: 0,
-          }}
+          className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${pBadge} shrink-0`}
         >
           {p}%
         </span>
       </div>
-      <div
-        style={{
-          height: 3,
-          borderRadius: 3,
-          background: "var(--color-background-tertiary)",
-          marginBottom: 8,
-          overflow: "hidden",
-        }}
-      >
+      <div className="h-1 rounded-full bg-gray-100 mb-2 overflow-hidden">
         <div
-          style={{
-            height: "100%",
-            width: `${p}%`,
-            background: barColor,
-            borderRadius: 3,
-            transition: "width 0.7s ease",
-          }}
+          className="h-full rounded-full transition-all duration-700"
+          style={{ width: `${p}%`, background: barColor }}
         />
       </div>
-      <div style={{ display: "flex", gap: 5 }}>
+      <div className="flex gap-1.5">
         {[
-          { v: hadir, l: "hadir", bg: "#f0fdf4", tc: "#15803d" },
-          { v: izinS, l: "izin", bg: "#fefce8", tc: "#a16207" },
-          { v: alfaS, l: "alfa", bg: "#fef2f2", tc: "#be123c" },
+          { v: hadir, l: "hadir", cls: "bg-emerald-50 text-emerald-700" },
+          { v: izinS, l: "izin", cls: "bg-amber-50 text-amber-700" },
+          { v: alfaS, l: "alfa", cls: "bg-rose-50 text-rose-700" },
         ].map((c) => (
           <span
             key={c.l}
-            style={{
-              fontSize: 10,
-              fontWeight: 500,
-              padding: "2px 6px",
-              borderRadius: 5,
-              background: c.bg,
-              color: c.tc,
-            }}
+            className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${c.cls}`}
           >
             {c.v} {c.l}
           </span>
@@ -296,148 +176,59 @@ export default function GuruDashboard() {
     month: "long",
     year: "numeric",
   });
-
-  const pctColor = pct >= 80 ? "#10b981" : pct >= 60 ? "#f59e0b" : "#f43f5e";
-  const pctBg = pct >= 80 ? "#f0fdf4" : pct >= 60 ? "#fefce8" : "#fef2f2";
-  const pctTc = pct >= 80 ? "#15803d" : pct >= 60 ? "#a16207" : "#be123c";
+  const pctBadge =
+    pct >= 80
+      ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+      : "bg-amber-50 border-amber-200 text-amber-700";
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-100 overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
-        <main
-          className="flex-1 overflow-y-auto overflow-x-hidden"
-          style={{
-            padding: "28px 32px",
-            background: "var(--color-background-tertiary)",
-          }}
-        >
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-5 lg:p-8 bg-slate-100">
           <GreetingBanner />
 
-          {/* ── Hero Header ── */}
-          <div
-            style={{
-              background: "var(--color-background-primary)",
-              border: "0.5px solid var(--color-border-tertiary)",
-              borderRadius: 20,
-              padding: "24px 28px",
-              marginBottom: 20,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: 16,
-            }}
-          >
+          {/* ── Hero ── */}
+          <div className="bg-white border border-gray-200 rounded-2xl px-6 py-5 mb-5 flex flex-wrap items-center justify-between gap-4 shadow-sm">
             <div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  marginBottom: 6,
-                }}
-              >
-                <div
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 8,
-                    background: "#f0fdf4",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <GraduationCap size={14} color="#10b981" />
+              <div className="flex items-center gap-2 mb-1.5">
+                <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <GraduationCap size={14} className="text-emerald-600" />
                 </div>
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: "#10b981",
-                    letterSpacing: "0.07em",
-                    textTransform: "uppercase",
-                  }}
-                >
+                <span className="text-[11px] font-semibold text-emerald-600 uppercase tracking-widest">
                   Dashboard Guru
                 </span>
               </div>
-              <p
-                style={{
-                  fontSize: 22,
-                  fontWeight: 700,
-                  color: "var(--color-text-primary)",
-                  margin: "0 0 4px",
-                }}
-              >
+              <p className="text-xl font-bold text-gray-900 mb-1">
                 Pantau Siswa PKL
               </p>
-              <p
-                style={{
-                  fontSize: 13,
-                  color: "var(--color-text-secondary)",
-                  margin: 0,
-                }}
-              >
-                {hariIni}
-              </p>
+              <p className="text-sm text-gray-400">{hariIni}</p>
             </div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div className="flex gap-2 flex-wrap">
               {[
                 {
                   v: loading ? "—" : `${pct}%`,
                   l: "hadir",
-                  bg: "#f0fdf4",
-                  tc: "#15803d",
-                  bc: "#bbf7d0",
+                  cls: "bg-emerald-50 border-emerald-200 text-emerald-700",
                 },
                 {
                   v: loading ? "—" : stats.totalSiswaPKL,
                   l: "siswa PKL",
-                  bg: "var(--color-background-secondary)",
-                  tc: "var(--color-text-secondary)",
-                  bc: "var(--color-border-tertiary)",
+                  cls: "bg-gray-50 border-gray-200 text-gray-600",
                 },
                 {
                   v: loading ? "—" : stats.tidakHadir + izin,
                   l: "tidak hadir",
-                  bg: "#fef2f2",
-                  tc: "#be123c",
-                  bc: "#fecaca",
+                  cls: "bg-rose-50 border-rose-200 text-rose-700",
                 },
               ].map((b) => (
                 <div
                   key={b.l}
-                  style={{
-                    background: b.bg,
-                    border: `0.5px solid ${b.bc}`,
-                    borderRadius: 12,
-                    padding: "8px 16px",
-                    textAlign: "center",
-                  }}
+                  className={`${b.cls} border rounded-xl px-4 py-2 text-center`}
                 >
-                  <p
-                    style={{
-                      fontSize: 18,
-                      fontWeight: 700,
-                      color: b.tc,
-                      margin: 0,
-                      lineHeight: 1,
-                    }}
-                  >
-                    {b.v}
-                  </p>
-                  <p
-                    style={{
-                      fontSize: 11,
-                      color: b.tc,
-                      opacity: 0.7,
-                      margin: "3px 0 0",
-                      textTransform: "capitalize",
-                    }}
-                  >
+                  <p className="text-lg font-bold leading-none">{b.v}</p>
+                  <p className="text-[11px] opacity-70 mt-1 capitalize">
                     {b.l}
                   </p>
                 </div>
@@ -445,77 +236,37 @@ export default function GuruDashboard() {
             </div>
           </div>
 
-          {/* ── Content Row ── */}
-          <div
-            style={{ display: "grid", gridTemplateColumns: "5fr 7fr", gap: 14 }}
-          >
-            {/* LEFT — Donut Besar + Keterangan */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {/* Donut Card */}
-              <div
-                style={{
-                  background: "var(--color-background-primary)",
-                  border: "0.5px solid var(--color-border-tertiary)",
-                  borderRadius: 18,
-                  padding: "24px",
-                  flex: 1,
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    marginBottom: 18,
-                  }}
-                >
-                  <TrendingUp size={13} color="#10b981" />
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      color: "var(--color-text-secondary)",
-                      letterSpacing: "0.06em",
-                      textTransform: "uppercase",
-                    }}
-                  >
+          {/* ── Content ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+            {/* LEFT */}
+            <div className="lg:col-span-2 flex flex-col gap-4">
+              {/* Donut card */}
+              <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-5">
+                  <TrendingUp size={13} className="text-emerald-500" />
+                  <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
                     Distribusi Kehadiran
                   </span>
                 </div>
 
                 {loading ? (
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: 14,
-                    }}
-                  >
-                    <Sk w={160} h={160} r={80} />
-                    <Sk h={14} />
-                    <Sk h={14} />
-                    <Sk h={14} />
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="w-40 h-40 rounded-full bg-gray-100 animate-pulse" />
+                    <Sk />
+                    <Sk />
+                    <Sk />
                   </div>
                 ) : (
                   <>
-                    {/* Donut besar */}
-                    <div
-                      style={{
-                        position: "relative",
-                        width: "100%",
-                        height: 180,
-                        marginBottom: 18,
-                      }}
-                    >
+                    <div className="relative w-full h-48 mb-5">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
                             data={donutData}
                             cx="50%"
                             cy="50%"
-                            innerRadius={56}
-                            outerRadius={82}
+                            innerRadius={58}
+                            outerRadius={84}
                             paddingAngle={4}
                             dataKey="value"
                             startAngle={90}
@@ -530,70 +281,37 @@ export default function GuruDashboard() {
                           <Tooltip content={<DonutTooltip />} />
                         </PieChart>
                       </ResponsiveContainer>
-                      <div
-                        style={{
-                          position: "absolute",
-                          inset: 0,
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          pointerEvents: "none",
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: 28,
-                            fontWeight: 800,
-                            color: "var(--color-text-primary)",
-                            lineHeight: 1,
-                          }}
-                        >
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span className="text-3xl font-black text-gray-900 leading-none">
                           {pct}%
                         </span>
-                        <span
-                          style={{
-                            fontSize: 11,
-                            color: "var(--color-text-secondary)",
-                            marginTop: 4,
-                          }}
-                        >
+                        <span className="text-xs text-gray-400 mt-1">
                           kehadiran
                         </span>
                       </div>
                     </div>
 
-                    {/* Legend detail */}
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 8,
-                      }}
-                    >
+                    <div className="flex flex-col gap-2">
                       {[
                         {
                           label: "Hadir",
                           val: stats.hadirHariIni,
-                          color: "#10b981",
-                          bg: "#f0fdf4",
-                          tc: "#15803d",
+                          bg: "bg-emerald-50",
+                          tc: "text-emerald-700",
                           icon: <CheckCircle2 size={14} />,
                         },
                         {
                           label: "Izin / Sakit",
                           val: izin,
-                          color: "#f59e0b",
-                          bg: "#fefce8",
-                          tc: "#a16207",
+                          bg: "bg-amber-50",
+                          tc: "text-amber-700",
                           icon: <BookOpen size={14} />,
                         },
                         {
                           label: "Alfa",
                           val: stats.tidakHadir,
-                          color: "#f43f5e",
-                          bg: "#fef2f2",
-                          tc: "#be123c",
+                          bg: "bg-rose-50",
+                          tc: "text-rose-700",
                           icon: <XCircle size={14} />,
                         },
                       ].map((b) => {
@@ -604,45 +322,19 @@ export default function GuruDashboard() {
                         return (
                           <div
                             key={b.label}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 10,
-                              padding: "10px 12px",
-                              background: b.bg,
-                              borderRadius: 12,
-                              border: `1px solid ${b.color}22`,
-                            }}
+                            className={`flex items-center gap-3 ${b.bg} rounded-xl px-3.5 py-2.5`}
                           >
-                            <div style={{ color: b.tc }}>{b.icon}</div>
+                            <span className={b.tc}>{b.icon}</span>
                             <span
-                              style={{
-                                fontSize: 12,
-                                color: b.tc,
-                                fontWeight: 600,
-                                flex: 1,
-                              }}
+                              className={`text-sm font-semibold ${b.tc} flex-1`}
                             >
                               {b.label}
                             </span>
-                            <span
-                              style={{
-                                fontSize: 17,
-                                fontWeight: 800,
-                                color: b.tc,
-                              }}
-                            >
+                            <span className={`text-xl font-black ${b.tc}`}>
                               {b.val}
                             </span>
                             <span
-                              style={{
-                                fontSize: 11,
-                                fontWeight: 600,
-                                background: "rgba(0,0,0,0.06)",
-                                padding: "2px 7px",
-                                borderRadius: 20,
-                                color: b.tc,
-                              }}
+                              className={`text-[11px] font-semibold ${b.tc} bg-black/5 px-2 py-0.5 rounded-full`}
                             >
                               {pctItem}%
                             </span>
@@ -654,129 +346,41 @@ export default function GuruDashboard() {
                 )}
               </div>
 
-              {/* Summary card */}
-              <div
-                style={{
-                  background: "var(--color-background-primary)",
-                  border: "0.5px solid var(--color-border-tertiary)",
-                  borderRadius: 18,
-                  padding: "20px 22px",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    marginBottom: 14,
-                  }}
-                >
-                  <Award size={13} color="#6366f1" />
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      color: "var(--color-text-secondary)",
-                      letterSpacing: "0.06em",
-                      textTransform: "uppercase",
-                    }}
-                  >
+              {/* Ringkasan card */}
+              <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <Award size={13} className="text-indigo-500" />
+                  <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
                     Ringkasan
                   </span>
                 </div>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    marginBottom: 14,
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 12,
-                      background: "#eef2ff",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Award size={20} color="#6366f1" />
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-11 h-11 rounded-2xl bg-indigo-100 flex items-center justify-center shrink-0">
+                    <Award size={20} className="text-indigo-600" />
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <p
-                      style={{
-                        fontSize: 11,
-                        color: "var(--color-text-secondary)",
-                        margin: "0 0 2px",
-                      }}
-                    >
-                      Rata-rata kehadiran siswa PKL
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-400 mb-0.5">
+                      Rata-rata kehadiran
                     </p>
-                    <p
-                      style={{
-                        fontSize: 26,
-                        fontWeight: 800,
-                        color: "var(--color-text-primary)",
-                        margin: 0,
-                        lineHeight: 1,
-                      }}
-                    >
+                    <p className="text-3xl font-black text-gray-900 leading-none">
                       {pct}%
                     </p>
                   </div>
                   <div
-                    style={{
-                      background: pctBg,
-                      borderRadius: 12,
-                      padding: "8px 12px",
-                      textAlign: "center",
-                    }}
+                    className={`w-11 h-11 rounded-2xl flex items-center justify-center ${pct >= 80 ? "bg-emerald-100" : "bg-rose-100"}`}
                   >
                     {pct >= 80 ? (
-                      <CheckCircle2 size={22} color={pctTc} />
+                      <CheckCircle2 size={22} className="text-emerald-600" />
                     ) : (
-                      <AlertTriangle size={22} color={pctTc} />
+                      <AlertTriangle size={22} className="text-rose-600" />
                     )}
-                    <p
-                      style={{
-                        fontSize: 10,
-                        color: pctTc,
-                        margin: "4px 0 0",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {pct >= 80 ? "Baik" : "Perhatian"}
-                    </p>
                   </div>
                 </div>
                 {bestSiswa && (
-                  <div
-                    style={{ display: "flex", flexDirection: "column", gap: 6 }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        padding: "7px 10px",
-                        background: "#f0fdf4",
-                        borderRadius: 9,
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: 5,
-                          height: 5,
-                          borderRadius: "50%",
-                          background: "#10b981",
-                          flexShrink: 0,
-                        }}
-                      />
-                      <span style={{ fontSize: 11, color: "#15803d" }}>
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center gap-2 bg-emerald-50 rounded-lg px-3 py-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                      <span className="text-xs text-emerald-700 truncate">
                         Terbaik:{" "}
                         <strong>
                           {bestSiswa.siswa || bestSiswa.tempatPKL}
@@ -784,26 +388,9 @@ export default function GuruDashboard() {
                       </span>
                     </div>
                     {worstSiswa && worstSiswa !== bestSiswa && (
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                          padding: "7px 10px",
-                          background: "#fef2f2",
-                          borderRadius: 9,
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: 5,
-                            height: 5,
-                            borderRadius: "50%",
-                            background: "#f43f5e",
-                            flexShrink: 0,
-                          }}
-                        />
-                        <span style={{ fontSize: 11, color: "#be123c" }}>
+                      <div className="flex items-center gap-2 bg-rose-50 rounded-lg px-3 py-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                        <span className="text-xs text-rose-700 truncate">
                           Perhatian:{" "}
                           <strong>
                             {worstSiswa.siswa || worstSiswa.tempatPKL}
@@ -816,148 +403,72 @@ export default function GuruDashboard() {
               </div>
             </div>
 
-            {/* RIGHT — Siswa PKL list */}
-            <div
-              style={{
-                background: "var(--color-background-primary)",
-                border: "0.5px solid var(--color-border-tertiary)",
-                borderRadius: 18,
-                padding: "24px",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  marginBottom: 18,
-                }}
-              >
-                <Users size={13} color="#10b981" />
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: "var(--color-text-secondary)",
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
-                  }}
-                >
+            {/* RIGHT — Siswa list */}
+            <div className="lg:col-span-3 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-5">
+                <Users size={13} className="text-emerald-500" />
+                <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
                   Kehadiran Siswa PKL
                 </span>
               </div>
+
               {loading ? (
-                <div
-                  style={{ display: "flex", flexDirection: "column", gap: 10 }}
-                >
+                <div className="flex flex-col gap-3">
                   {[...Array(4)].map((_, i) => (
-                    <Sk key={i} h={72} />
+                    <div
+                      key={i}
+                      className="h-20 rounded-xl bg-gray-100 animate-pulse"
+                    />
                   ))}
                 </div>
               ) : pklData.length === 0 ? (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: 140,
-                    color: "var(--color-text-secondary)",
-                    fontSize: 13,
-                  }}
-                >
+                <div className="flex items-center justify-center h-36 text-sm text-gray-400">
                   Tidak ada data siswa bimbingan.
                 </div>
               ) : (
                 <>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(3, 1fr)",
-                      gap: 10,
-                      marginBottom: 10,
-                      maxHeight: 380,
-                      overflowY: "auto",
-                    }}
-                  >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5 mb-3 max-h-[400px] overflow-y-auto pr-1">
                     {pklData.map((item, i) => (
                       <SiswaCard key={i} item={item} index={i} />
                     ))}
                   </div>
-                  {/* Summary 4 cols */}
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(4, 1fr)",
-                      gap: 8,
-                      marginTop: 4,
-                      padding: "12px",
-                      background: "var(--color-background-secondary)",
-                      borderRadius: 14,
-                    }}
-                  >
+                  {/* Summary */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-50 rounded-2xl p-3">
                     {[
                       {
                         v: stats.totalSiswaPKL,
                         l: "Total",
-                        bg: "#eef2ff",
-                        tc: "#4338ca",
+                        cls: "bg-indigo-100 text-indigo-700",
                         icon: <Users size={14} />,
                       },
                       {
                         v: stats.hadirHariIni,
                         l: "Hadir",
-                        bg: "#f0fdf4",
-                        tc: "#15803d",
+                        cls: "bg-emerald-100 text-emerald-700",
                         icon: <CheckCircle2 size={14} />,
                       },
                       {
                         v: izin,
                         l: "Izin",
-                        bg: "#fefce8",
-                        tc: "#a16207",
+                        cls: "bg-amber-100 text-amber-700",
                         icon: <BookOpen size={14} />,
                       },
                       {
                         v: stats.tidakHadir,
                         l: "Alfa",
-                        bg: "#fef2f2",
-                        tc: "#be123c",
+                        cls: "bg-rose-100 text-rose-700",
                         icon: <XCircle size={14} />,
                       },
                     ].map((s) => (
                       <div
                         key={s.l}
-                        style={{
-                          background: s.bg,
-                          borderRadius: 12,
-                          padding: "10px 8px",
-                          textAlign: "center",
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          gap: 4,
-                        }}
+                        className={`${s.cls} rounded-xl py-3 px-2 flex flex-col items-center gap-1`}
                       >
-                        <div style={{ color: s.tc }}>{s.icon}</div>
-                        <p
-                          style={{
-                            fontSize: 18,
-                            fontWeight: 800,
-                            color: s.tc,
-                            margin: 0,
-                            lineHeight: 1,
-                          }}
-                        >
-                          {s.v}
+                        {s.icon}
+                        <p className="text-xl font-black leading-none">
+                          {loading ? "—" : s.v}
                         </p>
-                        <p
-                          style={{
-                            fontSize: 10,
-                            color: s.tc,
-                            opacity: 0.75,
-                            margin: 0,
-                          }}
-                        >
+                        <p className="text-[10px] font-semibold opacity-75">
                           {s.l}
                         </p>
                       </div>

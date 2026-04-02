@@ -36,53 +36,17 @@ const DONUT_COLORS = ["#10b981", "#f59e0b", "#f43f5e"];
 const DonutTooltip = ({ active, payload }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div
-      style={{
-        background: "var(--color-background-primary)",
-        border: "0.5px solid var(--color-border-secondary)",
-        borderRadius: 10,
-        padding: "8px 12px",
-        fontSize: 12,
-        boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
-      }}
-    >
-      <p
-        style={{
-          fontWeight: 600,
-          color: "var(--color-text-primary)",
-          margin: "0 0 2px",
-        }}
-      >
-        {payload[0].name}
-      </p>
-      <p style={{ color: "var(--color-text-secondary)", margin: 0 }}>
-        Jumlah:{" "}
-        <strong style={{ color: "var(--color-text-primary)" }}>
-          {payload[0].value}
-        </strong>
+    <div className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs shadow-lg">
+      <p className="font-semibold text-gray-800 mb-0.5">{payload[0].name}</p>
+      <p className="text-gray-500 m-0">
+        Jumlah: <strong className="text-gray-800">{payload[0].value}</strong>
       </p>
     </div>
   );
 };
 
-const Sk = ({
-  w = "100%",
-  h = 20,
-  r = 8,
-}: {
-  w?: string | number;
-  h?: number;
-  r?: number;
-}) => (
-  <div
-    style={{
-      width: w,
-      height: h,
-      borderRadius: r,
-      background: "var(--color-background-tertiary)",
-      animation: "pulse 1.5s ease-in-out infinite",
-    }}
-  />
+const Sk = () => (
+  <div className="w-full h-5 rounded-lg bg-gray-100 animate-pulse" />
 );
 
 const getTipeConfig = (tipe: string) => {
@@ -90,23 +54,20 @@ const getTipeConfig = (tipe: string) => {
     case "pengumuman":
       return {
         icon: <Megaphone size={14} />,
-        pill: { bg: "#fefce8", color: "#a16207", border: "#fde68a" },
-        iconBg: "#fefce8",
-        iconColor: "#a16207",
+        pill: "bg-amber-50 text-amber-700 border-amber-200",
+        iconCls: "bg-amber-50 text-amber-600",
       };
     case "peringatan":
       return {
         icon: <AlertCircle size={14} />,
-        pill: { bg: "#fef2f2", color: "#be123c", border: "#fecaca" },
-        iconBg: "#fef2f2",
-        iconColor: "#be123c",
+        pill: "bg-rose-50 text-rose-700 border-rose-200",
+        iconCls: "bg-rose-50 text-rose-600",
       };
     default:
       return {
         icon: <Info size={14} />,
-        pill: { bg: "#f0fdf4", color: "#15803d", border: "#bbf7d0" },
-        iconBg: "#f0fdf4",
-        iconColor: "#15803d",
+        pill: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        iconCls: "bg-emerald-50 text-emerald-600",
       };
   }
 };
@@ -117,6 +78,34 @@ const formatTanggal = (t: string) =>
     month: "long",
     year: "numeric",
   });
+
+/* ── Info Card solid Tailwind ── */
+const INFO_CARD_CONFIGS = [
+  {
+    bg: "bg-emerald-500",
+    hover: "hover:bg-emerald-600",
+    text: "text-white",
+    iconBg: "bg-emerald-600",
+  },
+  {
+    bg: "bg-indigo-500",
+    hover: "hover:bg-indigo-600",
+    text: "text-white",
+    iconBg: "bg-indigo-600",
+  },
+  {
+    bg: "bg-amber-400",
+    hover: "hover:bg-amber-500",
+    text: "text-white",
+    iconBg: "bg-amber-500",
+  },
+  {
+    bg: "bg-rose-500",
+    hover: "hover:bg-rose-600",
+    text: "text-white",
+    iconBg: "bg-rose-600",
+  },
+];
 
 export default function SiswaDashboard() {
   const [loading, setLoading] = useState(true);
@@ -173,7 +162,6 @@ export default function SiswaDashboard() {
     stats.totalHariBulanIni - stats.hadirBulanIni - stats.tidakHadirBulanIni,
   );
   const pct = stats.persentaseKehadiran;
-
   const donutData = [
     { name: "Hadir", value: stats.hadirBulanIni },
     { name: "Izin/Sakit", value: izin },
@@ -188,269 +176,158 @@ export default function SiswaDashboard() {
   });
 
   const pctColor = pct >= 80 ? "#10b981" : pct >= 60 ? "#f59e0b" : "#f43f5e";
-  const pctBg = pct >= 80 ? "#f0fdf4" : pct >= 60 ? "#fefce8" : "#fef2f2";
-  const pctTc = pct >= 80 ? "#15803d" : pct >= 60 ? "#a16207" : "#be123c";
+  const pctBadge =
+    pct >= 80
+      ? "bg-emerald-100 text-emerald-700"
+      : pct >= 60
+        ? "bg-amber-100 text-amber-700"
+        : "bg-rose-100 text-rose-700";
+  const pctTc =
+    pct >= 80
+      ? "text-emerald-700"
+      : pct >= 60
+        ? "text-amber-700"
+        : "text-rose-700";
 
   const motivasiText =
     pct >= 90
       ? {
           title: "Luar biasa! 🏆",
-          body: "Kehadiranmu sudah melampaui 90%. Pertahankan semangat belajarmu!",
+          body: "Kehadiranmu sudah melampaui 90%. Pertahankan!",
         }
       : pct >= 80
         ? {
             title: "Bagus sekali! 🎉",
-            body: "Kamu sudah mencapai target. Terus jaga konsistensinya ya!",
+            body: "Kamu sudah mencapai target. Terus jaga konsistensinya!",
           }
         : {
             title: "Ayo semangat! 💪",
-            body: `Butuh ${80 - pct}% lagi untuk mencapai target 80% kehadiran bulan ini.`,
+            body: `Butuh ${80 - pct}% lagi untuk mencapai target 80% kehadiran.`,
           };
 
-  const motivasiGradient =
-    pct >= 90
-      ? "linear-gradient(135deg, #059669 0%, #10b981 100%)"
-      : pct >= 80
-        ? "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)"
-        : "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)";
+  /* Motivasi banner — solid bg ONLY */
+  const motivasiBg =
+    pct >= 90 ? "bg-emerald-500" : pct >= 80 ? "bg-indigo-500" : "bg-amber-400";
+  const motivasiFoot =
+    pct >= 90 ? "bg-emerald-600" : pct >= 80 ? "bg-indigo-600" : "bg-amber-500";
+
+  const infoCards = [
+    {
+      label: "Kehadiran Bulan Ini",
+      val: `${pct}%`,
+      sub: `${stats.hadirBulanIni} dari ${stats.totalHariBulanIni} hari`,
+      icon: <TrendingUp size={20} />,
+      pct,
+      cfg: INFO_CARD_CONFIGS[0],
+    },
+    {
+      label: "Target Kehadiran",
+      val: "80%",
+      sub: pct >= 80 ? "Target tercapai! 🎉" : `Sisa ${80 - pct}% lagi`,
+      icon: <Target size={20} />,
+      pct: 80,
+      cfg: pct >= 80 ? INFO_CARD_CONFIGS[1] : INFO_CARD_CONFIGS[2],
+    },
+    {
+      label: "Total Izin",
+      val: `${izin} hari`,
+      sub: "Dengan keterangan",
+      icon: <BookOpen size={20} />,
+      pct:
+        stats.totalHariBulanIni > 0
+          ? Math.round((izin / stats.totalHariBulanIni) * 100)
+          : 0,
+      cfg: INFO_CARD_CONFIGS[2],
+    },
+    {
+      label: "Total Alfa",
+      val: `${stats.tidakHadirBulanIni} hari`,
+      sub: "Tanpa keterangan",
+      icon: <XCircle size={20} />,
+      pct:
+        stats.totalHariBulanIni > 0
+          ? Math.round(
+              (stats.tidakHadirBulanIni / stats.totalHariBulanIni) * 100,
+            )
+          : 0,
+      cfg: INFO_CARD_CONFIGS[3],
+    },
+  ];
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-100 overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar />
-        <main
-          className="flex-1 overflow-y-auto overflow-x-hidden"
-          style={{
-            padding: "28px 32px",
-            background: "var(--color-background-tertiary)",
-          }}
-        >
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-5 lg:p-8 bg-slate-100">
           <GreetingBanner />
 
-          {/* ── HERO — Gradient Banner ── */}
-          <div
-            style={{
-              background:
-                "linear-gradient(135deg, #6366f1 0%, #4f46e5 55%, #7c3aed 100%)",
-              borderRadius: 20,
-              padding: "26px 28px",
-              marginBottom: 16,
-              position: "relative",
-              overflow: "hidden",
-              boxShadow: "0 8px 32px rgba(99,102,241,0.3)",
-            }}
-          >
-            {/* Decorative circles */}
-            <div
-              style={{
-                position: "absolute",
-                right: -40,
-                top: -40,
-                width: 180,
-                height: 180,
-                borderRadius: "50%",
-                background: "rgba(255,255,255,0.07)",
-              }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                right: 60,
-                bottom: -60,
-                width: 130,
-                height: 130,
-                borderRadius: "50%",
-                background: "rgba(255,255,255,0.05)",
-              }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                left: -20,
-                bottom: -30,
-                width: 100,
-                height: 100,
-                borderRadius: "50%",
-                background: "rgba(255,255,255,0.04)",
-              }}
-            />
+          {/* ── Hero Banner — solid indigo ── */}
+          <div className="bg-indigo-600 rounded-2xl p-6 mb-5 shadow-lg relative overflow-hidden">
+            {/* Decorative circles menggunakan border trick */}
+            <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full border-[32px] border-indigo-500 opacity-40" />
+            <div className="absolute right-16 -bottom-10 w-28 h-28 rounded-full border-[24px] border-indigo-500 opacity-30" />
 
-            {/* Top row: identity + date */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "flex-start",
-                justifyContent: "space-between",
-                marginBottom: 20,
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                {/* Avatar */}
-                <div
-                  style={{
-                    width: 54,
-                    height: 54,
-                    borderRadius: "50%",
-                    background: "rgba(255,255,255,0.2)",
-                    border: "2px solid rgba(255,255,255,0.35)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 20,
-                    fontWeight: 800,
-                    color: "#fff",
-                    flexShrink: 0,
-                  }}
-                >
-                  <BookOpen size={22} color="#fff" />
+            {/* Top */}
+            <div className="flex flex-wrap items-start justify-between gap-4 mb-6 relative">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full bg-indigo-500 border-2 border-indigo-400 flex items-center justify-center shrink-0">
+                  <BookOpen size={24} className="text-white" />
                 </div>
                 <div>
-                  <div
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 5,
-                      background: "rgba(255,255,255,0.15)",
-                      padding: "3px 10px",
-                      borderRadius: 20,
-                      marginBottom: 6,
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 600,
-                        color: "rgba(255,255,255,0.9)",
-                      }}
-                    >
+                  <div className="inline-flex items-center gap-1 bg-indigo-500 px-3 py-1 rounded-full mb-2">
+                    <span className="text-[11px] font-semibold text-indigo-100">
                       Dashboard Siswa
                     </span>
                   </div>
-                  <p
-                    style={{
-                      fontSize: 20,
-                      fontWeight: 700,
-                      color: "#fff",
-                      margin: "0 0 2px",
-                    }}
-                  >
+                  <p className="text-xl font-bold text-white mb-0.5">
                     Rekap Kehadiran PKL
                   </p>
-                  <p
-                    style={{
-                      fontSize: 12,
-                      color: "rgba(255,255,255,0.75)",
-                      margin: 0,
-                    }}
-                  >
-                    {hariIni}
-                  </p>
+                  <p className="text-sm text-indigo-200">{hariIni}</p>
                 </div>
               </div>
-
-              {/* Percentage badge */}
-              <div
-                style={{
-                  background: "rgba(255,255,255,0.15)",
-                  backdropFilter: "blur(8px)",
-                  borderRadius: 16,
-                  padding: "12px 18px",
-                  textAlign: "center",
-                  border: "1px solid rgba(255,255,255,0.2)",
-                }}
-              >
-                <p
-                  style={{
-                    fontSize: 30,
-                    fontWeight: 800,
-                    color: "#fff",
-                    margin: 0,
-                    lineHeight: 1,
-                  }}
-                >
+              {/* Percentage */}
+              <div className="bg-indigo-500 border border-indigo-400 rounded-2xl px-5 py-3 text-center">
+                <p className="text-3xl font-black text-white leading-none">
                   {loading ? "—" : `${pct}%`}
                 </p>
-                <p
-                  style={{
-                    fontSize: 11,
-                    color: "rgba(255,255,255,0.75)",
-                    margin: "4px 0 0",
-                  }}
-                >
-                  kehadiran
-                </p>
+                <p className="text-xs text-indigo-200 mt-1">kehadiran</p>
               </div>
             </div>
 
-            {/* Bottom row — 4 quick stats */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, 1fr)",
-                gap: 10,
-              }}
-            >
+            {/* Bottom quick stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 relative">
               {[
                 {
                   v: stats.totalHariBulanIni,
                   l: "Total Hari",
-                  icon: (
-                    <CalendarCheck size={16} color="rgba(255,255,255,0.85)" />
-                  ),
+                  icon: <CalendarCheck size={16} className="text-indigo-200" />,
                 },
                 {
                   v: stats.hadirBulanIni,
                   l: "Hadir",
-                  icon: (
-                    <CheckCircle2 size={16} color="rgba(255,255,255,0.85)" />
-                  ),
+                  icon: <CheckCircle2 size={16} className="text-indigo-200" />,
                 },
                 {
                   v: izin,
                   l: "Izin / Sakit",
-                  icon: <BookOpen size={16} color="rgba(255,255,255,0.85)" />,
+                  icon: <BookOpen size={16} className="text-indigo-200" />,
                 },
                 {
                   v: stats.tidakHadirBulanIni,
                   l: "Alfa",
-                  icon: <XCircle size={16} color="rgba(255,255,255,0.85)" />,
+                  icon: <XCircle size={16} className="text-indigo-200" />,
                 },
               ].map((b) => (
                 <div
                   key={b.l}
-                  style={{
-                    background: "rgba(255,255,255,0.12)",
-                    backdropFilter: "blur(4px)",
-                    border: "1px solid rgba(255,255,255,0.18)",
-                    borderRadius: 14,
-                    padding: "12px",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: 6,
-                  }}
+                  className="bg-indigo-500 border border-indigo-400 rounded-xl p-3 flex flex-col items-center gap-1.5"
                 >
                   {b.icon}
-                  <p
-                    style={{
-                      fontSize: 22,
-                      fontWeight: 800,
-                      color: "#fff",
-                      margin: 0,
-                      lineHeight: 1,
-                    }}
-                  >
+                  <p className="text-2xl font-black text-white leading-none">
                     {loading ? "—" : b.v}
                   </p>
-                  <p
-                    style={{
-                      fontSize: 10,
-                      color: "rgba(255,255,255,0.75)",
-                      margin: 0,
-                      textAlign: "center",
-                    }}
-                  >
+                  <p className="text-[10px] text-indigo-200 text-center">
                     {b.l}
                   </p>
                 </div>
@@ -458,225 +335,59 @@ export default function SiswaDashboard() {
             </div>
           </div>
 
-          {/* ── INFO CARDS 4-col berwarna ── */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: 12,
-              marginBottom: 14,
-            }}
-          >
-            {[
-              {
-                label: "Kehadiran Bulan Ini",
-                val: `${pct}%`,
-                sub: `${stats.hadirBulanIni} dari ${stats.totalHariBulanIni} hari`,
-                gradient: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                icon: <TrendingUp size={20} color="#fff" />,
-                pct: pct,
-              },
-              {
-                label: "Target Kehadiran",
-                val: "80%",
-                sub:
-                  pct >= 80 ? "Target tercapai! 🎉" : `Sisa ${80 - pct}% lagi`,
-                gradient:
-                  pct >= 80
-                    ? "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)"
-                    : "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
-                icon: <Target size={20} color="#fff" />,
-                pct: 80,
-              },
-              {
-                label: "Total Izin",
-                val: `${izin} hari`,
-                sub: "Dengan keterangan",
-                gradient: "linear-gradient(135deg, #f59e0b 0%, #ea9e00 100%)",
-                icon: <BookOpen size={20} color="#fff" />,
-                pct:
-                  stats.totalHariBulanIni > 0
-                    ? Math.round((izin / stats.totalHariBulanIni) * 100)
-                    : 0,
-              },
-              {
-                label: "Total Alfa",
-                val: `${stats.tidakHadirBulanIni} hari`,
-                sub: "Tanpa keterangan",
-                gradient: "linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)",
-                icon: <XCircle size={20} color="#fff" />,
-                pct:
-                  stats.totalHariBulanIni > 0
-                    ? Math.round(
-                        (stats.tidakHadirBulanIni / stats.totalHariBulanIni) *
-                          100,
-                      )
-                    : 0,
-              },
-            ].map((card) => (
+          {/* ── 4 Info Cards — solid colors ── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-4">
+            {infoCards.map((card) => (
               <div
                 key={card.label}
-                style={{
-                  background: card.gradient,
-                  borderRadius: 18,
-                  padding: "18px",
-                  color: "#fff",
-                  boxShadow: "0 4px 18px rgba(0,0,0,0.14)",
-                  transition: "transform 0.2s, box-shadow 0.2s",
-                  cursor: "default",
-                  position: "relative",
-                  overflow: "hidden",
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.transform =
-                    "translateY(-3px) scale(1.02)";
-                  (e.currentTarget as HTMLDivElement).style.boxShadow =
-                    "0 10px 30px rgba(0,0,0,0.2)";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.transform =
-                    "translateY(0) scale(1)";
-                  (e.currentTarget as HTMLDivElement).style.boxShadow =
-                    "0 4px 18px rgba(0,0,0,0.14)";
-                }}
+                className={`${card.cfg.bg} ${card.cfg.hover} ${card.cfg.text} rounded-2xl overflow-hidden shadow-md hover:shadow-xl hover:scale-[1.02] transition-all duration-200 cursor-default`}
               >
-                {/* Decorative circle */}
-                <div
-                  style={{
-                    position: "absolute",
-                    right: -16,
-                    top: -16,
-                    width: 70,
-                    height: 70,
-                    borderRadius: "50%",
-                    background: "rgba(255,255,255,0.1)",
-                  }}
-                />
-                <div
-                  style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: 12,
-                    background: "rgba(255,255,255,0.2)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginBottom: 12,
-                  }}
-                >
-                  {card.icon}
-                </div>
-                <p
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    opacity: 0.85,
-                    margin: "0 0 4px",
-                    letterSpacing: "0.04em",
-                  }}
-                >
-                  {card.label}
-                </p>
-                <p
-                  style={{
-                    fontSize: 24,
-                    fontWeight: 800,
-                    margin: "0 0 4px",
-                    lineHeight: 1,
-                  }}
-                >
-                  {loading ? "—" : card.val}
-                </p>
-                <p style={{ fontSize: 11, opacity: 0.75, margin: "0 0 12px" }}>
-                  {card.sub}
-                </p>
-                {/* Mini progress */}
-                <div
-                  style={{
-                    height: 4,
-                    borderRadius: 3,
-                    background: "rgba(255,255,255,0.25)",
-                    overflow: "hidden",
-                  }}
-                >
+                <div className="p-5">
                   <div
-                    style={{
-                      height: "100%",
-                      width: loading ? "0%" : `${Math.min(card.pct, 100)}%`,
-                      background: "rgba(255,255,255,0.8)",
-                      borderRadius: 3,
-                      transition: "width 0.8s ease",
-                    }}
-                  />
+                    className={`w-10 h-10 ${card.cfg.iconBg} rounded-xl flex items-center justify-center mb-4`}
+                  >
+                    {card.icon}
+                  </div>
+                  <p className="text-[11px] font-semibold opacity-80 mb-1 uppercase tracking-wide">
+                    {card.label}
+                  </p>
+                  <p className="text-2xl font-black leading-none mb-1">
+                    {loading ? "—" : card.val}
+                  </p>
+                  <p className="text-xs opacity-75 mb-4">{card.sub}</p>
+                  {/* Mini progress */}
+                  <div className="h-1.5 rounded-full bg-white/30 overflow-hidden">
+                    <div
+                      className="h-full bg-white/75 rounded-full transition-all duration-700"
+                      style={{ width: `${Math.min(card.pct, 100)}%` }}
+                    />
+                  </div>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* ── Middle: Donut | Progress Detail ── */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 12,
-              marginBottom: 14,
-            }}
-          >
-            {/* Donut card */}
-            <div
-              style={{
-                background: "var(--color-background-primary)",
-                border: "0.5px solid var(--color-border-tertiary)",
-                borderRadius: 16,
-                padding: "22px",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  marginBottom: 16,
-                }}
-              >
-                <TrendingUp size={13} color="#10b981" />
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: "var(--color-text-secondary)",
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
-                  }}
-                >
+          {/* ── Donut | Progress ── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            {/* Donut */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-5">
+                <TrendingUp size={13} className="text-emerald-500" />
+                <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
                   Distribusi Bulan Ini
                 </span>
               </div>
+
               {loading ? (
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: 14,
-                  }}
-                >
-                  <Sk w={140} h={140} r={70} />
-                  <Sk h={12} />
-                  <Sk h={12} />
-                  <Sk h={12} />
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-40 h-40 rounded-full bg-gray-100 animate-pulse" />
+                  <Sk />
+                  <Sk />
+                  <Sk />
                 </div>
               ) : (
                 <>
-                  {/* Donut */}
-                  <div
-                    style={{
-                      position: "relative",
-                      width: "100%",
-                      height: 170,
-                      marginBottom: 18,
-                    }}
-                  >
+                  <div className="relative w-full h-48 mb-5">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -687,8 +398,8 @@ export default function SiswaDashboard() {
                           }
                           cx="50%"
                           cy="50%"
-                          innerRadius={52}
-                          outerRadius={78}
+                          innerRadius={54}
+                          outerRadius={80}
                           paddingAngle={4}
                           dataKey="value"
                           startAngle={90}
@@ -715,66 +426,35 @@ export default function SiswaDashboard() {
                         )}
                       </PieChart>
                     </ResponsiveContainer>
-                    <div
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        pointerEvents: "none",
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: 26,
-                          fontWeight: 800,
-                          color: "var(--color-text-primary)",
-                          lineHeight: 1,
-                        }}
-                      >
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                      <span className="text-3xl font-black text-gray-900 leading-none">
                         {pct}%
                       </span>
-                      <span
-                        style={{
-                          fontSize: 11,
-                          color: "var(--color-text-secondary)",
-                          marginTop: 4,
-                        }}
-                      >
-                        hadir
-                      </span>
+                      <span className="text-xs text-gray-400 mt-1">hadir</span>
                     </div>
                   </div>
 
-                  {/* Legend rows — lebih detail */}
-                  <div
-                    style={{ display: "flex", flexDirection: "column", gap: 8 }}
-                  >
+                  <div className="flex flex-col gap-2">
                     {[
                       {
                         label: "Hadir",
                         val: stats.hadirBulanIni,
-                        color: "#10b981",
-                        bg: "#f0fdf4",
-                        tc: "#15803d",
+                        bg: "bg-emerald-50",
+                        tc: "text-emerald-700",
                         icon: <CheckCircle2 size={14} />,
                       },
                       {
                         label: "Izin / Sakit",
                         val: izin,
-                        color: "#f59e0b",
-                        bg: "#fefce8",
-                        tc: "#a16207",
+                        bg: "bg-amber-50",
+                        tc: "text-amber-700",
                         icon: <BookOpen size={14} />,
                       },
                       {
                         label: "Alfa",
                         val: stats.tidakHadirBulanIni,
-                        color: "#f43f5e",
-                        bg: "#fef2f2",
-                        tc: "#be123c",
+                        bg: "bg-rose-50",
+                        tc: "text-rose-700",
                         icon: <XCircle size={14} />,
                       },
                     ].map((b) => {
@@ -785,45 +465,19 @@ export default function SiswaDashboard() {
                       return (
                         <div
                           key={b.label}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 10,
-                            padding: "9px 12px",
-                            background: b.bg,
-                            borderRadius: 12,
-                            border: `1px solid ${b.color}22`,
-                          }}
+                          className={`flex items-center gap-3 ${b.bg} rounded-xl px-3.5 py-2.5`}
                         >
-                          <div style={{ color: b.tc }}>{b.icon}</div>
+                          <span className={b.tc}>{b.icon}</span>
                           <span
-                            style={{
-                              fontSize: 12,
-                              color: b.tc,
-                              fontWeight: 600,
-                              flex: 1,
-                            }}
+                            className={`text-sm font-semibold ${b.tc} flex-1`}
                           >
                             {b.label}
                           </span>
-                          <span
-                            style={{
-                              fontSize: 15,
-                              fontWeight: 800,
-                              color: b.tc,
-                            }}
-                          >
+                          <span className={`text-xl font-black ${b.tc}`}>
                             {b.val}
                           </span>
                           <span
-                            style={{
-                              fontSize: 11,
-                              fontWeight: 600,
-                              background: "rgba(0,0,0,0.06)",
-                              padding: "2px 7px",
-                              borderRadius: 20,
-                              color: b.tc,
-                            }}
+                            className={`text-[11px] font-semibold ${b.tc} bg-black/5 px-2 py-0.5 rounded-full`}
                           >
                             {bPct}%
                           </span>
@@ -835,135 +489,47 @@ export default function SiswaDashboard() {
               )}
             </div>
 
-            {/* Progress Detail */}
-            <div
-              style={{
-                background: "var(--color-background-primary)",
-                border: "0.5px solid var(--color-border-tertiary)",
-                borderRadius: 16,
-                padding: "22px",
-                display: "flex",
-                flexDirection: "column",
-                gap: 0,
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  marginBottom: 16,
-                }}
-              >
-                <Target size={13} color="#6366f1" />
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: "var(--color-text-secondary)",
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
-                  }}
-                >
+            {/* Progress */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col">
+              <div className="flex items-center gap-2 mb-5">
+                <Target size={13} className="text-indigo-500" />
+                <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
                   Progres Kehadiran
                 </span>
               </div>
 
-              {/* Main large progress */}
-              <div style={{ marginBottom: 18 }}>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "baseline",
-                    marginBottom: 8,
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: 13,
-                      color: "var(--color-text-secondary)",
-                      fontWeight: 500,
-                    }}
-                  >
+              {/* Big progress */}
+              <div className="mb-5">
+                <div className="flex justify-between items-baseline mb-2">
+                  <span className="text-sm font-medium text-gray-500">
                     Total kehadiran
                   </span>
-                  <span
-                    style={{
-                      fontSize: 22,
-                      fontWeight: 800,
-                      color: pctColor,
-                    }}
-                  >
-                    {pct}%
-                  </span>
+                  <span className={`text-2xl font-black ${pctTc}`}>{pct}%</span>
                 </div>
-                <div
-                  style={{
-                    position: "relative",
-                    height: 12,
-                    background: "var(--color-background-tertiary)",
-                    borderRadius: 8,
-                    overflow: "hidden",
-                    marginBottom: 8,
-                  }}
-                >
+                <div className="relative h-3 bg-gray-100 rounded-full overflow-hidden mb-2">
                   <div
+                    className="h-full rounded-full transition-all duration-700"
                     style={{
-                      height: "100%",
-                      width: loading ? "0%" : `${Math.min(pct, 100)}%`,
-                      background: `linear-gradient(90deg, ${pctColor}, ${pctColor}cc)`,
-                      borderRadius: 8,
-                      transition: "width 0.8s ease",
+                      width: `${Math.min(pct, 100)}%`,
+                      background: pctColor,
                     }}
                   />
                   {/* Target marker */}
                   <div
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      bottom: 0,
-                      left: "80%",
-                      width: 2,
-                      background: "#6366f1",
-                      opacity: 0.5,
-                    }}
+                    className="absolute top-0 bottom-0 w-0.5 bg-indigo-400 opacity-60"
+                    style={{ left: "80%" }}
                   />
                 </div>
-                <div
-                  style={{ display: "flex", justifyContent: "space-between" }}
-                >
-                  <span
-                    style={{
-                      fontSize: 10,
-                      color: "var(--color-text-secondary)",
-                    }}
-                  >
-                    0%
-                  </span>
-                  <span
-                    style={{ fontSize: 10, color: "#6366f1", fontWeight: 600 }}
-                  >
+                <div className="flex justify-between text-[10px] text-gray-400">
+                  <span>0%</span>
+                  <span className="text-indigo-500 font-semibold">
                     ▲ Target 80%
                   </span>
-                  <span
-                    style={{
-                      fontSize: 10,
-                      color: "var(--color-text-secondary)",
-                    }}
-                  >
-                    100%
-                  </span>
+                  <span>100%</span>
                 </div>
                 {!loading && (
                   <p
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: pctTc,
-                      marginTop: 8,
-                      textAlign: "center",
-                    }}
+                    className={`text-xs font-semibold ${pctTc} mt-2 text-center`}
                   >
                     {pct >= 80
                       ? "Anda sudah melampaui target! 🎉"
@@ -972,194 +538,82 @@ export default function SiswaDashboard() {
                 )}
               </div>
 
-              {/* Divider */}
-              <div
-                style={{
-                  height: "0.5px",
-                  background: "var(--color-border-tertiary)",
-                  marginBottom: 18,
-                }}
-              />
-
-              {/* Per-category progress bars */}
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 14 }}
-              >
-                {[
-                  {
-                    label: "Hadir",
-                    val: stats.hadirBulanIni,
-                    color: "#10b981",
-                    bg: "#f0fdf4",
-                  },
-                  {
-                    label: "Izin / Sakit",
-                    val: izin,
-                    color: "#f59e0b",
-                    bg: "#fefce8",
-                  },
-                  {
-                    label: "Alfa",
-                    val: stats.tidakHadirBulanIni,
-                    color: "#f43f5e",
-                    bg: "#fef2f2",
-                  },
-                ].map((b) => {
-                  const bPct =
-                    stats.totalHariBulanIni > 0
-                      ? Math.round((b.val / stats.totalHariBulanIni) * 100)
-                      : 0;
-                  return (
-                    <div key={b.label}>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginBottom: 6,
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 6,
-                          }}
-                        >
+              <div className="border-t border-gray-100 pt-5 mb-5">
+                <div className="flex flex-col gap-3.5">
+                  {[
+                    {
+                      label: "Hadir",
+                      val: stats.hadirBulanIni,
+                      color: "#10b981",
+                      bg: "bg-emerald-50",
+                    },
+                    {
+                      label: "Izin / Sakit",
+                      val: izin,
+                      color: "#f59e0b",
+                      bg: "bg-amber-50",
+                    },
+                    {
+                      label: "Alfa",
+                      val: stats.tidakHadirBulanIni,
+                      color: "#f43f5e",
+                      bg: "bg-rose-50",
+                    },
+                  ].map((b) => {
+                    const bPct =
+                      stats.totalHariBulanIni > 0
+                        ? Math.round((b.val / stats.totalHariBulanIni) * 100)
+                        : 0;
+                    return (
+                      <div key={b.label}>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="w-2 h-2 rounded-full inline-block"
+                              style={{ background: b.color }}
+                            />
+                            <span className="text-xs font-medium text-gray-500">
+                              {b.label}
+                            </span>
+                          </div>
                           <span
-                            style={{
-                              width: 8,
-                              height: 8,
-                              borderRadius: "50%",
-                              background: b.color,
-                              display: "inline-block",
-                            }}
-                          />
-                          <span
-                            style={{
-                              fontSize: 12,
-                              color: "var(--color-text-secondary)",
-                              fontWeight: 500,
-                            }}
+                            className="text-xs font-bold"
+                            style={{ color: b.color }}
                           >
-                            {b.label}
+                            {loading ? "—" : `${b.val} hari (${bPct}%)`}
                           </span>
                         </div>
-                        <span
-                          style={{
-                            fontSize: 12,
-                            fontWeight: 700,
-                            color: b.color,
-                          }}
-                        >
-                          {loading ? "—" : `${b.val} hari (${bPct}%)`}
-                        </span>
-                      </div>
-                      <div
-                        style={{
-                          height: 7,
-                          borderRadius: 5,
-                          background: b.bg,
-                          overflow: "hidden",
-                        }}
-                      >
                         <div
-                          style={{
-                            height: "100%",
-                            width: loading ? "0%" : `${bPct}%`,
-                            background: b.color,
-                            borderRadius: 5,
-                            transition: "width 0.8s ease",
-                          }}
-                        />
+                          className={`h-2 rounded-full ${b.bg} overflow-hidden`}
+                        >
+                          <div
+                            className="h-full rounded-full transition-all duration-700"
+                            style={{ width: `${bPct}%`, background: b.color }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Divider */}
-              <div
-                style={{
-                  height: "0.5px",
-                  background: "var(--color-border-tertiary)",
-                  margin: "18px 0",
-                }}
-              />
-
-              {/* Streak / Pencapaian */}
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: 8,
-                }}
-              >
-                <div
-                  style={{
-                    background: "#fdf4ff",
-                    borderRadius: 12,
-                    padding: "12px",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: 4,
-                    border: "1px solid #e879f922",
-                  }}
-                >
-                  <Flame size={20} color="#c026d3" />
-                  <p
-                    style={{
-                      fontSize: 16,
-                      fontWeight: 800,
-                      color: "#c026d3",
-                      margin: 0,
-                    }}
-                  >
+              {/* Grade + Flame */}
+              <div className="grid grid-cols-2 gap-2 mt-auto">
+                <div className="bg-fuchsia-50 border border-fuchsia-100 rounded-xl py-3 flex flex-col items-center gap-1.5">
+                  <Flame size={20} className="text-fuchsia-500" />
+                  <p className="text-lg font-black text-fuchsia-600 leading-none">
                     {stats.hadirBulanIni > 0 ? `${stats.hadirBulanIni}×` : "—"}
                   </p>
-                  <p
-                    style={{
-                      fontSize: 10,
-                      color: "#a21caf",
-                      margin: 0,
-                      textAlign: "center",
-                    }}
-                  >
+                  <p className="text-[10px] text-fuchsia-500 text-center">
                     Hadir bulan ini
                   </p>
                 </div>
-                <div
-                  style={{
-                    background: "#fffbeb",
-                    borderRadius: 12,
-                    padding: "12px",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: 4,
-                    border: "1px solid #fcd34d22",
-                  }}
-                >
-                  <Star size={20} color="#d97706" />
-                  <p
-                    style={{
-                      fontSize: 16,
-                      fontWeight: 800,
-                      color: "#d97706",
-                      margin: 0,
-                    }}
-                  >
+                <div className="bg-amber-50 border border-amber-100 rounded-xl py-3 flex flex-col items-center gap-1.5">
+                  <Star size={20} className="text-amber-500" />
+                  <p className="text-lg font-black text-amber-600 leading-none">
                     {pct >= 80 ? "A" : pct >= 60 ? "B" : "C"}
                   </p>
-                  <p
-                    style={{
-                      fontSize: 10,
-                      color: "#92400e",
-                      margin: 0,
-                      textAlign: "center",
-                    }}
-                  >
+                  <p className="text-[10px] text-amber-500 text-center">
                     Grade kehadiran
                   </p>
                 </div>
@@ -1167,226 +621,67 @@ export default function SiswaDashboard() {
             </div>
           </div>
 
-          {/* ── Motivasi Banner ── */}
+          {/* ── Motivasi Banner — solid ── */}
           {!loading && (
             <div
-              style={{
-                background: motivasiGradient,
-                borderRadius: 16,
-                padding: "18px 22px",
-                marginBottom: 14,
-                display: "flex",
-                alignItems: "center",
-                gap: 16,
-                boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
-                position: "relative",
-                overflow: "hidden",
-              }}
+              className={`${motivasiBg} rounded-2xl p-5 mb-4 flex items-center gap-4 shadow-md relative overflow-hidden`}
             >
+              <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full border-[20px] border-white/10" />
               <div
-                style={{
-                  position: "absolute",
-                  right: -20,
-                  top: -20,
-                  width: 100,
-                  height: 100,
-                  borderRadius: "50%",
-                  background: "rgba(255,255,255,0.08)",
-                }}
-              />
-              <div
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 14,
-                  background: "rgba(255,255,255,0.2)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
+                className={`w-12 h-12 ${motivasiFoot} rounded-2xl flex items-center justify-center shrink-0`}
               >
-                <ShieldCheck size={24} color="#fff" />
+                <ShieldCheck size={24} className="text-white" />
               </div>
-              <div style={{ flex: 1 }}>
-                <p
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 700,
-                    color: "#fff",
-                    margin: "0 0 3px",
-                  }}
-                >
+              <div className="flex-1">
+                <p className="text-base font-bold text-white mb-0.5">
                   {motivasiText.title}
                 </p>
-                <p
-                  style={{
-                    fontSize: 12,
-                    color: "rgba(255,255,255,0.85)",
-                    margin: 0,
-                  }}
-                >
-                  {motivasiText.body}
-                </p>
+                <p className="text-sm text-white/80">{motivasiText.body}</p>
               </div>
               <div
-                style={{
-                  background: "rgba(255,255,255,0.2)",
-                  borderRadius: 14,
-                  padding: "10px 16px",
-                  textAlign: "center",
-                  flexShrink: 0,
-                }}
+                className={`${motivasiFoot} rounded-xl px-4 py-2.5 text-center shrink-0`}
               >
-                <p
-                  style={{
-                    fontSize: 22,
-                    fontWeight: 800,
-                    color: "#fff",
-                    margin: 0,
-                    lineHeight: 1,
-                  }}
-                >
+                <p className="text-2xl font-black text-white leading-none">
                   {pct}%
                 </p>
-                <p
-                  style={{
-                    fontSize: 10,
-                    color: "rgba(255,255,255,0.8)",
-                    margin: "3px 0 0",
-                  }}
-                >
-                  dari 80%
-                </p>
+                <p className="text-[10px] text-white/75 mt-0.5">dari 80%</p>
               </div>
             </div>
           )}
 
-          {/* ── Informasi Card ── */}
-          <div
-            style={{
-              background: "var(--color-background-primary)",
-              border: "0.5px solid var(--color-border-tertiary)",
-              borderRadius: 16,
-              overflow: "hidden",
-            }}
-          >
-            {/* header */}
-            <div
-              style={{
-                padding: "14px 20px",
-                borderBottom: "0.5px solid var(--color-border-tertiary)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 8,
-                    background: "#f0fdf4",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Bell size={13} color="#10b981" />
+          {/* ── Informasi ── */}
+          <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <Bell size={13} className="text-emerald-600" />
                 </div>
-                <span
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: "var(--color-text-primary)",
-                  }}
-                >
+                <span className="text-sm font-semibold text-gray-800">
                   Informasi Terbaru
                 </span>
               </div>
               <a
                 href="/siswa/informasi"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                  fontSize: 12,
-                  color: "#15803d",
-                  fontWeight: 500,
-                  background: "#f0fdf4",
-                  border: "0.5px solid #bbf7d0",
-                  borderRadius: 20,
-                  padding: "5px 12px",
-                  textDecoration: "none",
-                  transition: "background 0.15s",
-                }}
+                className="flex items-center gap-1 text-xs text-emerald-700 font-medium bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1.5 hover:bg-emerald-100 transition-colors no-underline"
               >
                 Lihat semua <ChevronRight size={13} />
               </a>
             </div>
 
-            {/* list */}
             <div>
               {loadingInfo ? (
-                <div
-                  style={{
-                    padding: 32,
-                    display: "flex",
-                    justifyContent: "center",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 24,
-                      height: 24,
-                      border: "2px solid var(--color-border-tertiary)",
-                      borderTopColor: "#10b981",
-                      borderRadius: "50%",
-                      animation: "spin 0.8s linear infinite",
-                    }}
-                  />
+                <div className="p-8 flex justify-center">
+                  <div className="w-6 h-6 border-2 border-gray-200 border-t-emerald-500 rounded-full animate-spin" />
                 </div>
               ) : informasiList.length === 0 ? (
-                <div
-                  style={{
-                    padding: "48px 20px",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: 8,
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 12,
-                      background: "#f0fdf4",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Bell size={18} color="#6ee7b7" />
+                <div className="py-12 flex flex-col items-center gap-2">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                    <Bell size={18} className="text-emerald-300" />
                   </div>
-                  <p
-                    style={{
-                      fontSize: 13,
-                      color: "var(--color-text-secondary)",
-                      margin: 0,
-                    }}
-                  >
+                  <p className="text-sm text-gray-400">
                     Belum ada informasi terbaru.
                   </p>
-                  <p
-                    style={{
-                      fontSize: 12,
-                      color: "var(--color-text-secondary)",
-                      opacity: 0.6,
-                      margin: 0,
-                    }}
-                  >
+                  <p className="text-xs text-gray-300">
                     Pengumuman baru akan muncul di sini.
                   </p>
                 </div>
@@ -1399,123 +694,43 @@ export default function SiswaDashboard() {
                     <div
                       key={item.id}
                       onClick={() => setExpandedId(isExpanded ? null : item.id)}
-                      style={{
-                        padding: "14px 20px",
-                        borderBottom: isLast
-                          ? "none"
-                          : "0.5px solid var(--color-border-tertiary)",
-                        cursor: "pointer",
-                        transition: "background 0.15s",
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: 12,
-                      }}
-                      onMouseEnter={(e) =>
-                        ((e.currentTarget as HTMLDivElement).style.background =
-                          "var(--color-background-secondary)")
-                      }
-                      onMouseLeave={(e) =>
-                        ((e.currentTarget as HTMLDivElement).style.background =
-                          "transparent")
-                      }
+                      className={`flex items-start gap-3 px-5 py-4 cursor-pointer hover:bg-gray-50 transition-colors ${!isLast ? "border-b border-gray-100" : ""}`}
                     >
                       <div
-                        style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: 9,
-                          background: config.iconBg,
-                          color: config.iconColor,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          marginTop: 1,
-                        }}
+                        className={`w-8 h-8 rounded-lg ${config.iconCls} flex items-center justify-center shrink-0 mt-0.5`}
                       >
                         {config.icon}
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                            marginBottom: 4,
-                            flexWrap: "wrap",
-                          }}
-                        >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <span
-                            style={{
-                              fontSize: 11,
-                              fontWeight: 600,
-                              padding: "2px 8px",
-                              borderRadius: 20,
-                              background: config.pill.bg,
-                              color: config.pill.color,
-                              border: `0.5px solid ${config.pill.border}`,
-                            }}
+                            className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${config.pill}`}
                           >
                             {item.tipe || "Umum"}
                           </span>
                           {item.tempatPKL && (
-                            <span
-                              style={{
-                                fontSize: 11,
-                                color: "var(--color-text-secondary)",
-                              }}
-                            >
+                            <span className="text-xs text-gray-400">
                               {item.tempatPKL}
                             </span>
                           )}
-                          <span
-                            style={{
-                              fontSize: 11,
-                              color: "var(--color-text-secondary)",
-                              marginLeft: "auto",
-                            }}
-                          >
+                          <span className="text-xs text-gray-400 ml-auto">
                             {formatTanggal(item.tanggal)}
                           </span>
                         </div>
                         <p
-                          style={{
-                            fontSize: 13,
-                            fontWeight: 600,
-                            color: "var(--color-text-primary)",
-                            margin: "0 0 2px",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: isExpanded ? "normal" : "nowrap",
-                          }}
+                          className={`text-sm font-semibold text-gray-800 mb-0.5 ${isExpanded ? "" : "truncate"}`}
                         >
                           {item.judul}
                         </p>
                         <p
-                          style={{
-                            fontSize: 12,
-                            color: "var(--color-text-secondary)",
-                            margin: 0,
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: isExpanded ? "normal" : "nowrap",
-                            lineHeight: 1.5,
-                          }}
+                          className={`text-xs text-gray-500 leading-relaxed ${isExpanded ? "" : "truncate"}`}
                         >
                           {item.isi}
                         </p>
                       </div>
                       <ChevronRight
                         size={15}
-                        style={{
-                          color: "var(--color-text-secondary)",
-                          flexShrink: 0,
-                          marginTop: 4,
-                          transform: isExpanded
-                            ? "rotate(90deg)"
-                            : "rotate(0deg)",
-                          transition: "transform 0.2s",
-                        }}
+                        className={`text-gray-300 shrink-0 mt-1 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
                       />
                     </div>
                   );
@@ -1523,11 +738,6 @@ export default function SiswaDashboard() {
               )}
             </div>
           </div>
-
-          <style>{`
-            @keyframes spin { to { transform: rotate(360deg); } }
-            @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-          `}</style>
         </main>
       </div>
     </div>
