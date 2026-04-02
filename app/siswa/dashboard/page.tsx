@@ -16,6 +16,8 @@ import {
   ShieldCheck,
   CalendarDays,
   Clock,
+  ArrowUpRight,
+  ArrowDownRight,
 } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
@@ -43,8 +45,8 @@ const DonutTooltip = ({ active, payload }: any) => {
   );
 };
 
-const Sk = () => (
-  <div className="w-full h-5 rounded-xl bg-slate-100 animate-pulse" />
+const Sk = ({ h = "h-5" }: { h?: string }) => (
+  <div className={`w-full ${h} rounded-xl bg-slate-100 animate-pulse`} />
 );
 
 const getTipeConfig = (tipe: string) => {
@@ -146,7 +148,6 @@ export default function SiswaDashboard() {
     year: "numeric",
   });
 
-  // Determine status today (we use persentase as proxy — if >0 means sudah absen hari ini)
   const sudahAbsen = stats.hadirBulanIni > 0;
 
   const motivasiText =
@@ -166,143 +167,221 @@ export default function SiswaDashboard() {
           };
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-100 overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-5 lg:p-8 bg-slate-50">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-5 lg:p-8 bg-slate-100">
           <GreetingBanner />
 
-          {/* ═══ STATUS CARD HARI INI ═══ */}
-          <div
-            className={`relative rounded-3xl overflow-hidden mb-4 shadow-lg ${
-              sudahAbsen
-                ? "bg-gradient-to-br from-emerald-500 to-emerald-600"
-                : "bg-gradient-to-br from-amber-400 to-amber-500"
-            }`}
-          >
-            {/* Orb decoration */}
-            <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-white/10 pointer-events-none" />
-            <div className="absolute -bottom-8 left-8 w-32 h-32 rounded-full bg-white/5 pointer-events-none" />
+          {/* ═══ CARD 1 — HERO OVERVIEW (navy dark, identik admin/guru) ═══ */}
+          <div className="relative rounded-3xl overflow-hidden mb-5 shadow-xl">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a] via-[#1e3a5f] to-[#0f2744]" />
+            {/* Orbs */}
+            <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-12 left-20 w-48 h-48 rounded-full bg-sky-500/10 blur-3xl pointer-events-none" />
+            <div className="absolute top-1/2 right-1/3 w-32 h-32 rounded-full bg-indigo-500/5 blur-2xl pointer-events-none" />
+            {/* Grid overlay */}
+            <div
+              className="absolute inset-0 opacity-[0.03]"
+              style={{
+                backgroundImage:
+                  "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
+                backgroundSize: "32px 32px",
+              }}
+            />
 
-            <div className="relative p-6 flex flex-wrap items-center gap-5">
-              {/* Icon */}
-              <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
-                {sudahAbsen ? (
-                  <CheckCircle2 size={32} className="text-white" />
-                ) : (
-                  <Clock size={32} className="text-white" />
-                )}
+            <div className="relative p-6 lg:p-8">
+              {/* Header row */}
+              <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">
+                      <BookOpen size={15} className="text-emerald-300" />
+                    </div>
+                    <span className="text-[11px] font-semibold text-emerald-300 uppercase tracking-widest">
+                      Dashboard Siswa
+                    </span>
+                  </div>
+                  <h1 className="text-2xl font-black text-white mb-1">
+                    Rekap Kehadiran PKL Bulan Ini
+                  </h1>
+                  <p className="text-sm text-slate-400 flex items-center gap-1.5">
+                    <CalendarDays size={13} />
+                    {hariIni}
+                  </p>
+                </div>
+
+                {/* Pct + status pill */}
+                <div className="flex flex-col items-end gap-2">
+                  <div className="bg-white/10 border border-white/15 rounded-2xl px-6 py-4 text-center backdrop-blur-sm">
+                    <p className="text-4xl font-black text-white leading-none">
+                      {loading ? "—" : `${pct}%`}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1">kehadiran</p>
+                  </div>
+                  <div
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-semibold ${
+                      sudahAbsen
+                        ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-300"
+                        : "bg-amber-500/20 border-amber-500/30 text-amber-300"
+                    }`}
+                  >
+                    {sudahAbsen ? (
+                      <CheckCircle2 size={12} />
+                    ) : (
+                      <Clock size={12} />
+                    )}
+                    {sudahAbsen
+                      ? "Sudah absen hari ini"
+                      : "Belum absen hari ini"}
+                  </div>
+                </div>
               </div>
 
-              {/* Text */}
-              <div className="flex-1 min-w-0">
-                <span
-                  className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full mb-2 ${
-                    sudahAbsen
-                      ? "bg-emerald-400/50 text-emerald-50"
-                      : "bg-amber-300/50 text-amber-50"
-                  }`}
-                >
-                  <CalendarDays size={11} />
-                  {hariIni}
-                </span>
-                <h1 className="text-xl font-black text-white mb-1">
-                  {sudahAbsen ? "Sudah Absen Hari Ini" : "Belum Absen Hari Ini"}
-                </h1>
-                <p className="text-sm text-white/75">
-                  {sudahAbsen
-                    ? "Kehadiranmu sudah tercatat. Semangat belajar!"
-                    : "Segera lakukan absen sebelum waktu habis."}
-                </p>
-              </div>
-
-              {/* Pct badge */}
-              <div className="bg-white/20 border border-white/25 rounded-2xl px-5 py-4 text-center shrink-0">
-                <p className="text-3xl font-black text-white leading-none">
-                  {loading ? "—" : `${pct}%`}
-                </p>
-                <p className="text-xs text-white/70 mt-1">kehadiran</p>
+              {/* 4 Stat items — identik pola admin/guru */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {[
+                  {
+                    icon: <CalendarDays size={18} />,
+                    num: stats.totalHariBulanIni,
+                    label: "Total Hari",
+                    sub: "Bulan ini",
+                    color: "from-sky-500/20 to-sky-500/5",
+                    border: "border-sky-500/20",
+                    iconBg: "bg-sky-500/20",
+                    iconColor: "text-sky-300",
+                    numColor: "text-sky-100",
+                    badge: null,
+                  },
+                  {
+                    icon: <CheckCircle2 size={18} />,
+                    num: stats.hadirBulanIni,
+                    label: "Hadir",
+                    sub: "Bulan ini",
+                    color: "from-emerald-500/20 to-emerald-500/5",
+                    border: "border-emerald-500/20",
+                    iconBg: "bg-emerald-500/20",
+                    iconColor: "text-emerald-300",
+                    numColor: "text-emerald-100",
+                    badge: { text: `${pct}%`, positive: true },
+                  },
+                  {
+                    icon: <BookOpen size={18} />,
+                    num: izin,
+                    label: "Izin / Sakit",
+                    sub: "Dengan keterangan",
+                    color: "from-amber-500/20 to-amber-500/5",
+                    border: "border-amber-500/20",
+                    iconBg: "bg-amber-500/20",
+                    iconColor: "text-amber-300",
+                    numColor: "text-amber-100",
+                    badge:
+                      stats.totalHariBulanIni > 0
+                        ? {
+                            text: `${Math.round((izin / stats.totalHariBulanIni) * 100)}%`,
+                            positive: false,
+                          }
+                        : null,
+                  },
+                  {
+                    icon: <XCircle size={18} />,
+                    num: stats.tidakHadirBulanIni,
+                    label: "Alfa",
+                    sub: "Tanpa keterangan",
+                    color: "from-rose-500/20 to-rose-500/5",
+                    border: "border-rose-500/20",
+                    iconBg: "bg-rose-500/20",
+                    iconColor: "text-rose-300",
+                    numColor: "text-rose-100",
+                    badge:
+                      stats.totalHariBulanIni > 0
+                        ? {
+                            text: `${Math.round((stats.tidakHadirBulanIni / stats.totalHariBulanIni) * 100)}%`,
+                            positive: false,
+                          }
+                        : null,
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className={`bg-gradient-to-br ${item.color} border ${item.border} rounded-2xl p-4 backdrop-blur-sm`}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div
+                        className={`w-9 h-9 ${item.iconBg} rounded-xl flex items-center justify-center`}
+                      >
+                        <span className={item.iconColor}>{item.icon}</span>
+                      </div>
+                      {item.badge && (
+                        <span
+                          className={`flex items-center gap-0.5 text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                            item.badge.positive
+                              ? "bg-emerald-500/20 text-emerald-300"
+                              : "bg-rose-500/20 text-rose-300"
+                          }`}
+                        >
+                          {item.badge.positive ? (
+                            <ArrowUpRight size={10} />
+                          ) : (
+                            <ArrowDownRight size={10} />
+                          )}
+                          {item.badge.text}
+                        </span>
+                      )}
+                    </div>
+                    <p
+                      className={`text-3xl font-black leading-none mb-1 ${item.numColor}`}
+                    >
+                      {loading ? "—" : item.num}
+                    </p>
+                    <p className="text-sm font-semibold text-slate-300">
+                      {item.label}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-0.5">{item.sub}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* ═══ CARD RINGKASAN (3 stat) ═══ */}
-          <div className="grid grid-cols-3 gap-3 mb-4">
-            {[
-              {
-                icon: <CheckCircle2 size={20} />,
-                num: stats.hadirBulanIni,
-                label: "Total Hadir",
-                iconBg: "bg-emerald-100",
-                iconColor: "text-emerald-600",
-                numColor: "text-emerald-700",
-                bg: "bg-white",
-                border: "border-emerald-100",
-              },
-              {
-                icon: <BookOpen size={20} />,
-                num: izin,
-                label: "Total Izin",
-                iconBg: "bg-amber-100",
-                iconColor: "text-amber-600",
-                numColor: "text-amber-700",
-                bg: "bg-white",
-                border: "border-amber-100",
-              },
-              {
-                icon: <XCircle size={20} />,
-                num: stats.tidakHadirBulanIni,
-                label: "Total Alfa",
-                iconBg: "bg-rose-100",
-                iconColor: "text-rose-600",
-                numColor: "text-rose-700",
-                bg: "bg-white",
-                border: "border-rose-100",
-              },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className={`${item.bg} border ${item.border} rounded-2xl p-4 shadow-sm flex flex-col items-center text-center gap-2`}
-              >
-                <div
-                  className={`w-10 h-10 ${item.iconBg} rounded-xl flex items-center justify-center`}
-                >
-                  <span className={item.iconColor}>{item.icon}</span>
-                </div>
-                <p
-                  className={`text-2xl font-black leading-none ${item.numColor}`}
-                >
-                  {loading ? "—" : item.num}
-                </p>
-                <p className="text-xs text-slate-400 font-medium">
-                  {item.label}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {/* ═══ MAIN ROW: Donut + Motivasi ═══ */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            {/* ─── Donut Ringkasan Bulan Ini ─── */}
+          {/* ═══ CARD 2 + 3 ROW ═══ */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+            {/* ─── CARD 2: Distribusi Kehadiran (Donut) ─── */}
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
-              <div className="flex items-center gap-2 mb-5">
-                <TrendingUp size={13} className="text-emerald-500" />
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">
-                  Ringkasan Bulan Ini
-                </span>
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <TrendingUp size={13} className="text-emerald-500" />
+                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">
+                      Distribusi Bulan Ini
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400">Rekap kehadiran kamu</p>
+                </div>
+                {!loading && (
+                  <span
+                    className={`text-xs font-bold px-3 py-1 rounded-full ${
+                      pct >= 80
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-rose-100 text-rose-700"
+                    }`}
+                  >
+                    {pct >= 80 ? "Target Tercapai" : "Di Bawah Target"}
+                  </span>
+                )}
               </div>
 
               {loading ? (
                 <div className="flex flex-col items-center gap-4">
-                  <div className="w-40 h-40 rounded-full bg-slate-100 animate-pulse" />
-                  <Sk />
-                  <Sk />
-                  <Sk />
+                  <div className="w-44 h-44 rounded-full bg-slate-100 animate-pulse" />
+                  <Sk h="h-8" />
+                  <Sk h="h-8" />
+                  <Sk h="h-8" />
                 </div>
               ) : (
                 <>
-                  <div className="relative w-full h-48 mb-6">
+                  <div className="relative w-full h-52 mb-6">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -313,8 +392,8 @@ export default function SiswaDashboard() {
                           }
                           cx="50%"
                           cy="50%"
-                          innerRadius={54}
-                          outerRadius={80}
+                          innerRadius={68}
+                          outerRadius={94}
                           paddingAngle={4}
                           dataKey="value"
                           startAngle={90}
@@ -342,7 +421,7 @@ export default function SiswaDashboard() {
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <span className="text-3xl font-black text-slate-900 leading-none">
+                      <span className="text-4xl font-black text-slate-900 leading-none">
                         {pct}%
                       </span>
                       <span className="text-xs text-slate-400 mt-1.5">
@@ -406,9 +485,8 @@ export default function SiswaDashboard() {
               )}
             </div>
 
-            {/* ─── Info + Motivasi ─── */}
+            {/* ─── CARD 3: Progress Target + Motivasi ─── */}
             <div className="flex flex-col gap-4">
-              {/* Target Progress */}
               <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex-1">
                 <div className="flex items-center gap-2 mb-5">
                   <ShieldCheck size={13} className="text-indigo-500" />
@@ -419,16 +497,23 @@ export default function SiswaDashboard() {
 
                 {loading ? (
                   <div className="flex flex-col gap-3">
+                    <Sk h="h-10" />
+                    <Sk h="h-3" />
                     <Sk />
                     <Sk />
                     <Sk />
                   </div>
                 ) : (
                   <>
-                    {/* Big pct */}
                     <div className="flex items-baseline gap-2 mb-2">
                       <span
-                        className={`text-5xl font-black leading-none ${pct >= 80 ? "text-emerald-600" : pct >= 60 ? "text-amber-600" : "text-rose-600"}`}
+                        className={`text-5xl font-black leading-none ${
+                          pct >= 80
+                            ? "text-emerald-600"
+                            : pct >= 60
+                              ? "text-amber-600"
+                              : "text-rose-600"
+                        }`}
                       >
                         {pct}%
                       </span>
@@ -437,7 +522,6 @@ export default function SiswaDashboard() {
                       </span>
                     </div>
 
-                    {/* Progress bar */}
                     <div className="relative h-3 bg-slate-100 rounded-full overflow-hidden mb-1.5">
                       <div
                         className="h-full rounded-full transition-all duration-700"
@@ -451,22 +535,20 @@ export default function SiswaDashboard() {
                                 : "#f43f5e",
                         }}
                       />
-                      {/* Target marker */}
                       <div
                         className="absolute top-0 bottom-0 w-0.5 bg-indigo-400/60"
                         style={{ left: "80%" }}
                       />
                     </div>
-                    <div className="flex justify-between text-[10px] text-slate-400 mb-4">
+                    <div className="flex justify-between text-[10px] text-slate-400 mb-5">
                       <span>0%</span>
                       <span className="text-indigo-500 font-semibold">
-                        ▲ 80%
+                        ▲ Target 80%
                       </span>
                       <span>100%</span>
                     </div>
 
-                    {/* Per-item bars */}
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-3.5">
                       {[
                         {
                           label: "Hadir",
@@ -495,8 +577,8 @@ export default function SiswaDashboard() {
                             : 0;
                         return (
                           <div key={b.label}>
-                            <div className="flex justify-between items-center mb-1">
-                              <span className="text-xs text-slate-500 font-medium">
+                            <div className="flex justify-between items-center mb-1.5">
+                              <span className="text-xs font-medium text-slate-500">
                                 {b.label}
                               </span>
                               <span
@@ -507,7 +589,7 @@ export default function SiswaDashboard() {
                               </span>
                             </div>
                             <div
-                              className={`h-1.5 rounded-full ${b.bg} overflow-hidden`}
+                              className={`h-2 rounded-full ${b.bg} overflow-hidden`}
                             >
                               <div
                                 className="h-full rounded-full transition-all duration-700"
@@ -525,50 +607,50 @@ export default function SiswaDashboard() {
                 )}
               </div>
 
-              {/* Motivasi Banner */}
+              {/* Motivasi — white card konsisten */}
               {!loading && (
-                <div
-                  className={`rounded-2xl p-5 flex items-center gap-4 shadow-sm border ${
-                    pct >= 90
-                      ? "bg-emerald-50 border-emerald-200"
-                      : pct >= 80
-                        ? "bg-indigo-50 border-indigo-200"
-                        : "bg-amber-50 border-amber-200"
-                  }`}
-                >
+                <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-200 flex items-center gap-4">
                   <div
-                    className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${
+                    className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
                       pct >= 90
                         ? "bg-emerald-500"
                         : pct >= 80
                           ? "bg-indigo-500"
-                          : "bg-amber-400"
+                          : "bg-amber-500"
                     }`}
                   >
                     <ShieldCheck size={22} className="text-white" />
                   </div>
                   <div className="flex-1">
-                    <p
-                      className={`text-sm font-bold mb-0.5 ${
-                        pct >= 90
-                          ? "text-emerald-800"
-                          : pct >= 80
-                            ? "text-indigo-800"
-                            : "text-amber-800"
-                      }`}
-                    >
+                    <p className="text-sm font-bold text-slate-800 mb-0.5">
                       {motivasiText.title}
                     </p>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      {motivasiText.body}
+                    </p>
+                  </div>
+                  <div
+                    className={`shrink-0 px-4 py-3 rounded-2xl text-right ${
+                      pct >= 90
+                        ? "bg-emerald-50"
+                        : pct >= 80
+                          ? "bg-indigo-50"
+                          : "bg-amber-50"
+                    }`}
+                  >
                     <p
-                      className={`text-xs leading-relaxed ${
+                      className={`text-2xl font-black leading-none ${
                         pct >= 90
-                          ? "text-emerald-600"
+                          ? "text-emerald-700"
                           : pct >= 80
-                            ? "text-indigo-600"
-                            : "text-amber-600"
+                            ? "text-indigo-700"
+                            : "text-amber-700"
                       }`}
                     >
-                      {motivasiText.body}
+                      {pct}%
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      dari 80%
                     </p>
                   </div>
                 </div>
