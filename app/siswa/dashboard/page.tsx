@@ -69,6 +69,7 @@ export default function SiswaDashboard() {
     hadirBulanIni: 0,
     tidakHadirBulanIni: 0,
     persentaseKehadiran: 0,
+    sudahAbsenHariIni: false, // FIX BUG 5: field baru dari API
   });
 
   useEffect(() => {
@@ -83,6 +84,7 @@ export default function SiswaDashboard() {
               hadirBulanIni: 0,
               tidakHadirBulanIni: 0,
               persentaseKehadiran: 0,
+              sudahAbsenHariIni: false,
             },
           );
         }
@@ -122,7 +124,8 @@ export default function SiswaDashboard() {
     year: "numeric",
   });
 
-  const sudahAbsen = stats.hadirBulanIni > 0;
+  // FIX BUG 5: Gunakan field dari API, bukan hitung dari data bulan
+  const sudahAbsen = stats.sudahAbsenHariIni;
 
   const motivasiText =
     pct >= 90
@@ -148,7 +151,7 @@ export default function SiswaDashboard() {
         <main className="flex-1 overflow-y-auto overflow-x-hidden p-5 lg:p-8 bg-slate-100">
           <GreetingBanner />
 
-          {/* ═══ HERO CARD — navy dark identik admin/guru ═══ */}
+          {/* ═══ HERO CARD ═══ */}
           <div className="relative rounded-3xl overflow-hidden mb-5 shadow-xl">
             <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a] via-[#1e3a5f] to-[#0f2744]" />
             <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
@@ -204,6 +207,7 @@ export default function SiswaDashboard() {
                     ) : (
                       <Clock size={12} />
                     )}
+                    {/* FIX BUG 5: Status akurat berdasarkan absensi hari ini */}
                     {sudahAbsen
                       ? "Sudah absen hari ini"
                       : "Belum absen hari ini"}
@@ -211,7 +215,7 @@ export default function SiswaDashboard() {
                 </div>
               </div>
 
-              {/* 4 stat items — identik pola admin/guru */}
+              {/* 4 stat items */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
                   {
@@ -251,7 +255,9 @@ export default function SiswaDashboard() {
                     badge:
                       stats.totalHariBulanIni > 0
                         ? {
-                            text: `${Math.round((izin / stats.totalHariBulanIni) * 100)}%`,
+                            text: `${Math.round(
+                              (izin / stats.totalHariBulanIni) * 100,
+                            )}%`,
                             positive: false,
                           }
                         : null,
@@ -269,7 +275,11 @@ export default function SiswaDashboard() {
                     badge:
                       stats.totalHariBulanIni > 0
                         ? {
-                            text: `${Math.round((stats.tidakHadirBulanIni / stats.totalHariBulanIni) * 100)}%`,
+                            text: `${Math.round(
+                              (stats.tidakHadirBulanIni /
+                                stats.totalHariBulanIni) *
+                                100,
+                            )}%`,
                             positive: false,
                           }
                         : null,
@@ -409,7 +419,9 @@ export default function SiswaDashboard() {
                     <div
                       key={item.id}
                       onClick={() => setExpandedId(isExpanded ? null : item.id)}
-                      className={`flex items-start gap-3 px-5 py-4 cursor-pointer hover:bg-slate-50 transition-colors ${!isLast ? "border-b border-slate-100" : ""}`}
+                      className={`flex items-start gap-3 px-5 py-4 cursor-pointer hover:bg-slate-50 transition-colors ${
+                        !isLast ? "border-b border-slate-100" : ""
+                      }`}
                     >
                       <div
                         className={`w-8 h-8 rounded-xl ${config.iconCls} flex items-center justify-center shrink-0 mt-0.5`}
@@ -433,19 +445,25 @@ export default function SiswaDashboard() {
                           </span>
                         </div>
                         <p
-                          className={`text-sm font-semibold text-slate-800 mb-0.5 ${isExpanded ? "" : "truncate"}`}
+                          className={`text-sm font-semibold text-slate-800 mb-0.5 ${
+                            isExpanded ? "" : "truncate"
+                          }`}
                         >
                           {item.judul}
                         </p>
                         <p
-                          className={`text-xs text-slate-500 leading-relaxed ${isExpanded ? "" : "truncate"}`}
+                          className={`text-xs text-slate-500 leading-relaxed ${
+                            isExpanded ? "" : "truncate"
+                          }`}
                         >
                           {item.isi}
                         </p>
                       </div>
                       <ChevronRight
                         size={15}
-                        className={`text-slate-300 shrink-0 mt-1 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
+                        className={`text-slate-300 shrink-0 mt-1 transition-transform duration-200 ${
+                          isExpanded ? "rotate-90" : ""
+                        }`}
                       />
                     </div>
                   );
