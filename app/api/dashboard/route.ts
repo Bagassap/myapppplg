@@ -20,6 +20,48 @@ function buildTanggalWhere(tanggalFilter?: string | null) {
     return { gte: today, lte: todayEnd };
 }
 
+async function buildTrendData(allUserIds: string[]) {
+    const DAY_LABELS = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+
+    const days: { label: string; start: Date; end: Date }[] = [];
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const start = new Date(d);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(d);
+        end.setHours(23, 59, 59, 999);
+        days.push({ label: DAY_LABELS[d.getDay()], start, end });
+    }
+
+    const windowStart = days[0].start;
+    const windowEnd = days[days.length - 1].end;
+
+    const absensi = await prisma.absensi.findMany({
+        where: {
+            userId: { in: allUserIds },
+            tanggal: { gte: windowStart, lte: windowEnd },
+            tipe: "masuk",
+        },
+        select: { tanggal: true, status: true },
+    });
+
+    const trendData = days.map(({ label, start, end }) => {
+        const dayRecords = absensi.filter(
+            (a) => a.tanggal >= start && a.tanggal <= end
+        );
+        const hadir = dayRecords.filter((a) => a.status === "Hadir").length;
+        const absen = dayRecords.filter(
+            (a) => a.status !== "Hadir" || !a.status
+        ).length;
+        return { day: label, hadir, absen };
+    });
+
+    return trendData;
+}
+
 export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
@@ -36,7 +78,7 @@ export async function GET(req: NextRequest) {
     const tempatPKLFilter = searchParams.get("tempatPKL");
 
     try {
-        // ── ADMIN ──────────────────────────────────────────────────────────────────
+
         if (userRole === "ADMIN") {
             const tanggalWhere = buildTanggalWhere(tanggalFilter);
             const siswaWhere: any = kelasFilter ? { kelas: kelasFilter } : {};
@@ -49,8 +91,6 @@ export async function GET(req: NextRequest) {
             const totalSiswa = semuaSiswa.length;
             const allUserIds = semuaSiswa.map((s) => s.userId);
 
-            // FIX BUG 1 & 2: Ambil semua absensi hari ini sekaligus, lalu hitung
-            // hadir, izin, dan alfa secara terpisah per userId.
             const absensiHariIni = await prisma.absensi.findMany({
                 where: {
                     userId: { in: allUserIds },
@@ -60,13 +100,11 @@ export async function GET(req: NextRequest) {
                 select: { userId: true, status: true },
             });
 
-            // Buat map: userId → status terakhir hari ini
             const statusMap = new Map<string, string>();
             absensiHariIni.forEach((a) => {
                 statusMap.set(a.userId, a.status);
             });
 
-            // Hitung dari statusMap
             let hadirCount = 0;
             let izinCount = 0;
             let alfaCount = 0;
@@ -74,14 +112,12 @@ export async function GET(req: NextRequest) {
             allUserIds.forEach((id) => {
                 const status = statusMap.get(id);
                 if (!status) {
-                    // Tidak ada record sama sekali = belum absen / tidak hadir
                     alfaCount++;
                 } else if (status === "Hadir") {
                     hadirCount++;
                 } else if (status === "Izin" || status === "Sakit") {
                     izinCount++;
                 } else {
-                    // Status lain (misal "Terlambat" dll) dihitung alfa
                     alfaCount++;
                 }
             });
@@ -89,58 +125,57 @@ export async function GET(req: NextRequest) {
             const persentaseKehadiran =
                 totalSiswa > 0 ? Math.round((hadirCount / totalSiswa) * 100) : 0;
 
-            // FIX BUG 2: Tambahkan field `tidakHadir` (alfa per kelas) di tableData
             const kelasSiswaMap = new Map<string, string[]>();
             semuaSiswa.forEach((s) => {
                 if (!kelasSiswaMap.has(s.kelas)) kelasSiswaMap.set(s.kelas, []);
                 kelasSiswaMap.get(s.kelas)!.push(s.userId);
             });
 
-            const tableData = Array.from(kelasSiswaMap.entries()).map(
-                ([kelas, ids]) => {
-                    let hadirKelas = 0;
-                    let izinKelas = 0;
-                    let alfaKelas = 0;
+            const tableData = Array.from(kelasSiswaMap.entries()).map(([kelas, ids]) => {
+                let hadirKelas = 0;
+                let izinKelas = 0;
+                let alfaKelas = 0;
 
-                    ids.forEach((id) => {
-                        const st = statusMap.get(id);
-                        if (!st) {
-                            alfaKelas++;
-                        } else if (st === "Hadir") {
-                            hadirKelas++;
-                        } else if (st === "Izin" || st === "Sakit") {
-                            izinKelas++;
-                        } else {
-                            alfaKelas++;
-                        }
-                    });
+                ids.forEach((id) => {
+                    const st = statusMap.get(id);
+                    if (!st) {
+                        alfaKelas++;
+                    } else if (st === "Hadir") {
+                        hadirKelas++;
+                    } else if (st === "Izin" || st === "Sakit") {
+                        izinKelas++;
+                    } else {
+                        alfaKelas++;
+                    }
+                });
 
-                    const totalKelas = ids.length;
-                    return {
-                        kelas,
-                        hadir: hadirKelas,
-                        izin: izinKelas,
-                        tidakHadir: alfaKelas, // ← FIX: field ini sebelumnya tidak ada
-                        total: totalKelas,
-                        persentase:
-                            totalKelas > 0 ? Math.round((hadirKelas / totalKelas) * 100) : 0,
-                    };
-                }
-            );
+                const totalKelas = ids.length;
+                return {
+                    kelas,
+                    hadir: hadirKelas,
+                    izin: izinKelas,
+                    tidakHadir: alfaKelas,
+                    total: totalKelas,
+                    persentase: totalKelas > 0 ? Math.round((hadirKelas / totalKelas) * 100) : 0,
+                };
+            });
+
+            const trend = await buildTrendData(allUserIds);
 
             return NextResponse.json({
                 cards: {
                     totalSiswa,
                     hadirHariIni: hadirCount,
-                    izin: izinCount,        // ← bonus: izin terpisah
-                    tidakHadir: alfaCount,  // ← FIX: sekarang ini benar-benar ALFA
+                    izin: izinCount,
+                    tidakHadir: alfaCount,
                     persentaseKehadiran,
                 },
                 table: tableData,
+                trend,
             });
         }
 
-        // ── GURU ───────────────────────────────────────────────────────────────────
+
         if (userRole === "GURU") {
             const guruUser = await prisma.user.findUnique({
                 where: { email: userEmail },
@@ -152,6 +187,7 @@ export async function GET(req: NextRequest) {
                     cards: {
                         totalSiswaPKL: 0,
                         hadirHariIni: 0,
+                        izin: 0,
                         tidakHadir: 0,
                         persentaseKehadiran: 0,
                     },
@@ -160,19 +196,11 @@ export async function GET(req: NextRequest) {
             }
 
             const searchConditions: any[] = [
-                {
-                    guruPembimbing: {
-                        contains: guruUser.name,
-                        mode: "insensitive",
-                    },
-                },
+                { guruPembimbing: { contains: guruUser.name, mode: "insensitive" } },
             ];
             if (guruUser.username) {
                 searchConditions.push({
-                    guruPembimbing: {
-                        contains: guruUser.username,
-                        mode: "insensitive",
-                    },
+                    guruPembimbing: { contains: guruUser.username, mode: "insensitive" },
                 });
             }
 
@@ -189,125 +217,93 @@ export async function GET(req: NextRequest) {
 
             if (totalSiswaPKL === 0) {
                 return NextResponse.json({
-                    cards: {
-                        totalSiswaPKL: 0,
-                        hadirHariIni: 0,
-                        tidakHadir: 0,
-                        persentaseKehadiran: 0,
-                    },
+                    cards: { totalSiswaPKL: 0, hadirHariIni: 0, izin: 0, tidakHadir: 0, persentaseKehadiran: 0 },
                     table: [],
                 });
             }
 
             const tanggalWhere = buildTanggalWhere(tanggalFilter);
-
             const now = new Date();
             const startBulan = new Date(now.getFullYear(), now.getMonth(), 1);
             startBulan.setHours(0, 0, 0, 0);
-            const endBulan = new Date(
-                now.getFullYear(),
-                now.getMonth() + 1,
-                0,
-                23,
-                59,
-                59,
-                999
-            );
+            const endBulan = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
-            // FIX BUG 3: Ambil User berdasarkan username yang sesuai dengan
-            // DataSiswa.userId (bukan userId integer). Ini yang menyebabkan
-            // userMap kosong sebelumnya.
-            const [
-                absensiHariIniGuru,
-                hadirBulanData,
-                totalBulanData,
-                users,
-            ] = await Promise.all([
-                // Absensi hari ini untuk cards
-                prisma.absensi.findMany({
-                    where: {
-                        userId: { in: studentIds },
-                        tanggal: tanggalWhere,
-                        tipe: "masuk",
-                    },
-                    select: { userId: true, status: true },
-                }),
-                // Hadir bulan ini untuk tabel
-                prisma.absensi.groupBy({
-                    by: ["userId"],
-                    where: {
-                        userId: { in: studentIds },
-                        tanggal: { gte: startBulan, lte: endBulan },
-                        status: "Hadir",
-                        tipe: "masuk",
-                    },
-                    _count: { userId: true },
-                }),
-                // Total hari bulan ini untuk tabel
-                prisma.absensi.groupBy({
-                    by: ["userId"],
-                    where: {
-                        userId: { in: studentIds },
-                        tanggal: { gte: startBulan, lte: endBulan },
-                        tipe: "masuk",
-                    },
-                    _count: { userId: true },
-                }),
-                // FIX BUG 3: Gunakan `username: { in: studentIds }` — DataSiswa.userId
-                // memang berisi username string, ini sudah benar. Masalah aslinya adalah
-                // kondisi `username: { in: studentIds }` tidak match karena mungkin ada
-                // siswa yang userId-nya bukan username. Tambahkan fallback ke `name`.
-                prisma.user.findMany({
-                    where: {
-                        OR: [
-                            { username: { in: studentIds } },
-                            // Fallback: cari juga lewat email jika userId berformat email
-                            { email: { in: studentIds } },
-                        ],
-                    },
-                    select: { username: true, email: true, name: true },
-                }),
-            ]);
+            const [absensiHariIniGuru, hadirBulanData, totalBulanData, users] =
+                await Promise.all([
+                    prisma.absensi.findMany({
+                        where: {
+                            userId: { in: studentIds },
+                            tanggal: tanggalWhere,
+                            tipe: "masuk",
+                        },
+                        select: { userId: true, status: true },
+                    }),
+                    prisma.absensi.groupBy({
+                        by: ["userId"],
+                        where: {
+                            userId: { in: studentIds },
+                            tanggal: { gte: startBulan, lte: endBulan },
+                            status: "Hadir",
+                            tipe: "masuk",
+                        },
+                        _count: { userId: true },
+                    }),
+                    prisma.absensi.groupBy({
+                        by: ["userId"],
+                        where: {
+                            userId: { in: studentIds },
+                            tanggal: { gte: startBulan, lte: endBulan },
+                            tipe: "masuk",
+                        },
+                        _count: { userId: true },
+                    }),
+                    prisma.user.findMany({
+                        where: {
+                            OR: [
+                                { username: { in: studentIds } },
+                                { email: { in: studentIds } },
+                            ],
+                        },
+                        select: { username: true, email: true, name: true },
+                    }),
+                ]);
 
-            // FIX BUG 3: Build userMap dengan key ganda (username DAN email)
             const userMap = new Map<string, string>();
             users.forEach((u) => {
                 if (u.username) userMap.set(u.username, u.name ?? u.username);
                 if (u.email) userMap.set(u.email, u.name ?? u.email);
             });
 
-            // Hitung cards hari ini
             const statusMapGuru = new Map<string, string>();
             absensiHariIniGuru.forEach((a) => statusMapGuru.set(a.userId, a.status));
 
             let hadirHariIni = 0;
+            let izinHariIni = 0;
             let tidakHadir = 0;
+
             studentIds.forEach((id) => {
                 const st = statusMapGuru.get(id);
-                if (st === "Hadir") hadirHariIni++;
-                else tidakHadir++;
+                if (st === "Hadir") {
+                    hadirHariIni++;
+                } else if (st === "Izin" || st === "Sakit") {
+                    izinHariIni++;
+                } else {
+                    tidakHadir++;
+                }
             });
 
             const persentaseKehadiran =
-                totalSiswaPKL > 0
-                    ? Math.round((hadirHariIni / totalSiswaPKL) * 100)
-                    : 0;
+                totalSiswaPKL > 0 ? Math.round((hadirHariIni / totalSiswaPKL) * 100) : 0;
 
-            const hadirMap = new Map(
-                hadirBulanData.map((h) => [h.userId, h._count.userId])
-            );
-            const totalMap = new Map(
-                totalBulanData.map((t) => [t.userId, t._count.userId])
-            );
+            const hadirMap = new Map(hadirBulanData.map((h) => [h.userId, h._count.userId]));
+            const totalMap = new Map(totalBulanData.map((t) => [t.userId, t._count.userId]));
 
-            // FIX BUG 4: tableData pakai data bulan, cards pakai data hari ini
-            // (sekarang konsisten: cards = hari ini, tabel = bulan ini)
             const tableData = siswaBimbingan.map((s) => {
                 const hadirBulan = hadirMap.get(s.userId) ?? 0;
                 const totalBulan = totalMap.get(s.userId) ?? 0;
                 return {
                     tempatPKL: s.tempatPKL || "-",
-                    siswa: userMap.get(s.userId) || s.userId, // FIX BUG 3
+                    siswa: userMap.get(s.userId) || s.userId,
                     hadir: hadirBulan,
                     totalHari: totalBulan,
                     tidakHadir: Math.max(0, totalBulan - hadirBulan),
@@ -315,12 +311,18 @@ export async function GET(req: NextRequest) {
             });
 
             return NextResponse.json({
-                cards: { totalSiswaPKL, hadirHariIni, tidakHadir, persentaseKehadiran },
+                cards: {
+                    totalSiswaPKL,
+                    hadirHariIni,
+                    izin: izinHariIni,
+                    tidakHadir,
+                    persentaseKehadiran,
+                },
                 table: tableData,
             });
         }
 
-        // ── SISWA ──────────────────────────────────────────────────────────────────
+
         if (userRole === "SISWA") {
             const userData = await prisma.user.findUnique({
                 where: { email: userEmail },
@@ -332,6 +334,7 @@ export async function GET(req: NextRequest) {
                     cards: {
                         totalHariBulanIni: 0,
                         hadirBulanIni: 0,
+                        izinBulanIni: 0,
                         tidakHadirBulanIni: 0,
                         persentaseKehadiran: 0,
                         sudahAbsenHariIni: false,
@@ -345,14 +348,12 @@ export async function GET(req: NextRequest) {
             const endBulan = new Date(now.getFullYear(), now.getMonth() + 1, 0);
             endBulan.setHours(23, 59, 59, 999);
 
-            // Tanggal hari ini untuk cek sudahAbsen
             const todayStart = new Date();
             todayStart.setHours(0, 0, 0, 0);
             const todayEnd = new Date();
             todayEnd.setHours(23, 59, 59, 999);
 
-            // FIX BUG 5: Tambahkan query cek absensi hari ini secara eksplisit
-            const [totalHariBulanIni, hadirBulanIni, absenHariIni] =
+            const [totalHariBulanIni, hadirBulanIni, izinBulanIni, absenHariIni] =
                 await Promise.all([
                     prisma.absensi.count({
                         where: {
@@ -369,7 +370,15 @@ export async function GET(req: NextRequest) {
                             tipe: "masuk",
                         },
                     }),
-                    // FIX BUG 5: Query khusus cek apakah sudah absen HARI INI
+
+                    prisma.absensi.count({
+                        where: {
+                            userId: userData.username,
+                            tanggal: { gte: startBulan, lte: endBulan },
+                            status: { in: ["Izin", "Sakit"] },
+                            tipe: "masuk",
+                        },
+                    }),
                     prisma.absensi.count({
                         where: {
                             userId: userData.username,
@@ -379,7 +388,8 @@ export async function GET(req: NextRequest) {
                     }),
                 ]);
 
-            const tidakHadirBulanIni = totalHariBulanIni - hadirBulanIni;
+
+            const tidakHadirBulanIni = Math.max(0, totalHariBulanIni - hadirBulanIni - izinBulanIni);
             const persentaseKehadiran =
                 totalHariBulanIni > 0
                     ? Math.round((hadirBulanIni / totalHariBulanIni) * 100)
@@ -389,9 +399,10 @@ export async function GET(req: NextRequest) {
                 cards: {
                     totalHariBulanIni,
                     hadirBulanIni,
+                    izinBulanIni,
                     tidakHadirBulanIni,
                     persentaseKehadiran,
-                    sudahAbsenHariIni: absenHariIni > 0, // FIX BUG 5
+                    sudahAbsenHariIni: absenHariIni > 0,
                 },
             });
         }
@@ -399,9 +410,6 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     } catch (error) {
         console.error("Dashboard GET error:", error);
-        return NextResponse.json(
-            { error: "Internal Server Error" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

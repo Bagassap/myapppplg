@@ -15,6 +15,8 @@ import {
   CalendarDays,
   ArrowUpRight,
   ArrowDownRight,
+  RefreshCw,
+  WifiOff,
 } from "lucide-react";
 import {
   PieChart,
@@ -71,23 +73,20 @@ const CLASS_CONFIGS = [
 
 function ClassRow({ item, index }: { item: any; index: number }) {
   const cfg = CLASS_CONFIGS[index % CLASS_CONFIGS.length];
-  const izin = Math.max(
-    0,
-    (item.total || 0) - (item.hadir || 0) - (item.tidakHadir || 0),
-  );
+  // FIX: use `izin` field from API directly (not re-calculated)
+  const izin =
+    item.izin ??
+    Math.max(0, (item.total || 0) - (item.hadir || 0) - (item.tidakHadir || 0));
   const p = item.persentase || 0;
   const initial = (item.kelas || "?").substring(0, 3).toUpperCase();
 
   return (
     <div className="flex items-center gap-4 p-3.5 rounded-2xl bg-slate-50 hover:bg-white hover:shadow-md border border-transparent hover:border-slate-200 transition-all duration-200 cursor-default group">
-      {/* Badge kelas */}
       <div
         className={`w-11 h-11 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 ${cfg.badge}`}
       >
         {initial}
       </div>
-
-      {/* Info */}
       <div className="flex-1 min-w-0">
         <p className="text-sm font-bold text-gray-800 truncate">{item.kelas}</p>
         <div className="flex items-center gap-3 mt-0.5 text-[11px] text-gray-400">
@@ -98,8 +97,6 @@ function ClassRow({ item, index }: { item: any; index: number }) {
           <span>{item.tidakHadir ?? 0} alfa</span>
         </div>
       </div>
-
-      {/* Progress + pct */}
       <div className="flex items-center gap-3 shrink-0">
         <div className="w-24 h-1.5 rounded-full bg-slate-200 overflow-hidden hidden sm:block">
           <div
@@ -114,8 +111,6 @@ function ClassRow({ item, index }: { item: any; index: number }) {
           {p}%
         </span>
       </div>
-
-      {/* Total */}
       <div className="text-right shrink-0 hidden sm:block">
         <p className="text-xs text-gray-400">Total</p>
         <p className="text-sm font-bold text-gray-700">{item.total}</p>
@@ -124,38 +119,94 @@ function ClassRow({ item, index }: { item: any; index: number }) {
   );
 }
 
+// FIX: Default trend shape to avoid undefined errors
+const DEFAULT_TREND: TrendDay[] = [
+  { day: "Sen", hadir: 0, absen: 0 },
+  { day: "Sel", hadir: 0, absen: 0 },
+  { day: "Rab", hadir: 0, absen: 0 },
+  { day: "Kam", hadir: 0, absen: 0 },
+  { day: "Jum", hadir: 0, absen: 0 },
+  { day: "Sab", hadir: 0, absen: 0 },
+  { day: "Min", hadir: 0, absen: 0 },
+];
+
+interface TrendDay {
+  day: string;
+  hadir: number;
+  absen: number;
+}
+
+interface DashboardCards {
+  totalSiswa: number;
+  hadirHariIni: number;
+  izin: number;
+  tidakHadir: number;
+  persentaseKehadiran: number;
+}
+
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
+  const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<DashboardCards>({
     totalSiswa: 0,
     hadirHariIni: 0,
+    izin: 0, // FIX: now a direct field from API, not computed
     tidakHadir: 0,
     persentaseKehadiran: 0,
   });
   const [classData, setClassData] = useState<any[]>([]);
+  // FIX: trendData now comes from API, not hardcoded
+  const [trendData, setTrendData] = useState<TrendDay[]>(DEFAULT_TREND);
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/dashboard?t=${Date.now()}`);
+
+      // FIX: Handle non-ok responses explicitly
+      if (res.status === 401) {
+        setError("Sesi tidak valid. Silakan login ulang.");
+        return;
+      }
+      if (!res.ok) {
+        setError(`Gagal memuat data (${res.status}). Coba refresh halaman.`);
+        return;
+      }
+
+      const data = await res.json();
+
+      if (data.cards) {
+        setStats({
+          totalSiswa: data.cards.totalSiswa ?? 0,
+          hadirHariIni: data.cards.hadirHariIni ?? 0,
+          // FIX: use `izin` field directly from API (was computed wrongly before)
+          izin: data.cards.izin ?? 0,
+          tidakHadir: data.cards.tidakHadir ?? 0,
+          persentaseKehadiran: data.cards.persentaseKehadiran ?? 0,
+        });
+      }
+
+      if (data.table) setClassData(data.table);
+
+      // FIX: Use trend data from API if available, otherwise keep default
+      if (Array.isArray(data.trend) && data.trend.length > 0) {
+        setTrendData(data.trend);
+      }
+    } catch (e) {
+      console.error("Dashboard fetch error:", e);
+      setError("Koneksi gagal. Pastikan jaringan aktif dan coba lagi.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/dashboard?t=${Date.now()}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.cards) setStats(data.cards);
-          if (data.table) setClassData(data.table);
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    })();
+    fetchData();
   }, []);
 
-  const izin = useMemo(
-    () => Math.max(0, stats.totalSiswa - stats.hadirHariIni - stats.tidakHadir),
-    [stats],
-  );
+  // FIX: izin now comes directly from API stats, not re-computed here
+  const izin = stats.izin;
   const pct = stats.persentaseKehadiran;
 
   const donutData = useMemo(
@@ -167,16 +218,6 @@ export default function AdminDashboard() {
       ].filter((d) => d.value > 0),
     [stats, izin],
   );
-
-  const trendData = [
-    { day: "Sen", hadir: 0, absen: 0 },
-    { day: "Sel", hadir: 0, absen: 0 },
-    { day: "Rab", hadir: 0, absen: 0 },
-    { day: "Kam", hadir: 0, absen: 0 },
-    { day: "Jum", hadir: stats.hadirHariIni, absen: stats.tidakHadir + izin },
-    { day: "Sab", hadir: 0, absen: 0 },
-    { day: "Min", hadir: 0, absen: 0 },
-  ];
 
   const bestClass =
     classData.length > 0
@@ -200,6 +241,36 @@ export default function AdminDashboard() {
     year: "numeric",
   });
 
+  // FIX: Error state UI
+  if (error) {
+    return (
+      <div className="flex h-screen bg-slate-100 overflow-hidden">
+        <Sidebar />
+        <div className="flex-1 flex flex-col min-w-0">
+          <TopBar />
+          <main className="flex-1 flex items-center justify-center p-8">
+            <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200 max-w-md w-full text-center">
+              <div className="w-14 h-14 rounded-2xl bg-rose-100 flex items-center justify-center mx-auto mb-4">
+                <WifiOff size={24} className="text-rose-500" />
+              </div>
+              <h2 className="text-lg font-bold text-slate-800 mb-2">
+                Gagal Memuat Dashboard
+              </h2>
+              <p className="text-sm text-slate-500 mb-5">{error}</p>
+              <button
+                onClick={fetchData}
+                className="flex items-center gap-2 mx-auto bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-slate-700 transition-colors"
+              >
+                <RefreshCw size={15} />
+                Coba Lagi
+              </button>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-slate-100 overflow-hidden">
       <Sidebar />
@@ -208,15 +279,12 @@ export default function AdminDashboard() {
         <main className="flex-1 overflow-y-auto overflow-x-hidden p-5 lg:p-8 bg-slate-100">
           <GreetingBanner />
 
-          {/* ═══ CARD 1 — HERO OVERVIEW (navy gradient) ═══ */}
+          {/* ═══ CARD 1 — HERO OVERVIEW ═══ */}
           <div className="relative rounded-3xl overflow-hidden mb-5 shadow-xl">
-            {/* Background layers */}
             <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a] via-[#1e3a5f] to-[#0f2744]" />
-            {/* Decorative orbs */}
             <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-sky-500/10 blur-3xl pointer-events-none" />
             <div className="absolute -bottom-12 left-20 w-48 h-48 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
             <div className="absolute top-1/2 right-1/3 w-32 h-32 rounded-full bg-emerald-500/5 blur-2xl pointer-events-none" />
-            {/* Grid pattern overlay */}
             <div
               className="absolute inset-0 opacity-[0.03]"
               style={{
@@ -227,7 +295,6 @@ export default function AdminDashboard() {
             />
 
             <div className="relative p-6 lg:p-8">
-              {/* Header row */}
               <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
@@ -246,7 +313,6 @@ export default function AdminDashboard() {
                     {hariIni}
                   </p>
                 </div>
-                {/* Pct badge */}
                 <div className="bg-white/10 border border-white/15 rounded-2xl px-6 py-4 text-center backdrop-blur-sm">
                   <p className="text-4xl font-black text-white leading-none">
                     {loading ? "—" : `${pct}%`}
@@ -256,6 +322,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* 4 Stat Items */}
+              {/* FIX: izin now uses stats.izin directly from API */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
                   {
@@ -365,7 +432,6 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-5">
             {/* ─── CARD 2: Distribusi Kehadiran (Donut) ─── */}
             <div className="lg:col-span-2 bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
-              {/* Title */}
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <div className="flex items-center gap-2 mb-0.5">
@@ -398,7 +464,6 @@ export default function AdminDashboard() {
                 </div>
               ) : (
                 <>
-                  {/* Donut */}
                   <div className="relative w-full h-52 mb-6">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -432,12 +497,13 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  {/* Legend rows */}
+                  {/* FIX: Legend now uses izin from API, not re-computed */}
                   <div className="flex flex-col gap-2.5">
                     {[
                       {
                         label: "Hadir",
                         val: stats.hadirHariIni,
+                        total: stats.totalSiswa,
                         color: "#10b981",
                         bg: "bg-emerald-50",
                         tc: "text-emerald-700",
@@ -446,6 +512,7 @@ export default function AdminDashboard() {
                       {
                         label: "Izin / Sakit",
                         val: izin,
+                        total: stats.totalSiswa,
                         color: "#f59e0b",
                         bg: "bg-amber-50",
                         tc: "text-amber-700",
@@ -454,6 +521,7 @@ export default function AdminDashboard() {
                       {
                         label: "Alfa",
                         val: stats.tidakHadir,
+                        total: stats.totalSiswa,
                         color: "#f43f5e",
                         bg: "bg-rose-50",
                         tc: "text-rose-700",
@@ -461,9 +529,7 @@ export default function AdminDashboard() {
                       },
                     ].map((b) => {
                       const pctItem =
-                        stats.totalSiswa > 0
-                          ? Math.round((b.val / stats.totalSiswa) * 100)
-                          : 0;
+                        b.total > 0 ? Math.round((b.val / b.total) * 100) : 0;
                       return (
                         <div
                           key={b.label}
@@ -488,7 +554,6 @@ export default function AdminDashboard() {
                     })}
                   </div>
 
-                  {/* Best/Worst */}
                   {bestClass && (
                     <div className="mt-4 flex flex-col gap-2 border-t border-slate-100 pt-4">
                       <div className="flex items-center gap-2 bg-emerald-50 rounded-xl px-3 py-2">
@@ -533,7 +598,6 @@ export default function AdminDashboard() {
                     {classData.length} kelas aktif
                   </p>
                 </div>
-                {/* Summary chips */}
                 {!loading && (
                   <div className="flex gap-1.5">
                     {[
@@ -573,7 +637,7 @@ export default function AdminDashboard() {
                 </div>
               ) : classData.length === 0 ? (
                 <div className="flex items-center justify-center h-40 text-sm text-slate-400">
-                  Tidak ada data.
+                  Tidak ada data kelas.
                 </div>
               ) : (
                 <>
@@ -583,7 +647,7 @@ export default function AdminDashboard() {
                     ))}
                   </div>
 
-                  {/* Bottom summary bar */}
+                  {/* FIX: bottom bar uses izin from API */}
                   <div className="grid grid-cols-4 gap-2 bg-slate-50 rounded-2xl p-3">
                     {[
                       {
@@ -628,7 +692,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* ═══ Trend Chart ═══ */}
+          {/* ═══ Trend Chart — FIX: now uses real data from API ═══ */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
@@ -655,42 +719,57 @@ export default function AdminDashboard() {
                 ))}
               </div>
             </div>
-            <div className="h-36">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={trendData}
-                  margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
-                  barCategoryGap="30%"
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="#f1f5f9"
-                    vertical={false}
-                  />
-                  <XAxis
-                    dataKey="day"
-                    tick={{ fontSize: 11, fill: "#94a3b8" } as any}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip content={<TrendTooltip />} />
-                  <Bar
-                    dataKey="hadir"
-                    name="Hadir"
-                    fill="#6366f1"
-                    radius={[6, 6, 0, 0]}
-                    maxBarSize={28}
-                  />
-                  <Bar
-                    dataKey="absen"
-                    name="Tidak hadir"
-                    fill="#fca5a5"
-                    radius={[6, 6, 0, 0]}
-                    maxBarSize={28}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+
+            {loading ? (
+              <div className="h-36 bg-slate-50 rounded-2xl animate-pulse" />
+            ) : (
+              <div className="h-36">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={trendData}
+                    margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
+                    barCategoryGap="30%"
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#f1f5f9"
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="day"
+                      tick={{ fontSize: 11, fill: "#94a3b8" } as any}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip content={<TrendTooltip />} />
+                    <Bar
+                      dataKey="hadir"
+                      name="Hadir"
+                      fill="#6366f1"
+                      radius={[6, 6, 0, 0]}
+                      maxBarSize={28}
+                    />
+                    <Bar
+                      dataKey="absen"
+                      name="Tidak hadir"
+                      fill="#fca5a5"
+                      radius={[6, 6, 0, 0]}
+                      maxBarSize={28}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {/* FIX: note when trend data is not yet available from API */}
+            {!loading &&
+              trendData.every((d) => d.hadir === 0 && d.absen === 0) && (
+                <p className="text-center text-xs text-slate-400 mt-2">
+                  Data tren belum tersedia. Tambahkan endpoint{" "}
+                  <code>/api/dashboard?trend=true</code> untuk mengaktifkan
+                  fitur ini.
+                </p>
+              )}
           </div>
         </main>
       </div>
