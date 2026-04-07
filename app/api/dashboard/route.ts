@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { prisma } from "@/lib/prisma";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -22,8 +22,7 @@ function buildTanggalWhere(tanggalFilter?: string | null) {
 
 async function buildTrendData(allUserIds: string[]) {
     const DAY_LABELS = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
+    const totalSiswa = allUserIds.length;
 
     const days: { label: string; start: Date; end: Date }[] = [];
     for (let i = 6; i >= 0; i--) {
@@ -48,29 +47,39 @@ async function buildTrendData(allUserIds: string[]) {
         select: { tanggal: true, status: true },
     });
 
-    const trendData = days.map(({ label, start, end }) => {
+    return days.map(({ label, start, end }) => {
         const dayRecords = absensi.filter(
             (a) => a.tanggal >= start && a.tanggal <= end
         );
         const hadir = dayRecords.filter((a) => a.status === "Hadir").length;
-        const absen = dayRecords.filter(
-            (a) => a.status !== "Hadir" || !a.status
-        ).length;
+        const absen = totalSiswa - hadir;
         return { day: label, hadir, absen };
     });
+}
 
-    return trendData;
+
+function hitungStatus(userIds: string[], statusMap: Map<string, string>) {
+    let hadir = 0;
+    let izin = 0;
+    let alfa = 0;
+    userIds.forEach((id) => {
+        const st = statusMap.get(id);
+        if (st === "Hadir") hadir++;
+        else if (st === "Izin" || st === "Sakit") izin++;
+        else alfa++;
+    });
+    return { hadir, izin, alfa };
 }
 
 export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
+    if (!session?.user) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const user = session.user as any;
-    const userRole = user.role ? user.role.toUpperCase() : "";
-    const userEmail = user.email;
+    const userRole = (user.role ?? "").toUpperCase();
+    const userEmail = user.email as string;
 
     const { searchParams } = new URL(req.url);
     const kelasFilter = searchParams.get("kelas");
@@ -78,9 +87,7 @@ export async function GET(req: NextRequest) {
     const tempatPKLFilter = searchParams.get("tempatPKL");
 
     try {
-
         if (userRole === "ADMIN") {
-            const tanggalWhere = buildTanggalWhere(tanggalFilter);
             const siswaWhere: any = kelasFilter ? { kelas: kelasFilter } : {};
 
             const semuaSiswa = await prisma.dataSiswa.findMany({
@@ -90,6 +97,8 @@ export async function GET(req: NextRequest) {
 
             const totalSiswa = semuaSiswa.length;
             const allUserIds = semuaSiswa.map((s) => s.userId);
+
+            const tanggalWhere = buildTanggalWhere(tanggalFilter);
 
             const absensiHariIni = await prisma.absensi.findMany({
                 where: {
@@ -101,26 +110,10 @@ export async function GET(req: NextRequest) {
             });
 
             const statusMap = new Map<string, string>();
-            absensiHariIni.forEach((a) => {
-                statusMap.set(a.userId, a.status);
-            });
+            absensiHariIni.forEach((a) => statusMap.set(a.userId, a.status));
 
-            let hadirCount = 0;
-            let izinCount = 0;
-            let alfaCount = 0;
-
-            allUserIds.forEach((id) => {
-                const status = statusMap.get(id);
-                if (!status) {
-                    alfaCount++;
-                } else if (status === "Hadir") {
-                    hadirCount++;
-                } else if (status === "Izin" || status === "Sakit") {
-                    izinCount++;
-                } else {
-                    alfaCount++;
-                }
-            });
+            const { hadir: hadirCount, izin: izinCount, alfa: alfaCount } =
+                hitungStatus(allUserIds, statusMap);
 
             const persentaseKehadiran =
                 totalSiswa > 0 ? Math.round((hadirCount / totalSiswa) * 100) : 0;
@@ -131,36 +124,27 @@ export async function GET(req: NextRequest) {
                 kelasSiswaMap.get(s.kelas)!.push(s.userId);
             });
 
-            const tableData = Array.from(kelasSiswaMap.entries()).map(([kelas, ids]) => {
-                let hadirKelas = 0;
-                let izinKelas = 0;
-                let alfaKelas = 0;
+            const tableData = Array.from(kelasSiswaMap.entries())
+                .map(([kelas, ids]) => {
+                    const { hadir: hadirKelas, izin: izinKelas, alfa: alfaKelas } =
+                        hitungStatus(ids, statusMap);
+                    const totalKelas = ids.length;
+                    return {
+                        kelas,
+                        hadir: hadirKelas,
+                        izin: izinKelas,
+                        tidakHadir: alfaKelas,
+                        total: totalKelas,
+                        persentase:
+                            totalKelas > 0
+                                ? Math.round((hadirKelas / totalKelas) * 100)
+                                : 0,
+                    };
+                })
+                .sort((a, b) => b.persentase - a.persentase);
 
-                ids.forEach((id) => {
-                    const st = statusMap.get(id);
-                    if (!st) {
-                        alfaKelas++;
-                    } else if (st === "Hadir") {
-                        hadirKelas++;
-                    } else if (st === "Izin" || st === "Sakit") {
-                        izinKelas++;
-                    } else {
-                        alfaKelas++;
-                    }
-                });
-
-                const totalKelas = ids.length;
-                return {
-                    kelas,
-                    hadir: hadirKelas,
-                    izin: izinKelas,
-                    tidakHadir: alfaKelas,
-                    total: totalKelas,
-                    persentase: totalKelas > 0 ? Math.round((hadirKelas / totalKelas) * 100) : 0,
-                };
-            });
-
-            const trend = await buildTrendData(allUserIds);
+            const trend =
+                allUserIds.length > 0 ? await buildTrendData(allUserIds) : [];
 
             return NextResponse.json({
                 cards: {
@@ -175,38 +159,37 @@ export async function GET(req: NextRequest) {
             });
         }
 
-
         if (userRole === "GURU") {
             const guruUser = await prisma.user.findUnique({
                 where: { email: userEmail },
                 select: { name: true, username: true },
             });
 
-            if (!guruUser?.name) {
+            if (!guruUser) {
                 return NextResponse.json({
-                    cards: {
-                        totalSiswaPKL: 0,
-                        hadirHariIni: 0,
-                        izin: 0,
-                        tidakHadir: 0,
-                        persentaseKehadiran: 0,
-                    },
+                    cards: { totalSiswaPKL: 0, hadirHariIni: 0, izin: 0, tidakHadir: 0, persentaseKehadiran: 0 },
                     table: [],
                 });
             }
 
-            const searchConditions: any[] = [
-                { guruPembimbing: { contains: guruUser.name, mode: "insensitive" } },
-            ];
-            if (guruUser.username) {
-                searchConditions.push({
-                    guruPembimbing: { contains: guruUser.username, mode: "insensitive" },
+            const searchValues = [guruUser.name, guruUser.username].filter(
+                (v): v is string => !!v
+            );
+
+            if (searchValues.length === 0) {
+                return NextResponse.json({
+                    cards: { totalSiswaPKL: 0, hadirHariIni: 0, izin: 0, tidakHadir: 0, persentaseKehadiran: 0 },
+                    table: [],
                 });
             }
 
+            const orConditions = searchValues.map((v) => ({
+                guruPembimbing: { contains: v, mode: "insensitive" as const },
+            }));
+
             const siswaBimbingan = await prisma.dataSiswa.findMany({
                 where: {
-                    OR: searchConditions,
+                    OR: orConditions,
                     ...(tempatPKLFilter ? { tempatPKL: tempatPKLFilter } : {}),
                 },
                 select: { userId: true, tempatPKL: true },
@@ -224,89 +207,73 @@ export async function GET(req: NextRequest) {
 
             const tanggalWhere = buildTanggalWhere(tanggalFilter);
             const now = new Date();
-            const startBulan = new Date(now.getFullYear(), now.getMonth(), 1);
-            startBulan.setHours(0, 0, 0, 0);
+            const startBulan = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
             const endBulan = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
-            const [absensiHariIniGuru, hadirBulanData, totalBulanData, users] =
-                await Promise.all([
-                    prisma.absensi.findMany({
-                        where: {
-                            userId: { in: studentIds },
-                            tanggal: tanggalWhere,
-                            tipe: "masuk",
-                        },
-                        select: { userId: true, status: true },
-                    }),
-                    prisma.absensi.groupBy({
-                        by: ["userId"],
-                        where: {
-                            userId: { in: studentIds },
-                            tanggal: { gte: startBulan, lte: endBulan },
-                            status: "Hadir",
-                            tipe: "masuk",
-                        },
-                        _count: { userId: true },
-                    }),
-                    prisma.absensi.groupBy({
-                        by: ["userId"],
-                        where: {
-                            userId: { in: studentIds },
-                            tanggal: { gte: startBulan, lte: endBulan },
-                            tipe: "masuk",
-                        },
-                        _count: { userId: true },
-                    }),
-                    prisma.user.findMany({
-                        where: {
-                            OR: [
-                                { username: { in: studentIds } },
-                                { email: { in: studentIds } },
-                            ],
-                        },
-                        select: { username: true, email: true, name: true },
-                    }),
-                ]);
+            const [absensiHariIni, absensiPerSiswaRaw, users] = await Promise.all([
+                prisma.absensi.findMany({
+                    where: {
+                        userId: { in: studentIds },
+                        tanggal: tanggalWhere,
+                        tipe: "masuk",
+                    },
+                    select: { userId: true, status: true },
+                }),
+                prisma.absensi.findMany({
+                    where: {
+                        userId: { in: studentIds },
+                        tanggal: { gte: startBulan, lte: endBulan },
+                        tipe: "masuk",
+                    },
+                    select: { userId: true, status: true },
+                }),
+                prisma.user.findMany({
+                    where: { username: { in: studentIds } },
+                    select: { username: true, name: true },
+                }),
+            ]);
 
             const userMap = new Map<string, string>();
             users.forEach((u) => {
                 if (u.username) userMap.set(u.username, u.name ?? u.username);
-                if (u.email) userMap.set(u.email, u.name ?? u.email);
             });
 
-            const statusMapGuru = new Map<string, string>();
-            absensiHariIniGuru.forEach((a) => statusMapGuru.set(a.userId, a.status));
+            const statusMapToday = new Map<string, string>();
+            absensiHariIni.forEach((a) => statusMapToday.set(a.userId, a.status));
 
-            let hadirHariIni = 0;
-            let izinHariIni = 0;
-            let tidakHadir = 0;
-
-            studentIds.forEach((id) => {
-                const st = statusMapGuru.get(id);
-                if (st === "Hadir") {
-                    hadirHariIni++;
-                } else if (st === "Izin" || st === "Sakit") {
-                    izinHariIni++;
-                } else {
-                    tidakHadir++;
-                }
-            });
+            const { hadir: hadirHariIni, izin: izinHariIni, alfa: tidakHadir } =
+                hitungStatus(studentIds, statusMapToday);
 
             const persentaseKehadiran =
-                totalSiswaPKL > 0 ? Math.round((hadirHariIni / totalSiswaPKL) * 100) : 0;
+                totalSiswaPKL > 0
+                    ? Math.round((hadirHariIni / totalSiswaPKL) * 100)
+                    : 0;
 
-            const hadirMap = new Map(hadirBulanData.map((h) => [h.userId, h._count.userId]));
-            const totalMap = new Map(totalBulanData.map((t) => [t.userId, t._count.userId]));
+            type MonthlyEntry = { hadir: number; izin: number; alfa: number; total: number };
+            const monthlyByUser = new Map<string, MonthlyEntry>();
+            studentIds.forEach((id) =>
+                monthlyByUser.set(id, { hadir: 0, izin: 0, alfa: 0, total: 0 })
+            );
+
+            absensiPerSiswaRaw.forEach((a) => {
+                const entry = monthlyByUser.get(a.userId);
+                if (!entry) return;
+                entry.total++;
+                if (a.status === "Hadir") entry.hadir++;
+                else if (a.status === "Izin" || a.status === "Sakit") entry.izin++;
+                else entry.alfa++;
+            });
 
             const tableData = siswaBimbingan.map((s) => {
-                const hadirBulan = hadirMap.get(s.userId) ?? 0;
-                const totalBulan = totalMap.get(s.userId) ?? 0;
+                const m = monthlyByUser.get(s.userId) ?? { hadir: 0, izin: 0, alfa: 0, total: 0 };
                 return {
-                    tempatPKL: s.tempatPKL || "-",
-                    siswa: userMap.get(s.userId) || s.userId,
-                    hadir: hadirBulan,
-                    totalHari: totalBulan,
-                    tidakHadir: Math.max(0, totalBulan - hadirBulan),
+                    siswa: userMap.get(s.userId) ?? s.userId,
+                    tempatPKL: s.tempatPKL ?? "-",
+                    hadir: m.hadir,
+                    izin: m.izin,
+                    tidakHadir: m.alfa,
+                    totalHari: m.total,
+                    persentase: m.total > 0 ? Math.round((m.hadir / m.total) * 100) : 0,
                 };
             });
 
@@ -322,14 +289,17 @@ export async function GET(req: NextRequest) {
             });
         }
 
-
         if (userRole === "SISWA") {
             const userData = await prisma.user.findUnique({
                 where: { email: userEmail },
-                select: { username: true },
+                select: { username: true, name: true },
             });
 
             if (!userData?.username) {
+                console.warn(
+                    `[Dashboard SISWA] User ${userEmail} tidak memiliki username. ` +
+                    `Pastikan field username diisi saat registrasi.`
+                );
                 return NextResponse.json({
                     cards: {
                         totalHariBulanIni: 0,
@@ -338,58 +308,47 @@ export async function GET(req: NextRequest) {
                         tidakHadirBulanIni: 0,
                         persentaseKehadiran: 0,
                         sudahAbsenHariIni: false,
+                        namaSiswa: userData?.name ?? null,
+                        error: "username_null",
                     },
                 });
             }
 
             const now = new Date();
-            const startBulan = new Date(now.getFullYear(), now.getMonth(), 1);
-            startBulan.setHours(0, 0, 0, 0);
-            const endBulan = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-            endBulan.setHours(23, 59, 59, 999);
-
+            const startBulan = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+            const endBulan = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
             const todayStart = new Date();
             todayStart.setHours(0, 0, 0, 0);
             const todayEnd = new Date();
             todayEnd.setHours(23, 59, 59, 999);
 
-            const [totalHariBulanIni, hadirBulanIni, izinBulanIni, absenHariIni] =
-                await Promise.all([
-                    prisma.absensi.count({
-                        where: {
-                            userId: userData.username,
-                            tanggal: { gte: startBulan, lte: endBulan },
-                            tipe: "masuk",
-                        },
-                    }),
-                    prisma.absensi.count({
-                        where: {
-                            userId: userData.username,
-                            tanggal: { gte: startBulan, lte: endBulan },
-                            status: "Hadir",
-                            tipe: "masuk",
-                        },
-                    }),
+            const [bulananRecords, absenHariIni] = await Promise.all([
+                prisma.absensi.findMany({
+                    where: {
+                        userId: userData.username,
+                        tanggal: { gte: startBulan, lte: endBulan },
+                        tipe: "masuk",
+                    },
+                    select: { status: true },
+                }),
+                prisma.absensi.count({
+                    where: {
+                        userId: userData.username,
+                        tanggal: { gte: todayStart, lte: todayEnd },
+                        tipe: "masuk",
+                    },
+                }),
+            ]);
 
-                    prisma.absensi.count({
-                        where: {
-                            userId: userData.username,
-                            tanggal: { gte: startBulan, lte: endBulan },
-                            status: { in: ["Izin", "Sakit"] },
-                            tipe: "masuk",
-                        },
-                    }),
-                    prisma.absensi.count({
-                        where: {
-                            userId: userData.username,
-                            tanggal: { gte: todayStart, lte: todayEnd },
-                            tipe: "masuk",
-                        },
-                    }),
-                ]);
-
-
-            const tidakHadirBulanIni = Math.max(0, totalHariBulanIni - hadirBulanIni - izinBulanIni);
+            const totalHariBulanIni = bulananRecords.length;
+            const hadirBulanIni = bulananRecords.filter((r) => r.status === "Hadir").length;
+            const izinBulanIni = bulananRecords.filter(
+                (r) => r.status === "Izin" || r.status === "Sakit"
+            ).length;
+            const tidakHadirBulanIni = Math.max(
+                0,
+                totalHariBulanIni - hadirBulanIni - izinBulanIni
+            );
             const persentaseKehadiran =
                 totalHariBulanIni > 0
                     ? Math.round((hadirBulanIni / totalHariBulanIni) * 100)
@@ -403,13 +362,14 @@ export async function GET(req: NextRequest) {
                     tidakHadirBulanIni,
                     persentaseKehadiran,
                     sudahAbsenHariIni: absenHariIni > 0,
+                    namaSiswa: userData.name,
                 },
             });
         }
 
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     } catch (error) {
-        console.error("Dashboard GET error:", error);
+        console.error("[Dashboard API Error]", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

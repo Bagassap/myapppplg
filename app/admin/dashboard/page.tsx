@@ -73,7 +73,6 @@ const CLASS_CONFIGS = [
 
 function ClassRow({ item, index }: { item: any; index: number }) {
   const cfg = CLASS_CONFIGS[index % CLASS_CONFIGS.length];
-  // FIX: use `izin` field from API directly (not re-calculated)
   const izin =
     item.izin ??
     Math.max(0, (item.total || 0) - (item.hadir || 0) - (item.tidakHadir || 0));
@@ -119,7 +118,6 @@ function ClassRow({ item, index }: { item: any; index: number }) {
   );
 }
 
-// FIX: Default trend shape to avoid undefined errors
 const DEFAULT_TREND: TrendDay[] = [
   { day: "Sen", hadir: 0, absen: 0 },
   { day: "Sel", hadir: 0, absen: 0 },
@@ -150,12 +148,11 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardCards>({
     totalSiswa: 0,
     hadirHariIni: 0,
-    izin: 0, // FIX: now a direct field from API, not computed
+    izin: 0,
     tidakHadir: 0,
     persentaseKehadiran: 0,
   });
   const [classData, setClassData] = useState<any[]>([]);
-  // FIX: trendData now comes from API, not hardcoded
   const [trendData, setTrendData] = useState<TrendDay[]>(DEFAULT_TREND);
 
   const fetchData = async () => {
@@ -163,8 +160,6 @@ export default function AdminDashboard() {
     setError(null);
     try {
       const res = await fetch(`/api/dashboard?t=${Date.now()}`);
-
-      // FIX: Handle non-ok responses explicitly
       if (res.status === 401) {
         setError("Sesi tidak valid. Silakan login ulang.");
         return;
@@ -180,7 +175,6 @@ export default function AdminDashboard() {
         setStats({
           totalSiswa: data.cards.totalSiswa ?? 0,
           hadirHariIni: data.cards.hadirHariIni ?? 0,
-          // FIX: use `izin` field directly from API (was computed wrongly before)
           izin: data.cards.izin ?? 0,
           tidakHadir: data.cards.tidakHadir ?? 0,
           persentaseKehadiran: data.cards.persentaseKehadiran ?? 0,
@@ -188,8 +182,6 @@ export default function AdminDashboard() {
       }
 
       if (data.table) setClassData(data.table);
-
-      // FIX: Use trend data from API if available, otherwise keep default
       if (Array.isArray(data.trend) && data.trend.length > 0) {
         setTrendData(data.trend);
       }
@@ -205,7 +197,6 @@ export default function AdminDashboard() {
     fetchData();
   }, []);
 
-  // FIX: izin now comes directly from API stats, not re-computed here
   const izin = stats.izin;
   const pct = stats.persentaseKehadiran;
 
@@ -241,7 +232,6 @@ export default function AdminDashboard() {
     year: "numeric",
   });
 
-  // FIX: Error state UI
   if (error) {
     return (
       <div className="flex h-screen bg-slate-100 overflow-hidden">
@@ -278,8 +268,6 @@ export default function AdminDashboard() {
         <TopBar />
         <main className="flex-1 overflow-y-auto overflow-x-hidden p-5 lg:p-8 bg-slate-100">
           <GreetingBanner />
-
-          {/* ═══ CARD 1 — HERO OVERVIEW ═══ */}
           <div className="relative rounded-3xl overflow-hidden mb-5 shadow-xl">
             <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a] via-[#1e3a5f] to-[#0f2744]" />
             <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-sky-500/10 blur-3xl pointer-events-none" />
@@ -322,7 +310,6 @@ export default function AdminDashboard() {
               </div>
 
               {/* 4 Stat Items */}
-              {/* FIX: izin now uses stats.izin directly from API */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
                   {
@@ -430,7 +417,7 @@ export default function AdminDashboard() {
 
           {/* ═══ CARD 2 + 3 ROW ═══ */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-5">
-            {/* ─── CARD 2: Distribusi Kehadiran (Donut) ─── */}
+            {/* ─── Distribusi Kehadiran  ─── */}
             <div className="lg:col-span-2 bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
               <div className="flex items-center justify-between mb-5">
                 <div>
@@ -497,7 +484,6 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  {/* FIX: Legend now uses izin from API, not re-computed */}
                   <div className="flex flex-col gap-2.5">
                     {[
                       {
@@ -584,7 +570,6 @@ export default function AdminDashboard() {
               )}
             </div>
 
-            {/* ─── CARD 3: Kehadiran Per Kelas ─── */}
             <div className="lg:col-span-3 bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
               <div className="flex items-center justify-between mb-5">
                 <div>
@@ -647,7 +632,6 @@ export default function AdminDashboard() {
                     ))}
                   </div>
 
-                  {/* FIX: bottom bar uses izin from API */}
                   <div className="grid grid-cols-4 gap-2 bg-slate-50 rounded-2xl p-3">
                     {[
                       {
@@ -692,7 +676,6 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* ═══ Trend Chart — FIX: now uses real data from API ═══ */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
@@ -761,7 +744,6 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {/* FIX: note when trend data is not yet available from API */}
             {!loading &&
               trendData.every((d) => d.hadir === 0 && d.absen === 0) && (
                 <p className="text-center text-xs text-slate-400 mt-2">

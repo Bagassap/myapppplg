@@ -50,9 +50,7 @@ const AVATAR_COLORS = [
 function SiswaRow({ item, index }: { item: any; index: number }) {
   const totalHari = item.totalHari ?? item.total ?? 0;
   const hadir = item.hadir ?? 0;
-  // FIX: Use tidakHadir field from API directly, not re-computed
   const alfaS = item.tidakHadir ?? 0;
-  // FIX: izin = total - hadir - alfa (now consistent with API semantics)
   const izinS = Math.max(0, totalHari - hadir - alfaS);
   const p = totalHari > 0 ? Math.round((hadir / totalHari) * 100) : 0;
   const av = AVATAR_COLORS[index % AVATAR_COLORS.length];
@@ -124,7 +122,6 @@ export default function GuruDashboard() {
   const [stats, setStats] = useState<GuruCards>({
     totalSiswaPKL: 0,
     hadirHariIni: 0,
-    // FIX: izin is now a direct field from the API
     izin: 0,
     tidakHadir: 0,
     persentaseKehadiran: 0,
@@ -152,7 +149,6 @@ export default function GuruDashboard() {
         setStats({
           totalSiswaPKL: data.cards.totalSiswaPKL ?? 0,
           hadirHariIni: data.cards.hadirHariIni ?? 0,
-          // FIX: read izin directly; old API didn't send this, new API does
           izin:
             data.cards.izin ??
             Math.max(
@@ -178,7 +174,6 @@ export default function GuruDashboard() {
     fetchData();
   }, []);
 
-  // FIX: use izin directly from stats
   const izin = stats.izin;
   const pct = stats.persentaseKehadiran;
 
@@ -295,7 +290,6 @@ export default function GuruDashboard() {
                 </div>
               </div>
 
-              {/* FIX: 4 stat items — izin now from API */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
                   {
@@ -466,7 +460,6 @@ export default function GuruDashboard() {
                     </div>
                   </div>
 
-                  {/* FIX: legend uses izin from API */}
                   <div className="flex flex-col gap-2.5">
                     {[
                       {
@@ -627,7 +620,6 @@ export default function GuruDashboard() {
                     ))}
                   </div>
 
-                  {/* FIX: bottom summary uses izin from API */}
                   <div className="grid grid-cols-4 gap-2 bg-slate-50 rounded-2xl p-3">
                     {[
                       {

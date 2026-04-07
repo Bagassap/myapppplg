@@ -64,29 +64,39 @@ export default function SiswaDashboard() {
   const [loadingInfo, setLoadingInfo] = useState(true);
   const [informasiList, setInformasiList] = useState<Informasi[]>([]);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+
   const [stats, setStats] = useState({
     totalHariBulanIni: 0,
     hadirBulanIni: 0,
+    izinBulanIni: 0,
     tidakHadirBulanIni: 0,
     persentaseKehadiran: 0,
-    sudahAbsenHariIni: false, // FIX BUG 5: field baru dari API
+    sudahAbsenHariIni: false,
   });
 
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const res = await fetch("/api/dashboard");
+        const res = await fetch(`/api/dashboard?t=${Date.now()}`);
         if (res.ok) {
           const data = await res.json();
-          setStats(
-            data.cards || {
-              totalHariBulanIni: 0,
-              hadirBulanIni: 0,
-              tidakHadirBulanIni: 0,
-              persentaseKehadiran: 0,
-              sudahAbsenHariIni: false,
-            },
-          );
+          if (data.cards) {
+            setStats({
+              totalHariBulanIni: data.cards.totalHariBulanIni ?? 0,
+              hadirBulanIni: data.cards.hadirBulanIni ?? 0,
+              izinBulanIni:
+                data.cards.izinBulanIni ??
+                Math.max(
+                  0,
+                  (data.cards.totalHariBulanIni ?? 0) -
+                    (data.cards.hadirBulanIni ?? 0) -
+                    (data.cards.tidakHadirBulanIni ?? 0),
+                ),
+              tidakHadirBulanIni: data.cards.tidakHadirBulanIni ?? 0,
+              persentaseKehadiran: data.cards.persentaseKehadiran ?? 0,
+              sudahAbsenHariIni: data.cards.sudahAbsenHariIni ?? false,
+            });
+          }
         }
       } catch (e) {
         console.error(e);
@@ -111,11 +121,9 @@ export default function SiswaDashboard() {
     fetchInformasi();
   }, []);
 
-  const izin = Math.max(
-    0,
-    stats.totalHariBulanIni - stats.hadirBulanIni - stats.tidakHadirBulanIni,
-  );
+  const izin = stats.izinBulanIni;
   const pct = stats.persentaseKehadiran;
+  const sudahAbsen = stats.sudahAbsenHariIni;
 
   const hariIni = new Date().toLocaleDateString("id-ID", {
     weekday: "long",
@@ -123,9 +131,6 @@ export default function SiswaDashboard() {
     month: "long",
     year: "numeric",
   });
-
-  // FIX BUG 5: Gunakan field dari API, bukan hitung dari data bulan
-  const sudahAbsen = stats.sudahAbsenHariIni;
 
   const motivasiText =
     pct >= 90
@@ -207,7 +212,6 @@ export default function SiswaDashboard() {
                     ) : (
                       <Clock size={12} />
                     )}
-                    {/* FIX BUG 5: Status akurat berdasarkan absensi hari ini */}
                     {sudahAbsen
                       ? "Sudah absen hari ini"
                       : "Belum absen hari ini"}
