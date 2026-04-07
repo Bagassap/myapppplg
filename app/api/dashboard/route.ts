@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { prisma } from "@/lib/prisma";
-import { authOptions } from "@/lib/auth";
+import { authOptions } from "../auth/[...nextauth]/route";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +57,6 @@ async function buildTrendData(allUserIds: string[]) {
     });
 }
 
-
 function hitungStatus(userIds: string[], statusMap: Map<string, string>) {
     let hadir = 0;
     let izin = 0;
@@ -70,6 +69,7 @@ function hitungStatus(userIds: string[], statusMap: Map<string, string>) {
     });
     return { hadir, izin, alfa };
 }
+
 
 export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
@@ -87,6 +87,7 @@ export async function GET(req: NextRequest) {
     const tempatPKLFilter = searchParams.get("tempatPKL");
 
     try {
+
         if (userRole === "ADMIN") {
             const siswaWhere: any = kelasFilter ? { kelas: kelasFilter } : {};
 
@@ -209,7 +210,6 @@ export async function GET(req: NextRequest) {
             const now = new Date();
             const startBulan = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
             const endBulan = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-
             const [absensiHariIni, absensiPerSiswaRaw, users] = await Promise.all([
                 prisma.absensi.findMany({
                     where: {
