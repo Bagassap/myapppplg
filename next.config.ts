@@ -5,8 +5,6 @@ const nextConfig: NextConfig = {
   compress: true,
   poweredByHeader: false,
 
-  output: 'standalone',
-
   async headers() {
     return [
       {
