@@ -205,12 +205,17 @@ export default function GuruDashboard() {
         })
       : null;
 
-  const hariIni = new Date().toLocaleDateString("id-ID", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const [hariIni, setHariIni] = useState("");
+  useEffect(() => {
+    setHariIni(
+      new Date().toLocaleDateString("id-ID", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }),
+    );
+  }, []);
 
   if (error) {
     return (

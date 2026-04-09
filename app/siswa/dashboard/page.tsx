@@ -125,12 +125,65 @@ export default function SiswaDashboard() {
   const pct = stats.persentaseKehadiran;
   const sudahAbsen = stats.sudahAbsenHariIni;
 
-  const hariIni = new Date().toLocaleDateString("id-ID", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const [hariIni, setHariIni] = useState("");
+
+  useEffect(() => {
+    setHariIni(
+      new Date().toLocaleDateString("id-ID", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }),
+    );
+
+    const fetchDashboard = async () => {
+      try {
+        const res = await fetch(`/api/dashboard?t=${Date.now()}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.cards) {
+            setStats({
+              totalHariBulanIni: data.cards.totalHariBulanIni ?? 0,
+              hadirBulanIni: data.cards.hadirBulanIni ?? 0,
+              izinBulanIni:
+                data.cards.izinBulanIni ??
+                Math.max(
+                  0,
+                  (data.cards.totalHariBulanIni ?? 0) -
+                    (data.cards.hadirBulanIni ?? 0) -
+                    (data.cards.tidakHadirBulanIni ?? 0),
+                ),
+              tidakHadirBulanIni: data.cards.tidakHadirBulanIni ?? 0,
+              persentaseKehadiran: data.cards.persentaseKehadiran ?? 0,
+              sudahAbsenHariIni: data.cards.sudahAbsenHariIni ?? false,
+            });
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchInformasi = async () => {
+      try {
+        const res = await fetch("/api/informasi");
+        if (res.ok) {
+          const data = await res.json();
+          setInformasiList(Array.isArray(data) ? data.slice(0, 5) : []);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoadingInfo(false);
+      }
+    };
+
+    fetchDashboard();
+    fetchInformasi();
+  }, []);
 
   const motivasiText =
     pct >= 90

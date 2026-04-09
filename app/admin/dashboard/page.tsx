@@ -225,12 +225,17 @@ export default function AdminDashboard() {
         )
       : null;
 
-  const hariIni = new Date().toLocaleDateString("id-ID", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const [hariIni, setHariIni] = useState("");
+  useEffect(() => {
+    setHariIni(
+      new Date().toLocaleDateString("id-ID", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }),
+    );
+  }, []);
 
   if (error) {
     return (
@@ -706,8 +711,8 @@ export default function AdminDashboard() {
             {loading ? (
               <div className="h-36 bg-slate-50 rounded-2xl animate-pulse" />
             ) : (
-              <div className="h-36">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="h-36 w-full">
+                <ResponsiveContainer width="100%" height="100%" minHeight={144}>
                   <BarChart
                     data={trendData}
                     margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
