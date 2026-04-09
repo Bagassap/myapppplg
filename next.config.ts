@@ -5,6 +5,16 @@ const nextConfig: NextConfig = {
   compress: true,
   poweredByHeader: false,
 
+  async redirects() {
+    return [
+      {
+        source: '/uploads/:path*',
+        destination: '/api/uploads/:path*',
+        permanent: false,
+      },
+    ];
+  },
+
   async headers() {
     return [
       {
