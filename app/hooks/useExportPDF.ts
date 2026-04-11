@@ -61,7 +61,6 @@ export function useExportPDF() {
             const colorGreen: [number, number, number] = [22, 163, 74];
             const colorYellow: [number, number, number] = [217, 119, 6];
 
-            // ── HEADER ──────────────────────────────────────────────────
             doc.setFillColor(...colorIndigo);
             doc.rect(0, 0, pageW, 32, "F");
 
@@ -74,7 +73,6 @@ export function useExportPDF() {
             doc.setFont("helvetica", "normal");
             doc.text(`Dicetak: ${new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}   |   Total Data: ${data.length} record`, margin, 22);
 
-            // ── SUMMARY BOX ─────────────────────────────────────────────
             const hadir = data.filter(d => d.status === "Hadir").length;
             const izin = data.filter(d => d.status === "Izin").length;
             const tidakHadir = data.filter(d => d.status !== "Hadir" && d.status !== "Izin").length;
@@ -108,8 +106,6 @@ export function useExportPDF() {
 
             sy += 24;
 
-            // ── PER SISWA SECTIONS ───────────────────────────────────────
-            // Group by siswa
             const grouped: Record<string, AbsensiRow[]> = {};
             data.forEach(row => {
                 if (!grouped[row.siswa]) grouped[row.siswa] = [];
@@ -122,7 +118,6 @@ export function useExportPDF() {
                     sy = margin;
                 }
 
-                // ── Siswa header ─────────────────────────────────────────
                 doc.setFillColor(...colorIndigo);
                 doc.roundedRect(margin, sy, contentW, 10, 2, 2, "F");
                 doc.setTextColor(255, 255, 255);
@@ -131,7 +126,6 @@ export function useExportPDF() {
                 doc.text(`${siswa}  —  ${rows[0].tempatPKL}`, margin + 4, sy + 7);
                 sy += 14;
 
-                // ── Table header ─────────────────────────────────────────
                 const cols = [
                     { label: "Tanggal", w: 28 },
                     { label: "Status", w: 22 },
@@ -158,7 +152,6 @@ export function useExportPDF() {
                 });
                 sy += 8;
 
-                // ── Table rows ───────────────────────────────────────────
                 for (const row of rows) {
                     const rowH = 28;
 
@@ -167,14 +160,11 @@ export function useExportPDF() {
                         sy = margin;
                     }
 
-                    // Row background
                     doc.setFillColor(255, 255, 255);
                     doc.rect(margin, sy, contentW, rowH, "F");
                     doc.setDrawColor(...colorBorder);
                     doc.setLineWidth(0.15);
                     doc.rect(margin, sy, contentW, rowH, "S");
-
-                    // Status badge color
                     const statusColor: [number, number, number] =
                         row.status === "Hadir" ? colorGreen :
                             row.status === "Izin" ? colorYellow : colorGray;
@@ -182,37 +172,24 @@ export function useExportPDF() {
                     doc.setFontSize(7.5);
                     doc.setFont("helvetica", "normal");
                     doc.setTextColor(...colorText);
-
                     cx = margin + 2;
-
-                    // Tanggal
                     doc.text(row.tanggal || "-", cx, sy + 6);
                     cx += cols[0].w;
-
-                    // Status
                     doc.setTextColor(...statusColor);
                     doc.setFont("helvetica", "bold");
                     doc.text(row.status || "-", cx, sy + 6);
                     doc.setFont("helvetica", "normal");
                     doc.setTextColor(...colorText);
                     cx += cols[1].w;
-
-                    // Waktu
                     doc.text(row.waktu || "-", cx, sy + 6);
                     cx += cols[2].w;
-
-                    // Keterangan (catatan + kegiatan)
                     const ket = [row.catatan, row.kegiatan].filter(Boolean).join(" | ") || "-";
                     const ketLines = doc.splitTextToSize(ket, cols[3].w - 2);
                     doc.text(ketLines.slice(0, 3), cx, sy + 6);
                     cx += cols[3].w;
-
-                    // Lokasi
                     const lokasiText = row.lokasi ? "Ada (GPS)" : "-";
                     doc.text(lokasiText, cx, sy + 6);
                     cx += cols[4].w;
-
-                    // Foto
                     if (row.foto) {
                         try {
                             const b64 = await loadImageAsBase64(row.foto);
@@ -232,8 +209,6 @@ export function useExportPDF() {
                     }
                     doc.setTextColor(...colorText);
                     cx += cols[5].w;
-
-                    // TTD
                     if (row.tandaTangan) {
                         try {
                             const b64 = await loadImageAsBase64(row.tandaTangan);
@@ -260,8 +235,6 @@ export function useExportPDF() {
 
                 sy += 8;
             }
-
-            // ── FOOTER setiap halaman ────────────────────────────────────
             const totalPages = (doc.internal as any).getNumberOfPages();
             for (let i = 1; i <= totalPages; i++) {
                 doc.setPage(i);
@@ -274,7 +247,14 @@ export function useExportPDF() {
                 doc.text(`Halaman ${i} / ${totalPages}`, pageW - margin, pageH - 7, { align: "right" });
             }
 
-            const fileName = `Laporan_Absensi_${new Date().toISOString().split("T")[0]}.pdf`;
+            const tempatPKL = data[0]?.tempatPKL ?? "";
+            const slug = tempatPKL
+                .trim()
+                .replace(/[^a-zA-Z0-9\s]/g, "")
+                .replace(/\s+/g, "-");
+            const fileName = slug
+                ? `Laporan-Absen-${slug}.pdf`
+                : `Laporan-Absensi-${new Date().toISOString().split("T")[0]}.pdf`;
 
             try {
                 const pdfData = doc.output("datauristring");
