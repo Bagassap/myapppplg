@@ -9,7 +9,6 @@ import {
   SlidersHorizontal,
   Download,
   Loader2,
-  CheckSquare,
   X,
   ChevronLeft,
   ChevronRight,
@@ -24,6 +23,24 @@ import {
   CheckCircle2,
   Users,
 } from "lucide-react";
+
+const NAMA_BULAN = [
+  "Januari",
+  "Februari",
+  "Maret",
+  "April",
+  "Mei",
+  "Juni",
+  "Juli",
+  "Agustus",
+  "September",
+  "Oktober",
+  "November",
+  "Desember",
+];
+function getMonthOptions(): string[] {
+  return ["Hari Ini", ...NAMA_BULAN.slice(0, new Date().getMonth() + 1)];
+}
 
 const STATUS_STYLES: Record<string, { pill: string; dot: string }> = {
   Hadir: {
@@ -135,7 +152,6 @@ interface AbsensiRow {
   isVirtualAlfa?: boolean;
 }
 
-// ── Animated Counter ──────────────────────────────────────────────────────────
 function useCountUp(target: number, duration = 800, delay = 0) {
   const [value, setValue] = useState(0);
   const raf = useRef<number>(0);
@@ -208,7 +224,6 @@ function ProgressRing({
   );
 }
 
-// Guru menggunakan warna violet sebagai aksen utama
 const STAT_CARD_CONFIGS = [
   {
     key: "total",
@@ -256,32 +271,28 @@ function StatCard({
   const count = useCountUp(visible && !loading ? value : 0, 800, delay);
   const pct = total > 0 ? Math.round((value / total) * 100) : 0;
   const Icon = cfg.Icon;
-
   useEffect(() => {
     if (!loading) {
       const t = setTimeout(() => setVisible(true), delay);
       return () => clearTimeout(t);
     }
   }, [loading, delay]);
-
-  if (loading) {
+  if (loading)
     return (
       <div
         className="rounded-2xl h-[108px] animate-pulse"
         style={{
-          background: `linear-gradient(135deg, ${cfg.grad[0]}55, ${cfg.grad[1]}55)`,
+          background: `linear-gradient(135deg,${cfg.grad[0]}55,${cfg.grad[1]}55)`,
         }}
       />
     );
-  }
-
   return (
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className="relative overflow-hidden rounded-2xl p-4 cursor-default select-none"
       style={{
-        background: `linear-gradient(135deg, ${cfg.grad[0]}, ${cfg.grad[1]})`,
+        background: `linear-gradient(135deg,${cfg.grad[0]},${cfg.grad[1]})`,
         boxShadow: hovered
           ? `0 16px 32px -8px ${cfg.grad[0]}70`
           : `0 6px 20px -4px ${cfg.grad[0]}50`,
@@ -289,7 +300,7 @@ function StatCard({
         transform: visible
           ? hovered
             ? "translateY(-3px) scale(1.025)"
-            : "translateY(0) scale(1)"
+            : "translateY(0)"
           : "translateY(12px)",
         transition: `opacity .45s ease ${delay}ms, transform .45s ease ${delay}ms, box-shadow .2s ease`,
       }}
@@ -299,7 +310,6 @@ function StatCard({
         style={{ transform: hovered ? "scale(1.4)" : "scale(1)" }}
       />
       <div className="absolute right-1 -bottom-6 w-14 h-14 rounded-full bg-black/[0.06]" />
-
       <div className="relative flex items-start justify-between mb-3">
         <div>
           <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mb-1">
@@ -326,7 +336,6 @@ function StatCard({
           </div>
         </div>
       </div>
-
       {cfg.key !== "total" && (
         <div className="h-1 rounded-full bg-white/20 overflow-hidden mb-2">
           <div
@@ -338,7 +347,6 @@ function StatCard({
           />
         </div>
       )}
-
       <div className="flex items-center justify-between">
         {cfg.key !== "total" ? (
           <span className="text-white/75 text-[11px] font-semibold">
@@ -376,20 +384,17 @@ function SummaryCard({
 }) {
   const [visible, setVisible] = useState(false);
   const hadirPct = total > 0 ? Math.round((hadir / total) * 100) : 0;
-
   useEffect(() => {
     if (!loading) {
       const t = setTimeout(() => setVisible(true), 0);
       return () => clearTimeout(t);
     } else setVisible(false);
   }, [loading]);
-
   const breakdown = [
     { val: hadir, color: "#10b981", label: "Hadir" },
     { val: izin, color: "#f59e0b", label: "Izin/Sakit" },
     { val: alfa, color: "#f43f5e", label: "Alfa" },
   ];
-
   return (
     <div
       className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 p-5 shadow-xl mb-4"
@@ -401,7 +406,6 @@ function SummaryCard({
     >
       <div className="absolute right-0 top-0 w-48 h-48 rounded-full bg-violet-500/8 -translate-y-1/2 translate-x-1/3 pointer-events-none" />
       <div className="absolute right-12 bottom-0 w-28 h-28 rounded-full bg-emerald-500/8 translate-y-1/2 pointer-events-none" />
-
       <div className="relative flex items-center justify-between gap-4 flex-wrap">
         <div className="min-w-0">
           <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2">
@@ -415,14 +419,7 @@ function SummaryCard({
                 {total}
               </span>
               <span
-                className={`mb-1 px-2.5 py-0.5 rounded-full text-xs font-bold
-                ${
-                  hadirPct >= 80
-                    ? "bg-emerald-500/20 text-emerald-400"
-                    : hadirPct >= 60
-                      ? "bg-amber-500/20 text-amber-400"
-                      : "bg-rose-500/20 text-rose-400"
-                }`}
+                className={`mb-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${hadirPct >= 80 ? "bg-emerald-500/20 text-emerald-400" : hadirPct >= 60 ? "bg-amber-500/20 text-amber-400" : "bg-rose-500/20 text-rose-400"}`}
               >
                 {hadirPct}% hadir
               </span>
@@ -486,13 +483,13 @@ function SummaryCard({
   );
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
 export default function GuruAbsensi() {
   const { data: session, status } = useSession();
   const { exportPDF, exporting } = useExportPDF();
-
   const [selectedPKL, setSelectedPKL] = useState("Semua Tempat PKL");
-  const [selectedPeriod, setSelectedPeriod] = useState("Bulan Ini");
+  const [selectedPeriod, setSelectedPeriod] = useState(
+    NAMA_BULAN[new Date().getMonth()],
+  );
   const [selectedSiswa, setSelectedSiswa] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState("");
@@ -525,28 +522,19 @@ export default function GuruAbsensi() {
           const d = now.toISOString().split("T")[0];
           params.append("startDate", d);
           params.append("endDate", d);
-        } else if (selectedPeriod === "Bulan Ini") {
-          params.append(
-            "startDate",
-            new Date(now.getFullYear(), now.getMonth(), 1)
-              .toISOString()
-              .split("T")[0],
-          );
-          params.append(
-            "endDate",
-            new Date(now.getFullYear(), now.getMonth() + 1, 0)
-              .toISOString()
-              .split("T")[0],
-          );
-        } else if (selectedPeriod === "Tahun Ini") {
-          params.append(
-            "startDate",
-            new Date(now.getFullYear(), 0, 1).toISOString().split("T")[0],
-          );
-          params.append(
-            "endDate",
-            new Date(now.getFullYear(), 11, 31).toISOString().split("T")[0],
-          );
+        } else {
+          const monthIndex = NAMA_BULAN.indexOf(selectedPeriod);
+          if (monthIndex !== -1) {
+            const year = now.getFullYear();
+            params.append(
+              "startDate",
+              new Date(year, monthIndex, 1).toISOString().split("T")[0],
+            );
+            params.append(
+              "endDate",
+              new Date(year, monthIndex + 1, 0).toISOString().split("T")[0],
+            );
+          }
         }
         const res = await fetch(`/api/absensi?${params}`);
         if (!res.ok) throw new Error(await res.text());
@@ -650,7 +638,6 @@ export default function GuruAbsensi() {
   const totalPages = Math.max(1, Math.ceil(filteredData.length / itemsPerPage));
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentData = filteredData.slice(startIndex, startIndex + itemsPerPage);
-
   const statTotal = combinedData.length;
   const statHadir = combinedData.filter((i) => i.status === "Hadir").length;
   const statIzin = combinedData.filter((i) =>
@@ -693,7 +680,6 @@ export default function GuruAbsensi() {
             </p>
           </div>
 
-          {/* ── STAT CARDS BARU ── */}
           <SummaryCard
             total={statTotal}
             hadir={statHadir}
@@ -733,7 +719,6 @@ export default function GuruAbsensi() {
             })}
           </div>
 
-          {/* ── Filter Bar ── */}
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-4 py-3 mb-5 flex flex-wrap items-center gap-2.5">
             <SlidersHorizontal className="w-4 h-4 text-gray-400 shrink-0" />
             <div className="relative">
@@ -767,7 +752,7 @@ export default function GuruAbsensi() {
                 setSelectedPeriod(v);
                 setCurrentPage(1);
               }}
-              options={["Hari Ini", "Bulan Ini", "Tahun Ini"]}
+              options={getMonthOptions()}
             />
             <FilterSelect
               value={selectedSiswa}
@@ -814,7 +799,6 @@ export default function GuruAbsensi() {
             </div>
           </div>
 
-          {/* ── Table ── */}
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-6">
             <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
               <h2 className="font-semibold text-gray-700 text-sm">
@@ -960,7 +944,6 @@ export default function GuruAbsensi() {
         </main>
       </div>
 
-      {/* ── Modal Riwayat ── */}
       {modalSiswa && (
         <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div
@@ -1146,14 +1129,10 @@ export default function GuruAbsensi() {
               Klik di luar untuk menutup
             </p>
           </div>
-          <style>{`
-            @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
-            @keyframes scaleIn { from{opacity:0;transform:scale(0.94) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
-            @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
-          `}</style>
+          <style>{`@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes scaleIn{from{opacity:0;transform:scale(0.94) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}`}</style>
         </div>
       )}
-      <style>{`@keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }`}</style>
+      <style>{`@keyframes slideUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}`}</style>
     </div>
   );
 }
