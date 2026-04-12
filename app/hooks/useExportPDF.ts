@@ -60,97 +60,136 @@ export function useExportPDF() {
             const colorText: [number, number, number] = [17, 24, 39];
             const colorGreen: [number, number, number] = [22, 163, 74];
             const colorYellow: [number, number, number] = [217, 119, 6];
-
-            doc.setFillColor(...colorIndigo);
-            doc.rect(0, 0, pageW, 32, "F");
-
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(16);
-            doc.setFont("helvetica", "bold");
-            doc.text(title, margin, 14);
-
-            doc.setFontSize(9);
-            doc.setFont("helvetica", "normal");
-            doc.text(`Dicetak: ${new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}   |   Total Data: ${data.length} record`, margin, 22);
-
-            const hadir = data.filter(d => d.status === "Hadir").length;
-            const izin = data.filter(d => d.status === "Izin").length;
-            const tidakHadir = data.filter(d => d.status !== "Hadir" && d.status !== "Izin").length;
-
-            let sy = 38;
-            const boxW = (contentW - 8) / 3;
-            const boxes = [
-                { label: "Hadir", val: hadir, color: colorGreen },
-                { label: "Izin", val: izin, color: colorYellow },
-                { label: "Lainnya", val: tidakHadir, color: colorGray },
-            ];
-
-            boxes.forEach((box, i) => {
-                const bx = margin + i * (boxW + 4);
-                doc.setFillColor(...colorLight);
-                doc.roundedRect(bx, sy, boxW, 18, 2, 2, "F");
-                doc.setDrawColor(...colorBorder);
-                doc.setLineWidth(0.3);
-                doc.roundedRect(bx, sy, boxW, 18, 2, 2, "S");
-
-                doc.setTextColor(...box.color);
-                doc.setFontSize(18);
-                doc.setFont("helvetica", "bold");
-                doc.text(String(box.val), bx + boxW / 2, sy + 11, { align: "center" });
-
-                doc.setTextColor(...colorGray);
-                doc.setFontSize(8);
-                doc.setFont("helvetica", "normal");
-                doc.text(box.label, bx + boxW / 2, sy + 16, { align: "center" });
-            });
-
-            sy += 24;
-
-            const grouped: Record<string, AbsensiRow[]> = {};
-            data.forEach(row => {
-                if (!grouped[row.siswa]) grouped[row.siswa] = [];
-                grouped[row.siswa].push(row);
-            });
-
-            for (const [siswa, rows] of Object.entries(grouped)) {
-                if (sy > pageH - 60) {
-                    doc.addPage();
-                    sy = margin;
-                }
-
+            const drawGlobalHeader = (sy: number): number => {
                 doc.setFillColor(...colorIndigo);
-                doc.roundedRect(margin, sy, contentW, 10, 2, 2, "F");
+                doc.rect(0, 0, pageW, 32, "F");
+
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(16);
+                doc.setFont("helvetica", "bold");
+                doc.text(title, margin, 14);
+
+                doc.setFontSize(9);
+                doc.setFont("helvetica", "normal");
+                doc.text(
+                    `Dicetak: ${new Date().toLocaleDateString("id-ID", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                    })}   |   Total Data: ${data.length} record`,
+                    margin,
+                    22
+                );
+
+                return sy;
+            };
+
+            const drawSummaryBoxes = (
+                hadir: number,
+                izin: number,
+                lainnya: number,
+                startY: number
+            ): number => {
+                const boxW = (contentW - 8) / 3;
+                const boxes = [
+                    { label: "Hadir", val: hadir, color: colorGreen },
+                    { label: "Izin", val: izin, color: colorYellow },
+                    { label: "Lainnya", val: lainnya, color: colorGray },
+                ];
+
+                boxes.forEach((box, i) => {
+                    const bx = margin + i * (boxW + 4);
+                    doc.setFillColor(...colorLight);
+                    doc.roundedRect(bx, startY, boxW, 18, 2, 2, "F");
+                    doc.setDrawColor(...colorBorder);
+                    doc.setLineWidth(0.3);
+                    doc.roundedRect(bx, startY, boxW, 18, 2, 2, "S");
+
+                    doc.setTextColor(...box.color);
+                    doc.setFontSize(18);
+                    doc.setFont("helvetica", "bold");
+                    doc.text(String(box.val), bx + boxW / 2, startY + 11, { align: "center" });
+
+                    doc.setTextColor(...colorGray);
+                    doc.setFontSize(8);
+                    doc.setFont("helvetica", "normal");
+                    doc.text(box.label, bx + boxW / 2, startY + 16, { align: "center" });
+                });
+
+                return startY + 24;
+            };
+
+            const drawStudentHeader = (siswa: string, tempatPKL: string, startY: number): number => {
+                doc.setFillColor(...colorIndigo);
+                doc.roundedRect(margin, startY, contentW, 10, 2, 2, "F");
                 doc.setTextColor(255, 255, 255);
                 doc.setFontSize(10);
                 doc.setFont("helvetica", "bold");
-                doc.text(`${siswa}  —  ${rows[0].tempatPKL}`, margin + 4, sy + 7);
-                sy += 14;
+                doc.text(`${siswa}  —  ${tempatPKL}`, margin + 4, startY + 7);
+                return startY + 14;
+            };
 
-                const cols = [
-                    { label: "Tanggal", w: 28 },
-                    { label: "Status", w: 22 },
-                    { label: "Waktu", w: 22 },
-                    { label: "Keterangan", w: 48 },
-                    { label: "Lokasi", w: 28 },
-                    { label: "Foto", w: 22 },
-                    { label: "TTD", w: 22 },
-                ];
+            const cols = [
+                { label: "Tanggal", w: 28 },
+                { label: "Status", w: 22 },
+                { label: "Waktu", w: 22 },
+                { label: "Keterangan", w: 48 },
+                { label: "Lokasi", w: 28 },
+                { label: "Foto", w: 22 },
+                { label: "TTD", w: 22 },
+            ];
 
+            const drawTableHeader = (startY: number): number => {
                 doc.setFillColor(...colorLight);
-                doc.rect(margin, sy, contentW, 8, "F");
+                doc.rect(margin, startY, contentW, 8, "F");
                 doc.setDrawColor(...colorBorder);
                 doc.setLineWidth(0.2);
-                doc.rect(margin, sy, contentW, 8, "S");
+                doc.rect(margin, startY, contentW, 8, "S");
 
                 doc.setTextColor(...colorText);
                 doc.setFontSize(8);
                 doc.setFont("helvetica", "bold");
                 let cx = margin + 2;
-                cols.forEach(col => {
-                    doc.text(col.label, cx, sy + 5.5);
+                cols.forEach((col) => {
+                    doc.text(col.label, cx, startY + 5.5);
                     cx += col.w;
                 });
-                sy += 8;
+                return startY + 8;
+            };
+
+            const hadir = data.filter((d) => d.status === "Hadir").length;
+            const izin = data.filter((d) => d.status === "Izin").length;
+            const tidakHadir = data.filter(
+                (d) => d.status !== "Hadir" && d.status !== "Izin"
+            ).length;
+
+            drawGlobalHeader(0);
+            let sy = 38;
+            sy = drawSummaryBoxes(hadir, izin, tidakHadir, sy);
+
+            const grouped: Record<string, AbsensiRow[]> = {};
+            data.forEach((row) => {
+                if (!grouped[row.siswa]) grouped[row.siswa] = [];
+                grouped[row.siswa].push(row);
+            });
+
+            let isFirstStudent = true;
+
+            for (const [siswa, rows] of Object.entries(grouped)) {
+                if (!isFirstStudent) {
+                    doc.addPage();
+                    sy = margin;
+                } else {
+                    if (sy > pageH - 60) {
+                        doc.addPage();
+                        sy = margin;
+                    }
+                }
+                isFirstStudent = false;
+
+                sy = drawStudentHeader(siswa, rows[0].tempatPKL, sy);
+
+                sy = drawTableHeader(sy);
 
                 for (const row of rows) {
                     const rowH = 28;
@@ -158,37 +197,59 @@ export function useExportPDF() {
                     if (sy + rowH > pageH - margin) {
                         doc.addPage();
                         sy = margin;
+
+                        sy = drawStudentHeader(
+                            `${siswa} (lanjutan)`,
+                            rows[0].tempatPKL,
+                            sy
+                        );
+                        sy = drawTableHeader(sy);
                     }
+
 
                     doc.setFillColor(255, 255, 255);
                     doc.rect(margin, sy, contentW, rowH, "F");
                     doc.setDrawColor(...colorBorder);
                     doc.setLineWidth(0.15);
                     doc.rect(margin, sy, contentW, rowH, "S");
+
                     const statusColor: [number, number, number] =
-                        row.status === "Hadir" ? colorGreen :
-                            row.status === "Izin" ? colorYellow : colorGray;
+                        row.status === "Hadir"
+                            ? colorGreen
+                            : row.status === "Izin"
+                                ? colorYellow
+                                : colorGray;
 
                     doc.setFontSize(7.5);
                     doc.setFont("helvetica", "normal");
                     doc.setTextColor(...colorText);
-                    cx = margin + 2;
+
+                    let cx = margin + 2;
+
+
                     doc.text(row.tanggal || "-", cx, sy + 6);
                     cx += cols[0].w;
+
+
                     doc.setTextColor(...statusColor);
                     doc.setFont("helvetica", "bold");
                     doc.text(row.status || "-", cx, sy + 6);
                     doc.setFont("helvetica", "normal");
                     doc.setTextColor(...colorText);
                     cx += cols[1].w;
+
+
                     doc.text(row.waktu || "-", cx, sy + 6);
                     cx += cols[2].w;
-                    const ket = [row.catatan, row.kegiatan].filter(Boolean).join(" | ") || "-";
+
+                    const ket =
+                        [row.catatan, row.kegiatan].filter(Boolean).join(" | ") || "-";
                     const ketLines = doc.splitTextToSize(ket, cols[3].w - 2);
                     doc.text(ketLines.slice(0, 3), cx, sy + 6);
                     cx += cols[3].w;
-                    const lokasiText = row.lokasi ? "Ada (GPS)" : "-";
-                    doc.text(lokasiText, cx, sy + 6);
+
+
+                    doc.text(row.lokasi ? "Ada (GPS)" : "-", cx, sy + 6);
                     cx += cols[4].w;
                     if (row.foto) {
                         try {
@@ -209,6 +270,7 @@ export function useExportPDF() {
                     }
                     doc.setTextColor(...colorText);
                     cx += cols[5].w;
+
                     if (row.tandaTangan) {
                         try {
                             const b64 = await loadImageAsBase64(row.tandaTangan);
@@ -235,6 +297,7 @@ export function useExportPDF() {
 
                 sy += 8;
             }
+
             const totalPages = (doc.internal as any).getNumberOfPages();
             for (let i = 1; i <= totalPages; i++) {
                 doc.setPage(i);
@@ -243,8 +306,17 @@ export function useExportPDF() {
                 doc.line(margin, pageH - 12, pageW - margin, pageH - 12);
                 doc.setFontSize(7.5);
                 doc.setTextColor(...colorGray);
-                doc.text("Sistem Presensi Online PKL — PPLG Nusa", margin, pageH - 7);
-                doc.text(`Halaman ${i} / ${totalPages}`, pageW - margin, pageH - 7, { align: "right" });
+                doc.text(
+                    "Sistem Presensi Online PKL — PPLG Nusa",
+                    margin,
+                    pageH - 7
+                );
+                doc.text(
+                    `Halaman ${i} / ${totalPages}`,
+                    pageW - margin,
+                    pageH - 7,
+                    { align: "right" }
+                );
             }
 
             const tempatPKL = data[0]?.tempatPKL ?? "";
@@ -270,7 +342,9 @@ export function useExportPDF() {
 
         } catch (err) {
             console.error("Export PDF error:", err);
-            alert("Gagal membuat PDF. Pastikan library jsPDF sudah terinstall.\n\nnpm install jspdf");
+            alert(
+                "Gagal membuat PDF. Pastikan library jsPDF sudah terinstall.\n\nnpm install jspdf"
+            );
         } finally {
             setExporting(false);
         }
