@@ -44,28 +44,28 @@ function getMonthOptions(): string[] {
 
 const STATUS_STYLES: Record<string, { pill: string; dot: string }> = {
   Hadir: {
-    pill: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
-    dot: "bg-emerald-500",
+    pill: "bg-[#ACEC00]/10 text-[#00182E] ring-1 ring-[#ACEC00]/30",
+    dot: "bg-[#ACEC00]",
   },
   Pulang: {
-    pill: "bg-sky-50 text-sky-700 ring-1 ring-sky-200",
-    dot: "bg-sky-500",
+    pill: "bg-[#013FF6]/10 text-[#013FF6] ring-1 ring-[#013FF6]/20",
+    dot: "bg-[#013FF6]",
   },
   Izin: {
-    pill: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
-    dot: "bg-amber-400",
+    pill: "bg-[#013FF6]/10 text-[#013FF6] ring-1 ring-[#013FF6]/20",
+    dot: "bg-[#013FF6]",
   },
   Sakit: {
-    pill: "bg-orange-50 text-orange-700 ring-1 ring-orange-200",
-    dot: "bg-orange-400",
+    pill: "bg-[#013FF6]/8 text-[#013FF6] ring-1 ring-[#013FF6]/15",
+    dot: "bg-[#013FF6]",
   },
   Alfa: {
-    pill: "bg-red-50 text-red-700 ring-1 ring-red-200",
-    dot: "bg-red-500",
+    pill: "bg-rose-50 text-rose-700 ring-1 ring-rose-200",
+    dot: "bg-rose-500",
   },
   Libur: {
-    pill: "bg-gray-100 text-gray-500 ring-1 ring-slate-200",
-    dot: "bg-slate-400",
+    pill: "bg-gray-100 text-gray-500 ring-1 ring-gray-200",
+    dot: "bg-gray-400",
   },
 };
 
@@ -126,7 +126,7 @@ function FilterSelect({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="px-3 py-1.5 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-violet-300 transition-shadow"
+      className="px-3 py-1.5 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#013FF6]/30 transition-shadow"
     >
       {options.map((o) => (
         <option key={o} value={o}>
@@ -229,19 +229,19 @@ const STAT_CARD_CONFIGS = [
     key: "total",
     label: "Total Absensi",
     Icon: ClipboardList,
-    grad: ["#7c3aed", "#6d28d9"],
+    grad: ["#00182E", "#013FF6"],
   },
   {
     key: "hadir",
     label: "Hadir",
     Icon: CheckCircle2,
-    grad: ["#10b981", "#0d9488"],
+    grad: ["#ACEC00", "#78b200"],
   },
   {
     key: "izin",
     label: "Izin / Sakit",
     Icon: Clock,
-    grad: ["#f59e0b", "#f97316"],
+    grad: ["#013FF6", "#0030c8"],
   },
   {
     key: "alfa",
@@ -391,21 +391,21 @@ function SummaryCard({
     } else setVisible(false);
   }, [loading]);
   const breakdown = [
-    { val: hadir, color: "#10b981", label: "Hadir" },
-    { val: izin, color: "#f59e0b", label: "Izin/Sakit" },
+    { val: hadir, color: "#ACEC00", label: "Hadir" },
+    { val: izin, color: "#013FF6", label: "Izin/Sakit" },
     { val: alfa, color: "#f43f5e", label: "Alfa" },
   ];
   return (
     <div
-      className="relative overflow-hidden rounded-2xl bg-linear-to-br from-slate-800 to-slate-900 p-5 shadow-xl mb-4"
+      className="relative overflow-hidden rounded-2xl bg-[#00182E] p-5 shadow-xl mb-4"
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? "translateY(0)" : "translateY(12px)",
         transition: "opacity .4s ease, transform .4s ease",
       }}
     >
-      <div className="absolute right-0 top-0 w-48 h-48 rounded-full bg-violet-500/8 -translate-y-1/2 translate-x-1/3 pointer-events-none" />
-      <div className="absolute right-12 bottom-0 w-28 h-28 rounded-full bg-emerald-500/8 translate-y-1/2 pointer-events-none" />
+      <div className="absolute right-0 top-0 w-48 h-48 rounded-full bg-[#013FF6]/8 -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+      <div className="absolute right-12 bottom-0 w-28 h-28 rounded-full bg-[#ACEC00]/8 translate-y-1/2 pointer-events-none" />
       <div className="relative flex items-center justify-between gap-4 flex-wrap">
         <div className="min-w-0">
           <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2">
@@ -419,7 +419,7 @@ function SummaryCard({
                 {total}
               </span>
               <span
-                className={`mb-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${hadirPct >= 80 ? "bg-emerald-500/20 text-emerald-400" : hadirPct >= 60 ? "bg-amber-500/20 text-amber-400" : "bg-rose-500/20 text-rose-400"}`}
+                className={`mb-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${hadirPct >= 80 ? "bg-[#ACEC00]/20 text-[#ACEC00]" : hadirPct >= 60 ? "bg-[#013FF6]/20 text-[#013FF6]" : "bg-rose-500/20 text-rose-400"}`}
               >
                 {hadirPct}% hadir
               </span>
@@ -462,9 +462,9 @@ function SummaryCard({
               pct={visible ? hadirPct : 0}
               color={
                 hadirPct >= 80
-                  ? "#34d399"
+                  ? "#ACEC00"
                   : hadirPct >= 60
-                    ? "#fbbf24"
+                    ? "#013FF6"
                     : "#f87171"
               }
               size={88}
@@ -670,7 +670,7 @@ export default function GuruAbsensi() {
         <main className="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 px-4 sm:px-6 lg:px-8 py-7">
           <div className="mb-6">
             <div className="flex items-center gap-2.5 mb-1">
-              <span className="block w-1 h-6 bg-violet-600 rounded-full" />
+              <span className="block w-1 h-6 bg-[#013FF6] rounded-full" />
               <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
                 Data Absensi
               </h1>
@@ -731,7 +731,7 @@ export default function GuruAbsensi() {
                   setSearchQuery(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="pl-8 pr-3 py-1.5 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-violet-300 w-38.75"
+                className="pl-8 pr-3 py-1.5 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#013FF6]/30 w-38.75"
               />
             </div>
             <span className="hidden sm:block w-px h-5 bg-gray-200" />
@@ -787,7 +787,7 @@ export default function GuruAbsensi() {
                   exportPDF(filteredData, "Laporan Absensi PKL — Guru")
                 }
                 disabled={exporting}
-                className="flex items-center gap-2 px-4 py-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-60"
+                className="flex items-center gap-2 px-4 py-1.5 bg-[#00182E] hover:bg-[#013FF6] text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-60"
               >
                 {exporting ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -864,7 +864,7 @@ export default function GuruAbsensi() {
                         <td className="px-5 py-3.5">
                           <div className="flex items-center gap-3">
                             <div
-                              className={`w-8 h-8 rounded-full font-bold text-xs flex items-center justify-center shrink-0 select-none ${item.isVirtualAlfa ? "bg-red-100 text-red-600" : "bg-violet-100 text-violet-600"}`}
+                              className={`w-8 h-8 rounded-full font-bold text-xs flex items-center justify-center shrink-0 select-none ${item.isVirtualAlfa ? "bg-rose-100 text-rose-600" : "bg-[#013FF6]/10 text-[#013FF6]"}`}
                             >
                               {item.siswa.charAt(0).toUpperCase()}
                             </div>
@@ -902,7 +902,7 @@ export default function GuruAbsensi() {
                           ) : (
                             <button
                               onClick={() => setModalSiswa(item.siswa)}
-                              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-violet-50 hover:bg-violet-100 text-violet-600 rounded-lg text-xs font-semibold transition-colors border border-violet-200"
+                              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#013FF6]/8 hover:bg-[#013FF6]/15 text-[#013FF6] rounded-lg text-xs font-semibold transition-colors border border-[#013FF6]/20"
                             >
                               <Eye className="w-3 h-3" /> Riwayat
                             </button>
@@ -934,7 +934,7 @@ export default function GuruAbsensi() {
                 <button
                   disabled={currentPage >= totalPages}
                   onClick={() => setCurrentPage((p) => p + 1)}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-xs disabled:opacity-40 transition-colors"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-[#00182E] hover:bg-[#013FF6] text-white rounded-lg text-xs disabled:opacity-40 transition-colors"
                 >
                   Next <ChevronRight className="w-3.5 h-3.5" />
                 </button>
@@ -956,7 +956,7 @@ export default function GuruAbsensi() {
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-violet-100 text-violet-600 font-bold text-sm flex items-center justify-center">
+                <div className="w-9 h-9 rounded-full bg-[#013FF6]/10 text-[#013FF6] font-bold text-sm flex items-center justify-center">
                   {modalSiswa.charAt(0).toUpperCase()}
                 </div>
                 <div>
@@ -1015,7 +1015,7 @@ export default function GuruAbsensi() {
                             href={`https://www.google.com/maps?q=${item.lokasi}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-violet-600 bg-violet-50 hover:bg-violet-100 px-2 py-1 rounded-lg border border-violet-200 font-medium transition-colors"
+                            className="inline-flex items-center gap-1 text-xs text-[#013FF6] bg-[#013FF6]/8 hover:bg-[#013FF6]/15 px-2 py-1 rounded-lg border border-[#013FF6]/20 font-medium transition-colors"
                           >
                             <MapPin className="w-3 h-3" /> Maps
                           </a>

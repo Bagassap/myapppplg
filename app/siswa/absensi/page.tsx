@@ -40,24 +40,24 @@ import {
 
 const STATUS_STYLES: Record<string, { pill: string; dot: string }> = {
   Hadir: {
-    pill: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
-    dot: "bg-emerald-500",
+    pill: "bg-[#ACEC00]/10 text-[#00182E] ring-1 ring-[#ACEC00]/30",
+    dot: "bg-[#ACEC00]",
   },
   Pulang: {
-    pill: "bg-sky-50 text-sky-700 ring-1 ring-sky-200",
-    dot: "bg-sky-500",
+    pill: "bg-[#013FF6]/10 text-[#013FF6] ring-1 ring-[#013FF6]/20",
+    dot: "bg-[#013FF6]",
   },
   Izin: {
-    pill: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
-    dot: "bg-amber-400",
+    pill: "bg-[#013FF6]/10 text-[#013FF6] ring-1 ring-[#013FF6]/20",
+    dot: "bg-[#013FF6]",
   },
   Sakit: {
-    pill: "bg-orange-50 text-orange-700 ring-1 ring-orange-200",
-    dot: "bg-orange-400",
+    pill: "bg-[#013FF6]/8 text-[#013FF6] ring-1 ring-[#013FF6]/15",
+    dot: "bg-[#013FF6]",
   },
   Alfa: {
-    pill: "bg-red-50 text-red-700 ring-1 ring-red-200",
-    dot: "bg-red-500",
+    pill: "bg-rose-50 text-rose-700 ring-1 ring-rose-200",
+    dot: "bg-rose-500",
   },
   Libur: {
     pill: "bg-gray-100 text-gray-500 ring-1 ring-gray-200",
@@ -419,7 +419,7 @@ export default function SiswaAbsensi() {
   if (loading)
     return (
       <div className="flex h-screen bg-gray-50 items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#013FF6]"></div>
       </div>
     );
   if (error)
@@ -451,7 +451,7 @@ export default function SiswaAbsensi() {
           <div className="mb-7 flex items-start justify-between">
             <div>
               <div className="flex items-center gap-2.5 mb-1">
-                <span className="block w-1 h-6 bg-indigo-600 rounded-full" />
+                <span className="block w-1 h-6 bg-[#013FF6] rounded-full" />
                 <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
                   Absensi
                 </h1>
@@ -462,7 +462,7 @@ export default function SiswaAbsensi() {
             </div>
             <button
               onClick={() => setShowAbsenModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-[#00182E] hover:bg-[#013FF6] active:bg-[#013FF6] text-white rounded-xl text-sm font-semibold shadow-sm transition-colors"
             >
               <Edit className="w-4 h-4" /> Isi Absensi
             </button>
@@ -470,7 +470,7 @@ export default function SiswaAbsensi() {
 
           {/* ── 1 Stat Card ── */}
           <div className="mb-6">
-            <div className="relative bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-700 rounded-2xl shadow-xl overflow-hidden">
+            <div className="relative bg-[#00182E] rounded-2xl shadow-xl overflow-hidden">
               <div className="absolute -top-8 -right-8 w-40 h-40 bg-white/10 rounded-full" />
               <div className="absolute -bottom-10 -left-6 w-32 h-32 bg-white/5 rounded-full" />
               <div
@@ -489,7 +489,7 @@ export default function SiswaAbsensi() {
                         <Calendar className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <p className="text-indigo-200 text-xs font-medium uppercase tracking-wider">
+                        <p className="text-white/60 text-xs font-medium uppercase tracking-wider">
                           Hari Ini
                         </p>
                         <p className="text-white font-bold text-sm leading-tight">
@@ -505,7 +505,7 @@ export default function SiswaAbsensi() {
                         <ClockIcon className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <p className="text-indigo-200 text-xs font-medium uppercase tracking-wider">
+                        <p className="text-white/60 text-xs font-medium uppercase tracking-wider">
                           Jam
                         </p>
                         <p className="text-white font-bold text-lg font-mono leading-tight">
@@ -518,25 +518,25 @@ export default function SiswaAbsensi() {
 
                     <div className="flex items-center gap-3">
                       <div
-                        className={`p-2.5 rounded-xl ${sudahAbsen ? "bg-emerald-400/30" : "bg-amber-400/30"}`}
+                        className={`p-2.5 rounded-xl ${sudahAbsen ? "bg-[#ACEC00]/20" : "bg-rose-400/20"}`}
                       >
                         {sudahAbsen ? (
-                          <CheckCircle2 className="w-5 h-5 text-emerald-300" />
+                          <CheckCircle2 className="w-5 h-5 text-[#ACEC00]" />
                         ) : (
-                          <AlertCircle className="w-5 h-5 text-amber-300" />
+                          <AlertCircle className="w-5 h-5 text-rose-300" />
                         )}
                       </div>
                       <div>
-                        <p className="text-indigo-200 text-xs font-medium uppercase tracking-wider">
+                        <p className="text-white/60 text-xs font-medium uppercase tracking-wider">
                           Status Absensi
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
                           {sudahAbsen ? (
-                            <span className="text-emerald-300 font-bold text-sm">
+                            <span className="text-[#ACEC00] font-bold text-sm">
                               Sudah Absen
                             </span>
                           ) : (
-                            <span className="text-amber-300 font-bold text-sm">
+                            <span className="text-rose-300 font-bold text-sm">
                               Belum Absen
                             </span>
                           )}
@@ -550,7 +550,7 @@ export default function SiswaAbsensi() {
 
                   {waktuAbsen && (
                     <div className="sm:ml-auto text-right">
-                      <p className="text-indigo-200 text-xs font-medium uppercase tracking-wider">
+                      <p className="text-white/60 text-xs font-medium uppercase tracking-wider">
                         Waktu Absen
                       </p>
                       <p className="text-white font-bold text-lg font-mono">
@@ -562,9 +562,9 @@ export default function SiswaAbsensi() {
 
                 <div className="mt-4 pt-4 border-t border-white/10 flex items-center gap-2">
                   <div
-                    className={`w-2 h-2 rounded-full ${sudahAbsen ? "bg-emerald-400 animate-pulse" : "bg-amber-400 animate-pulse"}`}
+                    className={`w-2 h-2 rounded-full ${sudahAbsen ? "bg-[#ACEC00] animate-pulse" : "bg-rose-400 animate-pulse"}`}
                   />
-                  <p className="text-indigo-200 text-xs">
+                  <p className="text-white/60 text-xs">
                     {sudahAbsen
                       ? `${presensiData.length} record absensi hari ini · ${siswaData.kelas} · ${siswaData.tempatPKL}`
                       : `Belum ada absensi hari ini · ${siswaData.kelas} · ${siswaData.tempatPKL}`}
@@ -578,7 +578,7 @@ export default function SiswaAbsensi() {
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-6">
             <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
               <h2 className="font-semibold text-gray-700 text-sm flex items-center gap-2">
-                <ClockIcon className="w-4 h-4 text-indigo-500" />
+                <ClockIcon className="w-4 h-4 text-[#013FF6]" />
                 Riwayat Hari Ini
               </h2>
               <span className="text-xs text-gray-500 bg-gray-100 border border-gray-200 px-2.5 py-0.5 rounded-full font-medium">
@@ -621,7 +621,7 @@ export default function SiswaAbsensi() {
                     currentData.map((item) => (
                       <tr
                         key={item.id}
-                        className="border-b border-gray-100 hover:bg-indigo-50 transition-colors"
+                        className="border-b border-gray-100 hover:bg-[#013FF6]/5 transition-colors"
                       >
                         <td className="px-5 py-3.5">
                           <StatusBadge status={item.status} />
@@ -635,7 +635,7 @@ export default function SiswaAbsensi() {
                               href={`https://www.google.com/maps?q=${item.lokasi}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-xs text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded-lg border border-indigo-200 font-medium transition-colors"
+                              className="inline-flex items-center gap-1 text-xs text-[#013FF6] bg-[#013FF6]/8 hover:bg-[#013FF6]/15 px-2 py-1 rounded-lg border border-[#013FF6]/20 font-medium transition-colors"
                             >
                               <MapPin className="w-3 h-3" /> Maps
                             </a>
@@ -729,7 +729,7 @@ export default function SiswaAbsensi() {
                     currentPage >= Math.ceil(presensiData.length / itemsPerPage)
                   }
                   onClick={handleNext}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs disabled:opacity-40 transition-colors"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-[#00182E] hover:bg-[#013FF6] text-white rounded-lg text-xs disabled:opacity-40 transition-colors"
                 >
                   Next <ChevronRight className="w-3.5 h-3.5" />
                 </button>
@@ -751,8 +751,8 @@ export default function SiswaAbsensi() {
               >
                 <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-indigo-50">
-                      <Edit className="w-4 h-4 text-indigo-600" />
+                    <div className="p-2 rounded-xl bg-[#013FF6]/10">
+                      <Edit className="w-4 h-4 text-[#013FF6]" />
                     </div>
                     <div>
                       <p className="font-semibold text-gray-800">
@@ -785,8 +785,8 @@ export default function SiswaAbsensi() {
                     }}
                     className="space-y-5"
                   >
-                    <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
-                      <h4 className="text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                    <div className="bg-[#013FF6]/5 border border-[#013FF6]/10 rounded-xl p-4">
+                      <h4 className="text-xs font-semibold text-[#013FF6] uppercase tracking-wider mb-3 flex items-center gap-1.5">
                         <User className="w-3.5 h-3.5" /> Data Diri
                       </h4>
                       <div className="grid grid-cols-2 gap-3">
@@ -813,7 +813,7 @@ export default function SiswaAbsensi() {
                           },
                         ].map((f) => (
                           <div key={f.label} className="flex flex-col gap-1">
-                            <label className="text-xs font-semibold text-indigo-500 uppercase tracking-wide flex items-center gap-1">
+                            <label className="text-xs font-semibold text-[#013FF6] uppercase tracking-wide flex items-center gap-1">
                               {f.icon} {f.label}
                             </label>
                             <input
@@ -821,7 +821,7 @@ export default function SiswaAbsensi() {
                               value={f.val || "-"}
                               disabled
                               readOnly
-                              className="px-3 py-2 rounded-lg border border-indigo-100 bg-white text-gray-700 text-sm cursor-not-allowed"
+                              className="px-3 py-2 rounded-lg border border-[#013FF6]/15 bg-white text-gray-700 text-sm cursor-not-allowed"
                             />
                           </div>
                         ))}
@@ -841,7 +841,7 @@ export default function SiswaAbsensi() {
                           }))
                         }
                         disabled={isSubmitting}
-                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-700 focus:ring-2 focus:ring-indigo-300 outline-none transition-all"
+                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-700 focus:ring-2 focus:ring-[#013FF6]/30 outline-none transition-all"
                       >
                         <option value="Hadir">Hadir</option>
                         <option value="Pulang">Pulang</option>
@@ -880,7 +880,7 @@ export default function SiswaAbsensi() {
                             type="button"
                             onClick={getCurrentLocation}
                             disabled={isSubmitting || gpsLoading}
-                            className="px-3 bg-indigo-50 text-indigo-600 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors flex items-center justify-center min-w-[44px] disabled:opacity-50"
+                            className="px-3 bg-[#013FF6]/8 text-[#013FF6] border border-[#013FF6]/20 rounded-xl hover:bg-[#013FF6]/15 transition-colors flex items-center justify-center min-w-11 disabled:opacity-50"
                           >
                             {gpsLoading ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
@@ -907,7 +907,7 @@ export default function SiswaAbsensi() {
                         <Camera className="w-4 h-4" /> Foto Selfie / Lokasi{" "}
                         <span className="text-red-500">*</span>
                       </label>
-                      <div className="border-2 border-dashed border-gray-200 rounded-xl p-3 hover:border-indigo-300 transition-colors bg-gray-50">
+                      <div className="border-2 border-dashed border-gray-200 rounded-xl p-3 hover:border-[#013FF6]/30 transition-colors bg-gray-50">
                         <input
                           type="file"
                           accept="image/*"
@@ -917,7 +917,7 @@ export default function SiswaAbsensi() {
                             const file = e.target.files?.[0] || null;
                             setAbsenForm((prev) => ({ ...prev, foto: file }));
                           }}
-                          className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                          className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#013FF6]/10 file:text-[#013FF6] hover:file:bg-[#013FF6]/15"
                         />
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
@@ -926,8 +926,8 @@ export default function SiswaAbsensi() {
                     </div>
 
                     {isStatusIzinOrSakit && (
-                      <div className="bg-amber-50 p-4 rounded-xl border border-amber-100">
-                        <label className="text-sm font-semibold text-amber-800 mb-2 flex items-center gap-1">
+                      <div className="bg-[#013FF6]/5 p-4 rounded-xl border border-[#013FF6]/10">
+                        <label className="text-sm font-semibold text-[#013FF6] mb-2 flex items-center gap-1">
                           <UploadCloud className="w-4 h-4" /> Upload Surat Bukti
                           (Dokter/Ortu)
                         </label>
@@ -939,7 +939,7 @@ export default function SiswaAbsensi() {
                             const file = e.target.files?.[0] || null;
                             setAbsenForm((prev) => ({ ...prev, bukti: file }));
                           }}
-                          className="w-full text-sm text-amber-700"
+                          className="w-full text-sm text-[#013FF6]"
                         />
                       </div>
                     )}
@@ -977,7 +977,7 @@ export default function SiswaAbsensi() {
                               kegiatan: "",
                             }));
                         }}
-                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-700 focus:ring-2 focus:ring-indigo-300 outline-none resize-none"
+                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-700 focus:ring-2 focus:ring-[#013FF6]/30 outline-none resize-none"
                       />
                     </div>
 
@@ -1023,7 +1023,7 @@ export default function SiswaAbsensi() {
                       <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="flex-1 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-60 flex justify-center items-center gap-2"
+                        className="flex-1 py-2.5 bg-[#00182E] text-white font-semibold rounded-xl hover:bg-[#013FF6] transition-colors shadow-sm disabled:opacity-60 flex justify-center items-center gap-2"
                       >
                         {isSubmitting ? (
                           <>
@@ -1178,14 +1178,14 @@ export default function SiswaAbsensi() {
           >
             <div className="absolute top-0 left-0 right-0 h-1 bg-gray-100 overflow-hidden rounded-t-3xl">
               <div
-                className="h-full bg-gradient-to-r from-emerald-400 to-indigo-500 rounded-full"
+                className="h-full bg-linear-to-r from-[#ACEC00] to-[#013FF6] rounded-full"
                 style={{ animation: "shrinkBar 5s linear forwards" }}
               />
             </div>
             <div className="px-7 py-8 flex flex-col items-center text-center">
               <div className="relative mb-5">
                 <div
-                  className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center shadow-lg shadow-emerald-200"
+                  className="w-20 h-20 bg-[#00182E] rounded-full flex items-center justify-center shadow-lg shadow-[#00182E]/30"
                   style={{
                     animation:
                       "bounceIn 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.1s both",
@@ -1194,13 +1194,13 @@ export default function SiswaAbsensi() {
                   <CheckCircle2 className="w-10 h-10 text-white" />
                 </div>
                 <div
-                  className="absolute -top-1 -right-1 w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center"
+                  className="absolute -top-1 -right-1 w-6 h-6 bg-[#ACEC00] rounded-full flex items-center justify-center"
                   style={{
                     animation:
                       "bounceIn 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.25s both",
                   }}
                 >
-                  <span className="text-white text-xs">✓</span>
+                  <span className="text-[#00182E] text-xs font-black">✓</span>
                 </div>
               </div>
 
@@ -1232,7 +1232,7 @@ export default function SiswaAbsensi() {
 
               <button
                 onClick={() => setShowSuccess(false)}
-                className="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-indigo-600 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity text-sm shadow-md"
+                className="w-full py-2.5 bg-[#00182E] text-white font-semibold rounded-xl hover:bg-[#013FF6] transition-colors text-sm shadow-md"
               >
                 Oke, Terima Kasih!
               </button>
