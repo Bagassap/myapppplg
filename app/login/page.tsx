@@ -135,9 +135,6 @@ export default function LoginPage() {
           <div className="absolute top-0 right-0 w-48 h-48 bg-[#013FF6]/15 rounded-full blur-2xl" />
           <div className="absolute bottom-0 left-0 w-40 h-40 bg-[#ACEC00]/10 rounded-full blur-2xl" />
 
-          {/* Accent line atas */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-[#ACEC00]" />
-
           <div className="relative">
             <div className="absolute inset-0 bg-[#ACEC00]/15 rounded-full blur-2xl scale-125" />
             <Image
@@ -169,9 +166,6 @@ export default function LoginPage() {
 
         {/* Panel kanan — form */}
         <div className="w-full md:w-1/2 bg-white p-6 sm:p-8 md:p-12 flex flex-col items-center justify-center relative">
-          {/* Accent line atas (mobile) */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-[#ACEC00] md:hidden" />
-
           {/* Logo mobile only */}
           <div className="flex justify-center mb-5 md:hidden mt-3">
             <Image

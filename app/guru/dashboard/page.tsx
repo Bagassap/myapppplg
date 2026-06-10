@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
-const DONUT_COLORS = ["#10b981", "#f59e0b", "#f43f5e"];
+const DONUT_COLORS = ["#ACEC00", "#013FF6", "#f43f5e"];
 
 const DonutTooltip = ({ active, payload }: any) => {
   if (!active || !payload?.length) return null;
@@ -78,7 +78,7 @@ function SiswaRow({ item, index }: { item: any; index: number }) {
         {item.siswa && item.tempatPKL && (
           <p className="text-[11px] text-gray-400 truncate">{item.tempatPKL}</p>
         )}
-        <div className="h-1 rounded-full bg-slate-200 overflow-hidden mt-1.5 max-w-[120px]">
+        <div className="h-1 rounded-full bg-slate-200 overflow-hidden mt-1.5 max-w-30">
           <div
             className="h-full rounded-full transition-all duration-700"
             style={{ width: `${p}%`, background: barColor }}
@@ -256,9 +256,9 @@ export default function GuruDashboard() {
 
           {/* ═══ CARD 1 — HERO OVERVIEW ═══ */}
           <div className="relative rounded-3xl overflow-hidden mb-5 shadow-xl">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#0c1a3d] via-[#1a3a6e] to-[#0d2b52]" />
-            <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-12 left-20 w-48 h-48 rounded-full bg-teal-500/10 blur-3xl pointer-events-none" />
+            <div className="absolute inset-0 bg-[#00182E]" />
+            <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-[#ACEC00]/8 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-12 left-20 w-48 h-48 rounded-full bg-[#013FF6]/15 blur-3xl pointer-events-none" />
             <div
               className="absolute inset-0 opacity-[0.03]"
               style={{
@@ -273,9 +273,9 @@ export default function GuruDashboard() {
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">
-                      <GraduationCap size={15} className="text-indigo-300" />
+                      <GraduationCap size={15} className="text-[#ACEC00]" />
                     </div>
-                    <span className="text-[11px] font-semibold text-indigo-300 uppercase tracking-widest">
+                    <span className="text-[11px] font-semibold text-[#ACEC00] uppercase tracking-widest">
                       Dashboard Guru
                     </span>
                   </div>
@@ -302,11 +302,11 @@ export default function GuruDashboard() {
                     num: stats.totalSiswaPKL,
                     label: "Siswa PKL",
                     sub: "Dalam bimbingan",
-                    color: "from-indigo-500/20 to-indigo-500/5",
-                    border: "border-indigo-500/20",
-                    iconBg: "bg-indigo-500/20",
-                    iconColor: "text-indigo-300",
-                    numColor: "text-indigo-100",
+                    color: "from-[#013FF6]/20 to-[#013FF6]/5",
+                    border: "border-[#013FF6]/20",
+                    iconBg: "bg-[#013FF6]/20",
+                    iconColor: "text-blue-300",
+                    numColor: "text-blue-100",
                     badge: null,
                   },
                   {
@@ -314,11 +314,11 @@ export default function GuruDashboard() {
                     num: stats.hadirHariIni,
                     label: "Hadir",
                     sub: "Hari ini",
-                    color: "from-emerald-500/20 to-emerald-500/5",
-                    border: "border-emerald-500/20",
-                    iconBg: "bg-emerald-500/20",
-                    iconColor: "text-emerald-300",
-                    numColor: "text-emerald-100",
+                    color: "from-[#ACEC00]/20 to-[#ACEC00]/5",
+                    border: "border-[#ACEC00]/20",
+                    iconBg: "bg-[#ACEC00]/20",
+                    iconColor: "text-[#ACEC00]",
+                    numColor: "text-[#ACEC00]/90",
                     badge: { text: `${pct}%`, positive: true },
                   },
                   {
@@ -360,7 +360,7 @@ export default function GuruDashboard() {
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className={`bg-gradient-to-br ${item.color} border ${item.border} rounded-2xl p-4 backdrop-blur-sm`}
+                    className={`bg-linear-to-br ${item.color} border ${item.border} rounded-2xl p-4 backdrop-blur-sm`}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div
@@ -407,7 +407,7 @@ export default function GuruDashboard() {
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <div className="flex items-center gap-2 mb-0.5">
-                    <TrendingUp size={13} className="text-emerald-500" />
+                    <TrendingUp size={13} className="text-[#ACEC00]" />
                     <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">
                       Distribusi Kehadiran
                     </span>
@@ -521,8 +521,8 @@ export default function GuruDashboard() {
                   {bestSiswa && (
                     <div className="mt-4 flex flex-col gap-2 border-t border-slate-100 pt-4">
                       <div className="flex items-center gap-2">
-                        <div className="w-9 h-9 rounded-2xl bg-indigo-100 flex items-center justify-center shrink-0">
-                          <Award size={16} className="text-indigo-600" />
+                        <div className="w-9 h-9 rounded-2xl bg-[#013FF6]/15 flex items-center justify-center shrink-0">
+                          <Award size={16} className="text-blue-400" />
                         </div>
                         <div>
                           <p className="text-xs text-slate-400">
@@ -567,7 +567,7 @@ export default function GuruDashboard() {
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <div className="flex items-center gap-2 mb-0.5">
-                    <Users size={13} className="text-indigo-500" />
+                    <Users size={13} className="text-blue-400" />
                     <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">
                       Kehadiran Siswa PKL
                     </span>
@@ -582,7 +582,7 @@ export default function GuruDashboard() {
                       {
                         v: stats.totalSiswaPKL,
                         l: "Total",
-                        cls: "bg-indigo-50 text-indigo-700",
+                        cls: "bg-[#013FF6]/10 text-blue-700",
                       },
                       {
                         v: stats.hadirHariIni,
@@ -619,7 +619,7 @@ export default function GuruDashboard() {
                 </div>
               ) : (
                 <>
-                  <div className="flex flex-col gap-2 mb-5 max-h-[380px] overflow-y-auto pr-1">
+                  <div className="flex flex-col gap-2 mb-5 max-h-95 overflow-y-auto pr-1">
                     {pklData.map((item, i) => (
                       <SiswaRow key={i} item={item} index={i} />
                     ))}
@@ -630,7 +630,7 @@ export default function GuruDashboard() {
                       {
                         v: stats.totalSiswaPKL,
                         l: "Total",
-                        cls: "bg-indigo-100 text-indigo-700",
+                        cls: "bg-[#013FF6]/10 text-blue-700",
                         icon: <Users size={13} />,
                       },
                       {

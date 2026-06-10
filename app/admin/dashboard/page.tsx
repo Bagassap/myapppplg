@@ -30,7 +30,7 @@ import {
   CartesianGrid,
 } from "recharts";
 
-const DONUT_COLORS = ["#10b981", "#f59e0b", "#f43f5e"];
+const DONUT_COLORS = ["#ACEC00", "#013FF6", "#f43f5e"];
 
 const DonutTooltip = ({ active, payload }: any) => {
   if (!active || !payload?.length) return null;
@@ -104,7 +104,7 @@ function ClassRow({ item, index }: { item: any; index: number }) {
           />
         </div>
         <span
-          className="text-sm font-black min-w-[42px] text-right"
+          className="text-sm font-black min-w-10.5 text-right"
           style={{ color: cfg.bar }}
         >
           {p}%
@@ -274,10 +274,10 @@ export default function AdminDashboard() {
         <main className="flex-1 overflow-y-auto overflow-x-hidden p-5 lg:p-8 bg-slate-100">
           <GreetingBanner />
           <div className="relative rounded-3xl overflow-hidden mb-5 shadow-xl">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a] via-[#1e3a5f] to-[#0f2744]" />
-            <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-sky-500/10 blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-12 left-20 w-48 h-48 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
-            <div className="absolute top-1/2 right-1/3 w-32 h-32 rounded-full bg-emerald-500/5 blur-2xl pointer-events-none" />
+            <div className="absolute inset-0 bg-[#00182E]" />
+            <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-[#ACEC00]/8 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-12 left-20 w-48 h-48 rounded-full bg-[#013FF6]/15 blur-3xl pointer-events-none" />
+            <div className="absolute top-1/2 right-1/3 w-32 h-32 rounded-full bg-[#ACEC00]/5 blur-2xl pointer-events-none" />
             <div
               className="absolute inset-0 opacity-[0.03]"
               style={{
@@ -294,7 +294,7 @@ export default function AdminDashboard() {
                     <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">
                       <Activity size={15} className="text-sky-300" />
                     </div>
-                    <span className="text-[11px] font-semibold text-sky-300 uppercase tracking-widest">
+                    <span className="text-[11px] font-semibold text-[#ACEC00] uppercase tracking-widest">
                       Dashboard Admin
                     </span>
                   </div>
@@ -322,11 +322,11 @@ export default function AdminDashboard() {
                     num: stats.totalSiswa,
                     label: "Total Siswa",
                     sub: "Terdaftar",
-                    color: "from-sky-500/20 to-sky-500/5",
-                    border: "border-sky-500/20",
-                    iconBg: "bg-sky-500/20",
-                    iconColor: "text-sky-300",
-                    numColor: "text-sky-100",
+                    color: "from-[#013FF6]/20 to-[#013FF6]/5",
+                    border: "border-[#013FF6]/20",
+                    iconBg: "bg-[#013FF6]/20",
+                    iconColor: "text-[#013FF6]",
+                    numColor: "text-blue-100",
                     badge: null,
                   },
                   {
@@ -334,11 +334,11 @@ export default function AdminDashboard() {
                     num: stats.hadirHariIni,
                     label: "Hadir",
                     sub: "Hari ini",
-                    color: "from-emerald-500/20 to-emerald-500/5",
-                    border: "border-emerald-500/20",
-                    iconBg: "bg-emerald-500/20",
-                    iconColor: "text-emerald-300",
-                    numColor: "text-emerald-100",
+                    color: "from-[#ACEC00]/20 to-[#ACEC00]/5",
+                    border: "border-[#ACEC00]/25",
+                    iconBg: "bg-[#ACEC00]/20",
+                    iconColor: "text-[#ACEC00]",
+                    numColor: "text-[#ACEC00]",
                     badge: { text: `${pct}%`, positive: true },
                   },
                   {
@@ -380,7 +380,7 @@ export default function AdminDashboard() {
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className={`bg-gradient-to-br ${item.color} border ${item.border} rounded-2xl p-4 backdrop-blur-sm`}
+                    className={`bg-linear-to-br ${item.color} border ${item.border} rounded-2xl p-4 backdrop-blur-sm`}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div
@@ -691,8 +691,8 @@ export default function AdminDashboard() {
               </div>
               <div className="flex gap-4">
                 {[
-                  { color: "#6366f1", label: "Hadir" },
-                  { color: "#fca5a5", label: "Tidak hadir" },
+                  { color: "#ACEC00", label: "Hadir" },
+                  { color: "#013FF6", label: "Tidak hadir" },
                 ].map((l) => (
                   <span
                     key={l.label}
@@ -733,14 +733,14 @@ export default function AdminDashboard() {
                     <Bar
                       dataKey="hadir"
                       name="Hadir"
-                      fill="#6366f1"
+                      fill="#ACEC00"
                       radius={[6, 6, 0, 0]}
                       maxBarSize={28}
                     />
                     <Bar
                       dataKey="absen"
                       name="Tidak hadir"
-                      fill="#fca5a5"
+                      fill="#013FF6"
                       radius={[6, 6, 0, 0]}
                       maxBarSize={28}
                     />

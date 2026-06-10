@@ -56,12 +56,8 @@ export default function SidebarSiswa() {
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
-        <div className="absolute top-0 right-0 bottom-0 w-0.5 bg-[#ACEC00]/30 rounded-r-2xl" />
-
         <div className="shrink-0 flex flex-col gap-5 p-5">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-[#ACEC00] rounded-tr-2xl" />
-
-          <div className="flex items-center justify-between mt-1">
+          <div className="flex items-center justify-between">
             {isOpen && (
               <div className="flex items-center gap-3 animate-fade-in">
                 <img

@@ -211,10 +211,10 @@ export default function SiswaDashboard() {
 
           {/* ═══ HERO CARD ═══ */}
           <div className="relative rounded-3xl overflow-hidden mb-5 shadow-xl">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a] via-[#1e3a5f] to-[#0f2744]" />
-            <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-12 left-20 w-48 h-48 rounded-full bg-sky-500/10 blur-3xl pointer-events-none" />
-            <div className="absolute top-1/2 right-1/3 w-32 h-32 rounded-full bg-indigo-500/5 blur-2xl pointer-events-none" />
+            <div className="absolute inset-0 bg-[#00182E]" />
+            <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-[#ACEC00]/8 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-12 left-20 w-48 h-48 rounded-full bg-[#013FF6]/15 blur-3xl pointer-events-none" />
+            <div className="absolute top-1/2 right-1/3 w-32 h-32 rounded-full bg-[#013FF6]/5 blur-2xl pointer-events-none" />
             <div
               className="absolute inset-0 opacity-[0.03]"
               style={{
@@ -230,9 +230,9 @@ export default function SiswaDashboard() {
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">
-                      <BookOpen size={15} className="text-emerald-300" />
+                      <BookOpen size={15} className="text-[#ACEC00]" />
                     </div>
-                    <span className="text-[11px] font-semibold text-emerald-300 uppercase tracking-widest">
+                    <span className="text-[11px] font-semibold text-[#ACEC00] uppercase tracking-widest">
                       Dashboard Siswa
                     </span>
                   </div>
@@ -280,11 +280,11 @@ export default function SiswaDashboard() {
                     num: stats.totalHariBulanIni,
                     label: "Total Hari",
                     sub: "Bulan ini",
-                    color: "from-sky-500/20 to-sky-500/5",
-                    border: "border-sky-500/20",
-                    iconBg: "bg-sky-500/20",
-                    iconColor: "text-sky-300",
-                    numColor: "text-sky-100",
+                    color: "from-[#013FF6]/20 to-[#013FF6]/5",
+                    border: "border-[#013FF6]/20",
+                    iconBg: "bg-[#013FF6]/20",
+                    iconColor: "text-blue-300",
+                    numColor: "text-blue-100",
                     badge: null,
                   },
                   {
@@ -292,11 +292,11 @@ export default function SiswaDashboard() {
                     num: stats.hadirBulanIni,
                     label: "Hadir",
                     sub: "Bulan ini",
-                    color: "from-emerald-500/20 to-emerald-500/5",
-                    border: "border-emerald-500/20",
-                    iconBg: "bg-emerald-500/20",
-                    iconColor: "text-emerald-300",
-                    numColor: "text-emerald-100",
+                    color: "from-[#ACEC00]/20 to-[#ACEC00]/5",
+                    border: "border-[#ACEC00]/20",
+                    iconBg: "bg-[#ACEC00]/20",
+                    iconColor: "text-[#ACEC00]",
+                    numColor: "text-[#ACEC00]/90",
                     badge: { text: `${pct}%`, positive: true },
                   },
                   {
@@ -344,7 +344,7 @@ export default function SiswaDashboard() {
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className={`bg-gradient-to-br ${item.color} border ${item.border} rounded-2xl p-4 backdrop-blur-sm`}
+                    className={`bg-linear-to-br ${item.color} border ${item.border} rounded-2xl p-4 backdrop-blur-sm`}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div
@@ -435,8 +435,8 @@ export default function SiswaDashboard() {
           <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center">
-                  <Bell size={14} className="text-emerald-600" />
+                <div className="w-8 h-8 rounded-xl bg-[#013FF6]/10 flex items-center justify-center">
+                  <Bell size={14} className="text-blue-600" />
                 </div>
                 <span className="text-sm font-bold text-slate-800">
                   Informasi Terbaru
@@ -444,7 +444,7 @@ export default function SiswaDashboard() {
               </div>
               <a
                 href="/siswa/informasi"
-                className="flex items-center gap-1 text-xs text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1.5 hover:bg-emerald-100 transition-colors no-underline"
+                className="flex items-center gap-1 text-xs text-blue-700 font-semibold bg-[#013FF6]/8 border border-[#013FF6]/20 rounded-full px-3 py-1.5 hover:bg-[#013FF6]/15 transition-colors no-underline"
               >
                 Lihat semua <ChevronRight size={13} />
               </a>
@@ -453,12 +453,12 @@ export default function SiswaDashboard() {
             <div>
               {loadingInfo ? (
                 <div className="p-8 flex justify-center">
-                  <div className="w-6 h-6 border-2 border-slate-200 border-t-emerald-500 rounded-full animate-spin" />
+                  <div className="w-6 h-6 border-2 border-slate-200 border-t-[#013FF6] rounded-full animate-spin" />
                 </div>
               ) : informasiList.length === 0 ? (
                 <div className="py-12 flex flex-col items-center gap-2">
-                  <div className="w-10 h-10 rounded-2xl bg-emerald-50 flex items-center justify-center">
-                    <Bell size={18} className="text-emerald-300" />
+                  <div className="w-10 h-10 rounded-2xl bg-[#013FF6]/8 flex items-center justify-center">
+                    <Bell size={18} className="text-blue-300" />
                   </div>
                   <p className="text-sm text-slate-400">
                     Belum ada informasi terbaru.
