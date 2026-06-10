@@ -280,7 +280,7 @@ function StatCard({
   if (loading)
     return (
       <div
-        className="rounded-2xl h-[108px] animate-pulse"
+        className="rounded-2xl h-27 animate-pulse"
         style={{
           background: `linear-gradient(135deg,${cfg.grad[0]}55,${cfg.grad[1]}55)`,
         }}
@@ -309,7 +309,7 @@ function StatCard({
         className="absolute -right-5 -top-5 w-20 h-20 rounded-full bg-white/10 transition-transform duration-500"
         style={{ transform: hovered ? "scale(1.4)" : "scale(1)" }}
       />
-      <div className="absolute right-1 -bottom-6 w-14 h-14 rounded-full bg-black/[0.06]" />
+      <div className="absolute right-1 -bottom-6 w-14 h-14 rounded-full bg-black/6" />
       <div className="relative flex items-start justify-between mb-3">
         <div>
           <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mb-1">
@@ -326,7 +326,7 @@ function StatCard({
             )}
           </div>
         </div>
-        <div className="relative flex-shrink-0">
+        <div className="relative shrink-0">
           <ProgressRing
             pct={cfg.key === "total" ? 100 : visible ? pct : 0}
             color="rgba(255,255,255,0.9)"
@@ -397,7 +397,7 @@ function SummaryCard({
   ];
   return (
     <div
-      className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 p-5 shadow-xl mb-4"
+      className="relative overflow-hidden rounded-2xl bg-linear-to-br from-slate-800 to-slate-900 p-5 shadow-xl mb-4"
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? "translateY(0)" : "translateY(12px)",
@@ -457,7 +457,7 @@ function SummaryCard({
           </div>
         </div>
         {!loading && (
-          <div className="relative flex-shrink-0">
+          <div className="relative shrink-0">
             <ProgressRing
               pct={visible ? hadirPct : 0}
               color={
@@ -731,7 +731,7 @@ export default function GuruAbsensi() {
                   setSearchQuery(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="pl-8 pr-3 py-1.5 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-violet-300 w-[155px]"
+                className="pl-8 pr-3 py-1.5 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-violet-300 w-38.75"
               />
             </div>
             <span className="hidden sm:block w-px h-5 bg-gray-200" />
@@ -818,7 +818,7 @@ export default function GuruAbsensi() {
               </div>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[640px]">
+              <table className="w-full text-sm min-w-160">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50">
                     {[
@@ -887,7 +887,7 @@ export default function GuruAbsensi() {
                         <td className="px-5 py-3.5 text-gray-500 font-mono text-xs whitespace-nowrap">
                           {item.waktu}
                         </td>
-                        <td className="px-5 py-3.5 text-gray-400 text-xs hidden md:table-cell max-w-[180px]">
+                        <td className="px-5 py-3.5 text-gray-400 text-xs hidden md:table-cell max-w-45">
                           <span
                             className={`block truncate ${item.isVirtualAlfa ? "text-red-400 italic" : ""}`}
                           >
@@ -945,7 +945,7 @@ export default function GuruAbsensi() {
       </div>
 
       {modalSiswa && (
-        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div className="fixed inset-0 z-60 flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div
             className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
             onClick={() => setModalSiswa(null)}
@@ -974,7 +974,7 @@ export default function GuruAbsensi() {
               </button>
             </div>
             <div className="flex-1 overflow-auto">
-              <table className="w-full text-sm min-w-[640px]">
+              <table className="w-full text-sm min-w-160">
                 <thead className="sticky top-0 bg-gray-50 border-b border-gray-100 z-10">
                   <tr>
                     {[
@@ -1085,7 +1085,7 @@ export default function GuruAbsensi() {
 
       {previewUrl && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          className="fixed inset-0 z-100 flex items-center justify-center p-4"
           style={{ animation: "fadeIn .15s ease" }}
           onClick={() => setPreviewUrl(null)}
         >

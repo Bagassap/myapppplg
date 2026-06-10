@@ -46,7 +46,7 @@ export default function ChatIconButton() {
         className={`w-5 h-5 ${isOnChat ? "text-indigo-600" : "text-gray-500"}`}
       />
       {unread > 0 && !isOnChat && (
-        <span className="absolute top-1 right-1 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5 leading-none">
+        <span className="absolute top-1 right-1 min-w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5 leading-none">
           {unread > 99 ? "99+" : unread}
         </span>
       )}

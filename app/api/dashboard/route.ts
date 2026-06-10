@@ -147,9 +147,36 @@ export async function GET(req: NextRequest) {
             const trend =
                 allUserIds.length > 0 ? await buildTrendData(allUserIds) : [];
 
+            const totalGuru = await prisma.user.count({
+                where: { role: "GURU" as any },
+            });
+
+            const absensiTerbaruRaw = await prisma.absensi.findMany({
+                where: { tanggal: tanggalWhere, tipe: "masuk" },
+                orderBy: { createdAt: "desc" },
+                take: 10,
+                select: { userId: true, status: true, waktu: true, createdAt: true },
+            });
+            const terbaruIds = [...new Set(absensiTerbaruRaw.map((a) => a.userId))];
+            const terbaruUsers = await prisma.user.findMany({
+                where: { username: { in: terbaruIds } },
+                select: { username: true, name: true },
+            });
+            const terbaruUserMap = new Map<string, string>();
+            terbaruUsers.forEach((u) => {
+                if (u.username) terbaruUserMap.set(u.username, u.name ?? u.username);
+            });
+            const absensiTerbaru = absensiTerbaruRaw.map((a) => ({
+                nama: terbaruUserMap.get(a.userId) ?? a.userId,
+                status: a.status,
+                waktu: a.waktu ?? null,
+                createdAt: a.createdAt.toISOString(),
+            }));
+
             return NextResponse.json({
                 cards: {
                     totalSiswa,
+                    totalGuru,
                     hadirHariIni: hadirCount,
                     izin: izinCount,
                     tidakHadir: alfaCount,
@@ -157,6 +184,7 @@ export async function GET(req: NextRequest) {
                 },
                 table: tableData,
                 trend,
+                absensiTerbaru,
             });
         }
 

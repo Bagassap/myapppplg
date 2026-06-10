@@ -34,8 +34,8 @@ const getTipeConfig = (tipe: string) => {
     case "pengumuman":
       return {
         icon: <Megaphone size={14} />,
-        pill: "bg-amber-50 text-amber-700 border-amber-200",
-        iconCls: "bg-amber-50 text-amber-600",
+        pill: "bg-[#013FF6]/10 text-[#013FF6] border-[#013FF6]/20",
+        iconCls: "bg-[#013FF6]/10 text-[#013FF6]",
       };
     case "peringatan":
       return {
@@ -46,17 +46,15 @@ const getTipeConfig = (tipe: string) => {
     default:
       return {
         icon: <Info size={14} />,
-        pill: "bg-emerald-50 text-emerald-700 border-emerald-200",
-        iconCls: "bg-emerald-50 text-emerald-600",
+        pill: "bg-[#ACEC00]/10 text-[#00182E] border-[#ACEC00]/20",
+        iconCls: "bg-[#ACEC00]/10 text-[#00182E]",
       };
   }
 };
 
 const formatTanggal = (t: string) =>
   new Date(t).toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
+    day: "numeric", month: "long", year: "numeric",
   });
 
 export default function SiswaDashboard() {
@@ -64,6 +62,7 @@ export default function SiswaDashboard() {
   const [loadingInfo, setLoadingInfo] = useState(true);
   const [informasiList, setInformasiList] = useState<Informasi[]>([]);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [hariIni, setHariIni] = useState("");
 
   const [stats, setStats] = useState({
     totalHariBulanIni: 0,
@@ -75,65 +74,9 @@ export default function SiswaDashboard() {
   });
 
   useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const res = await fetch(`/api/dashboard?t=${Date.now()}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.cards) {
-            setStats({
-              totalHariBulanIni: data.cards.totalHariBulanIni ?? 0,
-              hadirBulanIni: data.cards.hadirBulanIni ?? 0,
-              izinBulanIni:
-                data.cards.izinBulanIni ??
-                Math.max(
-                  0,
-                  (data.cards.totalHariBulanIni ?? 0) -
-                    (data.cards.hadirBulanIni ?? 0) -
-                    (data.cards.tidakHadirBulanIni ?? 0),
-                ),
-              tidakHadirBulanIni: data.cards.tidakHadirBulanIni ?? 0,
-              persentaseKehadiran: data.cards.persentaseKehadiran ?? 0,
-              sudahAbsenHariIni: data.cards.sudahAbsenHariIni ?? false,
-            });
-          }
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    const fetchInformasi = async () => {
-      try {
-        const res = await fetch("/api/informasi");
-        if (res.ok) {
-          const data = await res.json();
-          setInformasiList(Array.isArray(data) ? data.slice(0, 5) : []);
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoadingInfo(false);
-      }
-    };
-    fetchDashboard();
-    fetchInformasi();
-  }, []);
-
-  const izin = stats.izinBulanIni;
-  const pct = stats.persentaseKehadiran;
-  const sudahAbsen = stats.sudahAbsenHariIni;
-
-  const [hariIni, setHariIni] = useState("");
-
-  useEffect(() => {
     setHariIni(
       new Date().toLocaleDateString("id-ID", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
+        weekday: "long", day: "numeric", month: "long", year: "numeric",
       }),
     );
 
@@ -185,21 +128,16 @@ export default function SiswaDashboard() {
     fetchInformasi();
   }, []);
 
+  const izin = stats.izinBulanIni;
+  const pct = stats.persentaseKehadiran;
+  const sudahAbsen = stats.sudahAbsenHariIni;
+
   const motivasiText =
     pct >= 90
-      ? {
-          title: "Luar biasa! 🏆",
-          body: "Kehadiranmu sudah melampaui 90%. Pertahankan!",
-        }
+      ? { title: "Luar biasa! 🏆", body: "Kehadiranmu sudah melampaui 90%. Pertahankan!" }
       : pct >= 80
-        ? {
-            title: "Bagus sekali! 🎉",
-            body: "Kamu sudah mencapai target. Terus jaga konsistensinya!",
-          }
-        : {
-            title: "Ayo semangat! 💪",
-            body: `Butuh ${80 - pct}% lagi untuk mencapai target 80% kehadiran.`,
-          };
+        ? { title: "Bagus sekali! 🎉", body: "Kamu sudah mencapai target. Terus jaga konsistensinya!" }
+        : { title: "Ayo semangat! 💪", body: `Butuh ${80 - pct}% lagi untuk mencapai target 80% kehadiran.` };
 
   return (
     <div className="flex h-screen bg-slate-100 overflow-hidden">
@@ -225,7 +163,6 @@ export default function SiswaDashboard() {
             />
 
             <div className="relative p-6 lg:p-8">
-              {/* Header */}
               <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
@@ -245,7 +182,6 @@ export default function SiswaDashboard() {
                   </p>
                 </div>
 
-                {/* Pct + status pill */}
                 <div className="flex flex-col items-end gap-2">
                   <div className="bg-white/10 border border-white/15 rounded-2xl px-6 py-4 text-center backdrop-blur-sm">
                     <p className="text-4xl font-black text-white leading-none">
@@ -256,23 +192,16 @@ export default function SiswaDashboard() {
                   <div
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-semibold ${
                       sudahAbsen
-                        ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-300"
-                        : "bg-amber-500/20 border-amber-500/30 text-amber-300"
+                        ? "bg-[#ACEC00]/20 border-[#ACEC00]/30 text-[#ACEC00]"
+                        : "bg-white/10 border-white/20 text-white/70"
                     }`}
                   >
-                    {sudahAbsen ? (
-                      <CheckCircle2 size={12} />
-                    ) : (
-                      <Clock size={12} />
-                    )}
-                    {sudahAbsen
-                      ? "Sudah absen hari ini"
-                      : "Belum absen hari ini"}
+                    {sudahAbsen ? <CheckCircle2 size={12} /> : <Clock size={12} />}
+                    {sudahAbsen ? "Sudah absen hari ini" : "Belum absen hari ini"}
                   </div>
                 </div>
               </div>
 
-              {/* 4 stat items */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
                   {
@@ -304,17 +233,15 @@ export default function SiswaDashboard() {
                     num: izin,
                     label: "Izin / Sakit",
                     sub: "Dengan keterangan",
-                    color: "from-amber-500/20 to-amber-500/5",
-                    border: "border-amber-500/20",
-                    iconBg: "bg-amber-500/20",
-                    iconColor: "text-amber-300",
-                    numColor: "text-amber-100",
+                    color: "from-[#013FF6]/15 to-[#013FF6]/5",
+                    border: "border-[#013FF6]/15",
+                    iconBg: "bg-[#013FF6]/15",
+                    iconColor: "text-blue-300",
+                    numColor: "text-blue-100",
                     badge:
                       stats.totalHariBulanIni > 0
                         ? {
-                            text: `${Math.round(
-                              (izin / stats.totalHariBulanIni) * 100,
-                            )}%`,
+                            text: `${Math.round((izin / stats.totalHariBulanIni) * 100)}%`,
                             positive: false,
                           }
                         : null,
@@ -333,9 +260,7 @@ export default function SiswaDashboard() {
                       stats.totalHariBulanIni > 0
                         ? {
                             text: `${Math.round(
-                              (stats.tidakHadirBulanIni /
-                                stats.totalHariBulanIni) *
-                                100,
+                              (stats.tidakHadirBulanIni / stats.totalHariBulanIni) * 100,
                             )}%`,
                             positive: false,
                           }
@@ -347,36 +272,26 @@ export default function SiswaDashboard() {
                     className={`bg-linear-to-br ${item.color} border ${item.border} rounded-2xl p-4 backdrop-blur-sm`}
                   >
                     <div className="flex items-start justify-between mb-3">
-                      <div
-                        className={`w-9 h-9 ${item.iconBg} rounded-xl flex items-center justify-center`}
-                      >
+                      <div className={`w-9 h-9 ${item.iconBg} rounded-xl flex items-center justify-center`}>
                         <span className={item.iconColor}>{item.icon}</span>
                       </div>
                       {item.badge && (
                         <span
                           className={`flex items-center gap-0.5 text-[11px] font-bold px-2 py-0.5 rounded-full ${
                             item.badge.positive
-                              ? "bg-emerald-500/20 text-emerald-300"
+                              ? "bg-[#ACEC00]/20 text-[#ACEC00]"
                               : "bg-rose-500/20 text-rose-300"
                           }`}
                         >
-                          {item.badge.positive ? (
-                            <ArrowUpRight size={10} />
-                          ) : (
-                            <ArrowDownRight size={10} />
-                          )}
+                          {item.badge.positive ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
                           {item.badge.text}
                         </span>
                       )}
                     </div>
-                    <p
-                      className={`text-3xl font-black leading-none mb-1 ${item.numColor}`}
-                    >
+                    <p className={`text-3xl font-black leading-none mb-1 ${item.numColor}`}>
                       {loading ? "—" : item.num}
                     </p>
-                    <p className="text-sm font-semibold text-slate-300">
-                      {item.label}
-                    </p>
+                    <p className="text-sm font-semibold text-slate-300">{item.label}</p>
                     <p className="text-xs text-slate-500 mt-0.5">{item.sub}</p>
                   </div>
                 ))}
@@ -389,39 +304,23 @@ export default function SiswaDashboard() {
             <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-200 flex items-center gap-4 mb-5">
               <div
                 className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
-                  pct >= 90
-                    ? "bg-emerald-500"
-                    : pct >= 80
-                      ? "bg-indigo-500"
-                      : "bg-amber-500"
+                  pct >= 90 ? "bg-[#ACEC00]" : pct >= 80 ? "bg-[#013FF6]" : "bg-rose-500"
                 }`}
               >
                 <ShieldCheck size={22} className="text-white" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-bold text-slate-800 mb-0.5">
-                  {motivasiText.title}
-                </p>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  {motivasiText.body}
-                </p>
+                <p className="text-sm font-bold text-slate-800 mb-0.5">{motivasiText.title}</p>
+                <p className="text-xs text-slate-500 leading-relaxed">{motivasiText.body}</p>
               </div>
               <div
                 className={`shrink-0 px-4 py-3 rounded-2xl text-right ${
-                  pct >= 90
-                    ? "bg-emerald-50"
-                    : pct >= 80
-                      ? "bg-indigo-50"
-                      : "bg-amber-50"
+                  pct >= 90 ? "bg-[#ACEC00]/10" : pct >= 80 ? "bg-[#013FF6]/8" : "bg-rose-50"
                 }`}
               >
                 <p
                   className={`text-2xl font-black leading-none ${
-                    pct >= 90
-                      ? "text-emerald-700"
-                      : pct >= 80
-                        ? "text-indigo-700"
-                        : "text-amber-700"
+                    pct >= 90 ? "text-[#00182E]" : pct >= 80 ? "text-[#013FF6]" : "text-rose-600"
                   }`}
                 >
                   {pct}%
@@ -436,15 +335,13 @@ export default function SiswaDashboard() {
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-[#013FF6]/10 flex items-center justify-center">
-                  <Bell size={14} className="text-blue-600" />
+                  <Bell size={14} className="text-[#013FF6]" />
                 </div>
-                <span className="text-sm font-bold text-slate-800">
-                  Informasi Terbaru
-                </span>
+                <span className="text-sm font-bold text-slate-800">Informasi Terbaru</span>
               </div>
               <a
                 href="/siswa/informasi"
-                className="flex items-center gap-1 text-xs text-blue-700 font-semibold bg-[#013FF6]/8 border border-[#013FF6]/20 rounded-full px-3 py-1.5 hover:bg-[#013FF6]/15 transition-colors no-underline"
+                className="flex items-center gap-1 text-xs text-[#013FF6] font-semibold bg-[#013FF6]/8 border border-[#013FF6]/20 rounded-full px-3 py-1.5 hover:bg-[#013FF6]/15 transition-colors no-underline"
               >
                 Lihat semua <ChevronRight size={13} />
               </a>
@@ -458,14 +355,10 @@ export default function SiswaDashboard() {
               ) : informasiList.length === 0 ? (
                 <div className="py-12 flex flex-col items-center gap-2">
                   <div className="w-10 h-10 rounded-2xl bg-[#013FF6]/8 flex items-center justify-center">
-                    <Bell size={18} className="text-blue-300" />
+                    <Bell size={18} className="text-[#013FF6]/40" />
                   </div>
-                  <p className="text-sm text-slate-400">
-                    Belum ada informasi terbaru.
-                  </p>
-                  <p className="text-xs text-slate-300">
-                    Pengumuman baru akan muncul di sini.
-                  </p>
+                  <p className="text-sm text-slate-400">Belum ada informasi terbaru.</p>
+                  <p className="text-xs text-slate-300">Pengumuman baru akan muncul di sini.</p>
                 </div>
               ) : (
                 informasiList.map((item, idx) => {
@@ -487,32 +380,20 @@ export default function SiswaDashboard() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <span
-                            className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${config.pill}`}
-                          >
+                          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${config.pill}`}>
                             {item.tipe || "Umum"}
                           </span>
                           {item.tempatPKL && (
-                            <span className="text-xs text-slate-400">
-                              {item.tempatPKL}
-                            </span>
+                            <span className="text-xs text-slate-400">{item.tempatPKL}</span>
                           )}
                           <span className="text-xs text-slate-400 ml-auto">
                             {formatTanggal(item.tanggal)}
                           </span>
                         </div>
-                        <p
-                          className={`text-sm font-semibold text-slate-800 mb-0.5 ${
-                            isExpanded ? "" : "truncate"
-                          }`}
-                        >
+                        <p className={`text-sm font-semibold text-slate-800 mb-0.5 ${isExpanded ? "" : "truncate"}`}>
                           {item.judul}
                         </p>
-                        <p
-                          className={`text-xs text-slate-500 leading-relaxed ${
-                            isExpanded ? "" : "truncate"
-                          }`}
-                        >
+                        <p className={`text-xs text-slate-500 leading-relaxed ${isExpanded ? "" : "truncate"}`}>
                           {item.isi}
                         </p>
                       </div>
