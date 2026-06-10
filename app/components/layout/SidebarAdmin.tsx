@@ -48,55 +48,60 @@ export default function SidebarAdmin() {
 
       <aside
         className={`
-          bg-gradient-to-b from-indigo-700 via-indigo-600 to-blue-600 text-white flex flex-col justify-between shadow-2xl min-h-screen transition-all duration-300
-          ${isOpen ? "w-80" : "w-20"}
+          bg-linear-to-b from-[#44225A] via-[#44225A] to-[#762864]
+          text-white flex flex-col justify-between shadow-2xl min-h-screen transition-all duration-300
+          ${isOpen ? "w-72" : "w-20"}
           rounded-r-2xl
           fixed inset-y-0 left-0 z-50
           lg:static lg:translate-x-0
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
-        <div className="shrink-0 flex flex-col gap-6 p-6">
+        {/* Header sidebar */}
+        <div className="shrink-0 flex flex-col gap-5 p-5">
           <div className="flex items-center justify-between">
             {isOpen && (
-              <div className="flex items-center gap-4 animate-fade-in">
+              <div className="flex items-center gap-3 animate-fade-in">
                 <img
                   src="/img/img.png"
                   alt="Logo"
-                  width={120}
-                  height={120}
-                  className="rounded-lg shadow-md p-1 transition-transform duration-300 hover:scale-110"
+                  width={110}
+                  height={110}
+                  className="rounded-xl shadow-md transition-transform duration-300 hover:scale-105"
                 />
               </div>
             )}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="p-2 hover:bg-white/20 rounded-md transition-all duration-300 hover:rotate-180 hidden lg:block"
+              className="p-2 hover:bg-white/15 rounded-xl transition-all duration-300 hidden lg:flex items-center justify-center"
               aria-label="Toggle sidebar"
             >
               {isOpen ? (
-                <ChevronLeft className="text-white w-6 h-6" />
+                <ChevronLeft className="text-[#BFD833] w-5 h-5" />
               ) : (
-                <Menu className="text-white w-6 h-6" />
+                <Menu className="text-[#BFD833] w-5 h-5" />
               )}
             </button>
             <button
               onClick={closeMobileSidebar}
-              className="p-2 hover:bg-white/20 rounded-md transition-all duration-300 lg:hidden"
+              className="p-2 hover:bg-white/15 rounded-xl transition-all duration-300 lg:hidden"
               aria-label="Close mobile sidebar"
             >
-              <ChevronLeft className="text-white w-6 h-6" />
+              <ChevronLeft className="text-[#BFD833] w-5 h-5" />
             </button>
           </div>
-          <div className="border-b border-white/30"></div>
+
+          {/* Divider + label */}
+          <div className="border-b border-white/15" />
           {isOpen && (
-            <div className="flex flex-col gap-1 animate-fade-in">
-              <span className="text-white text-base">Main Menu</span>
-            </div>
+            <span className="text-[#BFD833]/70 text-xs font-semibold uppercase tracking-widest animate-fade-in px-1">
+              Navigasi
+            </span>
           )}
         </div>
 
-        <nav className="flex-1 flex flex-col gap-6 px-4 overflow-y-auto">
+        {/* Menu navigasi */}
+        <nav className="flex-1 flex flex-col gap-1.5 px-3 overflow-y-auto">
           {menu.map((item, idx) => {
             const active = pathname === item.href;
             return (
@@ -104,23 +109,33 @@ export default function SidebarAdmin() {
                 key={item.href}
                 href={item.href}
                 onClick={closeMobileSidebar}
-                className={`group flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 ease-in-out text-base font-medium tracking-wide hover:bg-white/15 hover:shadow-sm ${
-                  active ? "bg-white/20 shadow-md" : ""
-                }`}
+                className={`
+                  group flex items-center gap-3 px-3 py-3 rounded-xl
+                  transition-all duration-200 ease-in-out font-medium
+                  ${active
+                    ? "bg-[#BFD833] shadow-lg shadow-[#BFD833]/20"
+                    : "hover:bg-white/10"
+                  }
+                  ${!isOpen ? "justify-center" : ""}
+                `}
                 title={!isOpen ? item.name : ""}
-                style={{ animationDelay: `${idx * 0.1}s` }}
+                style={{ animationDelay: `${idx * 0.06}s` }}
               >
                 <span
-                  className={`flex items-center justify-center w-6 h-6 text-white transition-all duration-300 rounded-md ${
+                  className={`flex items-center justify-center w-5 h-5 shrink-0 transition-colors duration-200 ${
                     active
-                      ? "text-white"
-                      : "text-white/50 group-hover:text-white"
+                      ? "text-[#44225A]"
+                      : "text-white/60 group-hover:text-white"
                   }`}
                 >
                   {item.icon}
                 </span>
                 {isOpen && (
-                  <span className="truncate animate-fade-in text-white text-lg transition-colors duration-300">
+                  <span
+                    className={`truncate animate-fade-in text-base transition-colors duration-200 ${
+                      active ? "text-[#44225A] font-semibold" : "text-white/90"
+                    }`}
+                  >
                     {item.name}
                   </span>
                 )}
@@ -129,17 +144,22 @@ export default function SidebarAdmin() {
           })}
         </nav>
 
-        <div className="p-4 border-t border-white/30 flex flex-col gap-4 shrink-0">
+        {/* Footer sidebar */}
+        <div className="p-3 border-t border-white/15 flex flex-col gap-3 shrink-0">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-white/15 transition-all duration-300 hover:shadow-sm text-base font-medium w-full text-left"
+            className={`flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-red-500/20 transition-all duration-200 font-medium w-full text-left ${!isOpen ? "justify-center" : ""}`}
             aria-label="Logout"
           >
-            <LogOut className="w-6 h-6 text-indigo-300" />
-            {isOpen && <span className="animate-fade-in">Keluar</span>}
+            <LogOut className="w-5 h-5 text-[#AD6DA1] shrink-0" />
+            {isOpen && (
+              <span className="animate-fade-in text-white/80 text-base">
+                Keluar
+              </span>
+            )}
           </button>
           {isOpen && (
-            <p className="text-sm text-blue-300 mt-2 text-center animate-fade-in">
+            <p className="text-xs text-[#BFD833]/50 text-center animate-fade-in pb-1">
               © 2026 PPLG Nusa
             </p>
           )}

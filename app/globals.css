@@ -211,13 +211,13 @@ html.dark textarea::placeholder {
 
 /* ── Sidebar ── */
 html.dark aside {
-  background: linear-gradient(to bottom, #0f172a, #1e1b4b, #0f172a) !important;
+  background: linear-gradient(to bottom, #2d1440, #3d1d56, #2d1440) !important;
 }
 
 /* ── Topbar ── */
 html.dark header.bg-white {
   background-color: #1f2937 !important;
-  border-color: #374151 !important;
+  border-color: #BFD833 !important;
 }
 
 /* ── Table ── */
