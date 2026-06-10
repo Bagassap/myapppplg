@@ -111,33 +111,35 @@ export default function LoginPage() {
 
   if (status === "loading" || redirecting) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-[#44225A] to-[#762864]">
+      <div className="min-h-screen flex items-center justify-center bg-[#00182E]">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-[#BFD833] border-t-transparent rounded-full animate-spin" />
-          <span className="text-white/70 text-sm">Memuat...</span>
+          <div className="w-10 h-10 border-4 border-[#ACEC00] border-t-transparent rounded-full animate-spin" />
+          <span className="text-white/60 text-sm">Memuat...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center bg-linear-to-br from-[#44225A] via-[#762864] to-[#44225A] overflow-hidden font-sans px-4 sm:px-6 md:px-0">
+    <main className="relative flex min-h-screen items-center justify-center bg-[#00182E] overflow-hidden font-sans px-4 sm:px-6 md:px-0">
 
       {/* Dekoratif blob */}
-      <div className="absolute -top-24 -left-16 w-96 h-96 bg-[#BFD833]/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-28 -right-12 w-96 h-96 bg-[#AD6DA1]/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/3 right-1/4 w-64 h-64 bg-[#762864]/30 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-24 -left-16 w-96 h-96 bg-[#013FF6]/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-28 -right-12 w-80 h-80 bg-[#ACEC00]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/3 right-1/3 w-64 h-64 bg-[#013FF6]/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="relative z-10 flex flex-col md:flex-row w-full max-w-sm sm:max-w-md md:max-w-5xl bg-white rounded-3xl shadow-2xl overflow-hidden mx-auto">
+      <div className="relative z-10 flex flex-col md:flex-row w-full max-w-sm sm:max-w-md md:max-w-5xl rounded-3xl shadow-2xl overflow-hidden mx-auto border border-white/10">
 
         {/* Panel kiri — hanya desktop */}
-        <div className="hidden md:flex w-1/2 flex-col items-center justify-center bg-linear-to-b from-[#44225A] to-[#762864] p-12 gap-8 relative overflow-hidden">
-          {/* Dekoratif dalam panel kiri */}
-          <div className="absolute top-0 right-0 w-48 h-48 bg-[#BFD833]/10 rounded-full blur-2xl" />
-          <div className="absolute bottom-0 left-0 w-40 h-40 bg-[#AD6DA1]/15 rounded-full blur-2xl" />
+        <div className="hidden md:flex w-1/2 flex-col items-center justify-center bg-[#00182E] p-12 gap-8 relative overflow-hidden border-r border-white/10">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-[#013FF6]/15 rounded-full blur-2xl" />
+          <div className="absolute bottom-0 left-0 w-40 h-40 bg-[#ACEC00]/10 rounded-full blur-2xl" />
+
+          {/* Accent line atas */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-[#ACEC00]" />
 
           <div className="relative">
-            <div className="absolute inset-0 bg-[#BFD833]/20 rounded-full blur-2xl scale-110" />
+            <div className="absolute inset-0 bg-[#ACEC00]/15 rounded-full blur-2xl scale-125" />
             <Image
               src="/img/PPLG.png"
               alt="Logo PPLG"
@@ -152,24 +154,26 @@ export default function LoginPage() {
             <h2 className="text-2xl font-bold text-white mb-2 leading-tight">
               Sistem Presensi Online
             </h2>
-            <p className="text-[#BFD833] text-sm font-medium">
+            <p className="text-[#ACEC00] text-sm font-semibold tracking-wide">
               PPLG — Pengembangan Perangkat Lunak dan GIM
             </p>
           </div>
 
           {/* Dot indicators */}
           <div className="flex gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#BFD833]" />
-            <div className="w-2.5 h-2.5 rounded-full bg-[#AD6DA1]/60" />
-            <div className="w-2.5 h-2.5 rounded-full bg-white/30" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#ACEC00]" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#013FF6]" />
+            <div className="w-2.5 h-2.5 rounded-full bg-white/20" />
           </div>
         </div>
 
         {/* Panel kanan — form */}
-        <div className="w-full md:w-1/2 p-6 sm:p-8 md:p-12 flex flex-col items-center justify-center">
+        <div className="w-full md:w-1/2 bg-white p-6 sm:p-8 md:p-12 flex flex-col items-center justify-center relative">
+          {/* Accent line atas (mobile) */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-[#ACEC00] md:hidden" />
 
           {/* Logo mobile only */}
-          <div className="flex justify-center mb-5 md:hidden">
+          <div className="flex justify-center mb-5 md:hidden mt-3">
             <Image
               src="/img/PPLG.png"
               alt="Logo"
@@ -180,13 +184,13 @@ export default function LoginPage() {
           </div>
 
           {/* Judul */}
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-linear-to-r from-[#44225A] via-[#762864] to-[#44225A] bg-clip-text text-transparent text-center mb-1">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-linear-to-r from-[#00182E] via-[#013FF6] to-[#00182E] bg-clip-text text-transparent text-center mb-1">
             Selamat Datang
           </h1>
-          <p className="text-center text-[#AD6DA1] text-sm font-medium mb-1">
+          <p className="text-center text-[#013FF6] text-sm font-semibold mb-1">
             Pengembangan Perangkat Lunak dan GIM
           </p>
-          <p className="text-center text-gray-400 text-xs mb-6 leading-relaxed">
+          <p className="text-center text-gray-400 text-xs mb-6">
             Masuk ke akun Anda untuk melakukan presensi
           </p>
 
@@ -204,15 +208,15 @@ export default function LoginPage() {
 
             {/* Email */}
             <div>
-              <label className="block text-xs font-semibold text-[#44225A] uppercase tracking-widest mb-1.5">
+              <label className="block text-xs font-bold text-[#00182E] uppercase tracking-widest mb-1.5">
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#44225A]/40 w-4.5 h-4.5" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#00182E]/30 w-4 h-4" />
                 <input
                   type="email"
                   placeholder="nama@sekolah.sch.id"
-                  className="pl-10 pr-4 w-full py-3 rounded-xl border-2 border-gray-200 text-gray-800 placeholder-gray-300 focus:border-[#44225A] focus:outline-none transition-colors text-sm disabled:bg-gray-50"
+                  className="pl-10 pr-4 w-full py-3 rounded-xl border-2 border-gray-200 text-gray-800 placeholder-gray-300 focus:border-[#ACEC00] focus:outline-none transition-colors text-sm disabled:bg-gray-50"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setError(""); }}
                   required
@@ -225,15 +229,15 @@ export default function LoginPage() {
 
             {/* Password */}
             <div>
-              <label className="block text-xs font-semibold text-[#44225A] uppercase tracking-widest mb-1.5">
+              <label className="block text-xs font-bold text-[#00182E] uppercase tracking-widest mb-1.5">
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#7A8B33]/60 w-4.5 h-4.5" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#013FF6]/40 w-4 h-4" />
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="pl-10 pr-10 w-full py-3 rounded-xl border-2 border-gray-200 text-gray-800 placeholder-gray-300 focus:border-[#7A8B33] focus:outline-none transition-colors text-sm disabled:bg-gray-50"
+                  className="pl-10 pr-10 w-full py-3 rounded-xl border-2 border-gray-200 text-gray-800 placeholder-gray-300 focus:border-[#013FF6] focus:outline-none transition-colors text-sm disabled:bg-gray-50"
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError(""); }}
                   required
@@ -243,22 +247,22 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((p) => !p)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#44225A] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#00182E] transition-colors"
                   tabIndex={-1}
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
-            {/* Submit button */}
+            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 mt-2 rounded-full bg-[#BFD833] hover:bg-[#adc02b] text-[#44225A] font-bold shadow-lg shadow-[#BFD833]/30 hover:shadow-xl hover:scale-[1.02] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 text-sm sm:text-base flex items-center justify-center gap-2"
+              className="w-full py-3 mt-2 rounded-full bg-[#ACEC00] hover:bg-[#9dd500] text-[#00182E] font-bold shadow-lg shadow-[#ACEC00]/25 hover:shadow-xl hover:scale-[1.02] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 text-sm sm:text-base flex items-center justify-center gap-2"
             >
               {loading && (
-                <div className="w-4 h-4 border-2 border-[#44225A] border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-[#00182E] border-t-transparent rounded-full animate-spin" />
               )}
               {loading ? "Memproses..." : "Masuk"}
             </button>
@@ -267,7 +271,7 @@ export default function LoginPage() {
           <p className="text-center text-sm mt-4">
             <Link
               href="/forgot-password"
-              className="text-[#762864] hover:text-[#44225A] font-medium transition-colors"
+              className="text-[#013FF6] hover:text-[#00182E] font-semibold transition-colors"
             >
               Lupa Password?
             </Link>

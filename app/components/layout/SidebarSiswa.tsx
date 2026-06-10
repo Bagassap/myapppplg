@@ -42,14 +42,13 @@ export default function SidebarSiswa() {
       {isMobileOpen && (
         <div
           onClick={closeMobileSidebar}
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm transition-opacity"
         />
       )}
 
       <aside
         className={`
-          bg-linear-to-b from-[#44225A] via-[#44225A] to-[#762864]
-          text-white flex flex-col justify-between shadow-2xl min-h-screen transition-all duration-300
+          bg-[#00182E] text-white flex flex-col justify-between shadow-2xl min-h-screen transition-all duration-300
           ${isOpen ? "w-72" : "w-20"}
           rounded-r-2xl
           fixed inset-y-0 left-0 z-50
@@ -57,9 +56,12 @@ export default function SidebarSiswa() {
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
-        {/* Header sidebar */}
+        <div className="absolute top-0 right-0 bottom-0 w-0.5 bg-[#ACEC00]/30 rounded-r-2xl" />
+
         <div className="shrink-0 flex flex-col gap-5 p-5">
-          <div className="flex items-center justify-between">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-[#ACEC00] rounded-tr-2xl" />
+
+          <div className="flex items-center justify-between mt-1">
             {isOpen && (
               <div className="flex items-center gap-3 animate-fade-in">
                 <img
@@ -67,41 +69,39 @@ export default function SidebarSiswa() {
                   alt="Logo"
                   width={110}
                   height={110}
-                  className="rounded-xl shadow-md transition-transform duration-300 hover:scale-105"
+                  className="rounded-xl transition-transform duration-300 hover:scale-105"
                 />
               </div>
             )}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="p-2 hover:bg-white/15 rounded-xl transition-all duration-300 hidden lg:flex items-center justify-center"
+              className="p-2 hover:bg-[#013FF6] rounded-xl transition-all duration-200 hidden lg:flex items-center justify-center"
               aria-label="Toggle sidebar"
             >
               {isOpen ? (
-                <ChevronLeft className="text-[#BFD833] w-5 h-5" />
+                <ChevronLeft className="text-[#ACEC00] w-5 h-5" />
               ) : (
-                <Menu className="text-[#BFD833] w-5 h-5" />
+                <Menu className="text-[#ACEC00] w-5 h-5" />
               )}
             </button>
             <button
               onClick={closeMobileSidebar}
-              className="p-2 hover:bg-white/15 rounded-xl transition-all duration-300 lg:hidden"
+              className="p-2 hover:bg-[#013FF6] rounded-xl transition-all duration-200 lg:hidden"
               aria-label="Close mobile sidebar"
             >
-              <ChevronLeft className="text-[#BFD833] w-5 h-5" />
+              <ChevronLeft className="text-[#ACEC00] w-5 h-5" />
             </button>
           </div>
 
-          {/* Divider + label */}
-          <div className="border-b border-white/15" />
+          <div className="border-b border-white/10" />
           {isOpen && (
-            <span className="text-[#BFD833]/70 text-xs font-semibold uppercase tracking-widest animate-fade-in px-1">
+            <span className="text-[#ACEC00]/60 text-xs font-bold uppercase tracking-widest animate-fade-in px-1">
               Navigasi
             </span>
           )}
         </div>
 
-        {/* Menu navigasi */}
-        <nav className="flex-1 flex flex-col gap-1.5 px-3 overflow-y-auto">
+        <nav className="flex-1 flex flex-col gap-1 px-3 overflow-y-auto">
           {menu.map((item, idx) => {
             const active = pathname === item.href;
             return (
@@ -113,8 +113,8 @@ export default function SidebarSiswa() {
                   group flex items-center gap-3 px-3 py-3 rounded-xl
                   transition-all duration-200 ease-in-out font-medium
                   ${active
-                    ? "bg-[#BFD833] shadow-lg shadow-[#BFD833]/20"
-                    : "hover:bg-white/10"
+                    ? "bg-[#ACEC00] shadow-lg shadow-[#ACEC00]/20"
+                    : "hover:bg-[#013FF6]"
                   }
                   ${!isOpen ? "justify-center" : ""}
                 `}
@@ -123,9 +123,7 @@ export default function SidebarSiswa() {
               >
                 <span
                   className={`flex items-center justify-center w-5 h-5 shrink-0 transition-colors duration-200 ${
-                    active
-                      ? "text-[#44225A]"
-                      : "text-white/60 group-hover:text-white"
+                    active ? "text-[#00182E]" : "text-white/50 group-hover:text-white"
                   }`}
                 >
                   {item.icon}
@@ -133,7 +131,7 @@ export default function SidebarSiswa() {
                 {isOpen && (
                   <span
                     className={`truncate animate-fade-in text-base transition-colors duration-200 ${
-                      active ? "text-[#44225A] font-semibold" : "text-white/90"
+                      active ? "text-[#00182E] font-bold" : "text-white/80"
                     }`}
                   >
                     {item.name}
@@ -144,22 +142,21 @@ export default function SidebarSiswa() {
           })}
         </nav>
 
-        {/* Footer sidebar */}
-        <div className="p-3 border-t border-white/15 flex flex-col gap-3 shrink-0">
+        <div className="p-3 border-t border-white/10 flex flex-col gap-2 shrink-0">
           <button
             onClick={handleLogout}
-            className={`flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-red-500/20 transition-all duration-200 font-medium w-full text-left ${!isOpen ? "justify-center" : ""}`}
+            className={`flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-red-600/20 transition-all duration-200 font-medium w-full text-left ${!isOpen ? "justify-center" : ""}`}
             aria-label="Logout"
           >
-            <LogOut className="w-5 h-5 text-[#AD6DA1] shrink-0" />
+            <LogOut className="w-5 h-5 text-[#013FF6] shrink-0" />
             {isOpen && (
-              <span className="animate-fade-in text-white/80 text-base">
+              <span className="animate-fade-in text-white/70 text-base">
                 Keluar
               </span>
             )}
           </button>
           {isOpen && (
-            <p className="text-xs text-[#BFD833]/50 text-center animate-fade-in pb-1">
+            <p className="text-xs text-[#ACEC00]/40 text-center animate-fade-in pb-1">
               © 2026 PPLG Nusa
             </p>
           )}
