@@ -1,63 +1,248 @@
-import Image from "next/image";
+"use client";
 import Link from "next/link";
-import { BookOpen, ClipboardList, Trophy, User } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function Home() {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), 50);
+    return () => clearTimeout(t);
+  }, []);
+
+  const cards = [
+    { icon: "👨‍💼", title: "Admin", desc: "Kelola seluruh data absensi PKL siswa dan laporan kehadiran." },
+    { icon: "👨‍🏫", title: "Guru", desc: "Pantau absensi siswa bimbingan secara real-time." },
+    { icon: "👨‍🎓", title: "Siswa", desc: "Catat kehadiran harian beserta foto, lokasi, dan tanda tangan." },
+  ];
+
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-center bg-linear-to-br from-blue-600 to-indigo-700 overflow-hidden font-sans">
-      {/* Decorative shapes */}
-      <div className="absolute -top-25 -left-25 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-blob"></div>
-      <div className="absolute -bottom-30 -right-20 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+    <>
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "#00182E",
+          display: "flex",
+          flexDirection: "column",
+          fontFamily: "'Inter', 'Segoe UI', sans-serif",
+        }}
+      >
+        {/* ── Hero ── */}
+        <section
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "80px 24px 60px",
+            opacity: visible ? 1 : 0,
+            transform: visible ? "translateY(0)" : "translateY(24px)",
+            transition: "opacity .6s ease, transform .6s ease",
+          }}
+        >
+          {/* Badge */}
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "6px 18px",
+              borderRadius: 100,
+              border: "1.5px solid #013FF6",
+              marginBottom: 32,
+            }}
+          >
+            <span
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: "50%",
+                background: "#ACEC00",
+                display: "inline-block",
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{
+                color: "#94a3b8",
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "1.5px",
+                textTransform: "uppercase",
+              }}
+            >
+              PPLG NUSP
+            </span>
+          </div>
 
-      {/* Card utama */}
-      <div className="relative z-10 flex flex-col items-center gap-6 p-8 bg-white/10 backdrop-blur-md rounded-3xl shadow-2xl max-w-md w-full animate-fadeIn">
-        {/* Logo */}
-        <div className="mb-4 mt-4">
-          <Image
-            src="/img/PPLG.png"
-            alt="Logo"
-            width={100}
-            height={100}
-            priority
+          {/* Icon */}
+          <div
+            style={{
+              width: 96,
+              height: 96,
+              borderRadius: 24,
+              background: "rgba(172,236,0,0.1)",
+              border: "2px solid rgba(172,236,0,0.25)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 48,
+              marginBottom: 28,
+              boxShadow: "0 0 48px rgba(172,236,0,0.12)",
+            }}
+          >
+            🎓
+          </div>
+
+          {/* Title */}
+          <h1
+            style={{
+              color: "#fff",
+              fontWeight: 900,
+              fontSize: "clamp(28px,5vw,42px)",
+              textAlign: "center",
+              lineHeight: 1.15,
+              margin: "0 0 12px",
+              letterSpacing: "-0.5px",
+            }}
+          >
+            Sistem Presensi{" "}
+            <span style={{ color: "#ACEC00" }}>Online PKL</span>
+          </h1>
+
+          {/* Subtitle */}
+          <p
+            style={{
+              color: "#94a3b8",
+              fontSize: 16,
+              textAlign: "center",
+              margin: "0 0 28px",
+              maxWidth: 380,
+              lineHeight: 1.7,
+            }}
+          >
+            Pengembangan Perangkat Lunak dan GIM
+          </p>
+
+          {/* Divider */}
+          <div
+            style={{
+              width: 60,
+              height: 3,
+              background: "#ACEC00",
+              borderRadius: 99,
+              marginBottom: 36,
+            }}
           />
-        </div>
 
-        {/* Judul */}
-        <h1 className="text-4xl md:text-5xl font-extrabold text-white text-center">
-          Sistem Presensi <br />{" "}
-          <span className="text-yellow-300">Online PKL</span>
-        </h1>
-
-        {/* Info fitur / icon */}
-        <div className="mt-6 grid grid-cols-2 gap-4 w-full">
-          <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2 hover:bg-white/20 transition">
-            <BookOpen className="w-5 h-5 text-blue-400" />
-            <span className="text-white text-sm">Presensi Harian</span>
-          </div>
-          <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2 hover:bg-white/20 transition">
-            <ClipboardList className="w-5 h-5 text-green-400" />
-            <span className="text-white text-sm">Jurnal Kegiatan</span>
-          </div>
-          <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2 hover:bg-white/20 transition">
-            <Trophy className="w-5 h-5 text-yellow-300" />
-            <span className="text-white text-sm">Riwayat Kehadiran</span>
-          </div>
-          <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2 hover:bg-white/20 transition">
-            <User className="w-5 h-5 text-pink-400" />
-            <span className="text-white text-sm">Profil & Data PKL</span>
-          </div>
-        </div>
-
-        {/* Tombol */}
-        <div className="mt-6 flex space-x-4 w-full justify-center">
+          {/* CTA */}
           <Link
             href="/login"
-            className="px-6 py-3 rounded-full bg-linear-to-r from-yellow-400 to-yellow-600 text-white font-semibold shadow-lg hover:scale-105 hover:shadow-xl transition transform"
+            style={{
+              display: "inline-block",
+              padding: "14px 40px",
+              background: "#ACEC00",
+              color: "#00182E",
+              borderRadius: 12,
+              fontWeight: 800,
+              fontSize: 15,
+              textDecoration: "none",
+              letterSpacing: "0.3px",
+              boxShadow: "0 8px 32px rgba(172,236,0,0.28)",
+              transition: "transform .2s, box-shadow .2s",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1.05)";
+              (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 14px 44px rgba(172,236,0,0.45)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1)";
+              (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 8px 32px rgba(172,236,0,0.28)";
+            }}
           >
-            Login Sekarang
+            Masuk Sekarang →
           </Link>
-        </div>
+        </section>
+
+        {/* ── Feature Cards ── */}
+        <section
+          style={{
+            background: "#001a35",
+            padding: "40px 24px 48px",
+            opacity: visible ? 1 : 0,
+            transition: "opacity .6s ease .2s",
+          }}
+        >
+          <div
+            style={{
+              maxWidth: 900,
+              margin: "0 auto",
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+              gap: 20,
+            }}
+          >
+            {cards.map((card) => (
+              <div
+                key={card.title}
+                style={{
+                  background: "#012444",
+                  borderRadius: 16,
+                  padding: 24,
+                  borderTop: "3px solid #013FF6",
+                  transition: "transform .2s, box-shadow .2s",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLDivElement).style.transform = "translateY(-4px)";
+                  (e.currentTarget as HTMLDivElement).style.boxShadow = "0 12px 32px rgba(1,63,246,0.2)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
+                  (e.currentTarget as HTMLDivElement).style.boxShadow = "none";
+                }}
+              >
+                <span style={{ fontSize: 36, display: "block", marginBottom: 12, lineHeight: 1 }}>
+                  {card.icon}
+                </span>
+                <h3
+                  style={{
+                    color: "#fff",
+                    fontWeight: 800,
+                    fontSize: 17,
+                    margin: "0 0 8px",
+                  }}
+                >
+                  {card.title}
+                </h3>
+                <p
+                  style={{
+                    color: "#94a3b8",
+                    fontSize: 13,
+                    margin: 0,
+                    lineHeight: 1.65,
+                  }}
+                >
+                  {card.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Footer ── */}
+        <footer
+          style={{
+            background: "#00182E",
+            borderTop: "1px solid #013FF6",
+            padding: "20px 24px",
+            textAlign: "center",
+          }}
+        >
+          <p style={{ color: "#94a3b8", fontSize: 12, margin: 0 }}>
+            © 2026 PPLG NUSP · Sistem Presensi PKL
+          </p>
+        </footer>
       </div>
-    </main>
+    </>
   );
 }
