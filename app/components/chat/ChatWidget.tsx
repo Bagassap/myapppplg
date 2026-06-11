@@ -69,7 +69,7 @@ function ToastNotif({ toast, onClose, onOpen }: {
   return (
     <div
       onClick={() => { onOpen(toast.convId); onClose(toast.id); }}
-      style={{ display: "flex", alignItems: "flex-start", gap: "10px", padding: "12px 14px", borderRadius: "14px", boxShadow: "0 8px 30px rgba(0,0,0,0.4)", cursor: "pointer", minWidth: "240px", maxWidth: "300px", background: "#00182E", border: "1px solid #013FF6", animation: "slideInRight .25s ease" }}
+      style={{ display: "flex", alignItems: "flex-start", gap: "10px", padding: "12px 14px", borderRadius: "14px", boxShadow: "0 8px 30px rgba(0,0,0,0.5)", cursor: "pointer", minWidth: "240px", maxWidth: "300px", background: "#00182E", animation: "slideInRight .25s ease" }}
     >
       <div style={{ width: "34px", height: "34px", borderRadius: "50%", background: getAvatarColor(toast.name), display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "11px", fontWeight: "bold", flexShrink: 0 }}>
         {getInitials(toast.name)}
@@ -304,8 +304,8 @@ export default function ChatWidget({
       {showBroadcast && (
         <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
           <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={() => { setShowBroadcast(false); setBroadcastMsg(""); setBroadcastResult(null); }} />
-          <div style={{ position: "relative", background: "#00182E", border: "1px solid #013FF6", borderRadius: "16px", boxShadow: "0 20px 60px rgba(0,0,0,0.6)", width: "100%", maxWidth: "400px", overflow: "hidden", zIndex: 10 }}>
-            <div style={{ padding: "16px 20px", borderBottom: "1px solid #013FF6", display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{ position: "relative", background: "#00182E", borderRadius: "16px", boxShadow: "0 20px 60px rgba(0,0,0,0.6)", width: "100%", maxWidth: "400px", overflow: "hidden", zIndex: 10 }}>
+            <div style={{ padding: "16px 20px", background: "#001525", display: "flex", alignItems: "center", gap: "12px" }}>
               <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "rgba(245,158,11,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 <Megaphone style={{ width: "18px", height: "18px", color: "#f59e0b" }} />
               </div>
@@ -335,7 +335,7 @@ export default function ChatWidget({
                     placeholder="Tulis pesan broadcast..."
                     rows={4}
                     autoFocus
-                    style={{ width: "100%", background: "#012444", border: "1px solid #013FF6", borderRadius: "10px", padding: "10px 12px", color: "#ffffff", outline: "none", fontSize: "13px", resize: "none", boxSizing: "border-box", lineHeight: 1.5 }}
+                    style={{ width: "100%", background: "#012444", borderRadius: "10px", padding: "10px 12px", color: "#ffffff", outline: "none", border: "none", fontSize: "13px", resize: "none", boxSizing: "border-box", lineHeight: 1.5 }}
                   />
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "12px" }}>
                     <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "11px", margin: 0 }}>Dikirim ke semua siswa terdaftar</p>
@@ -368,15 +368,15 @@ export default function ChatWidget({
           className="sm:w-[740px]"
           style={{ position: "fixed", bottom: "84px", right: "16px", zIndex: 50, width: "calc(100vw - 2rem)", maxWidth: "740px", transition: "opacity .28s, transform .28s cubic-bezier(.32,1.25,.6,1)", opacity: visible ? 1 : 0, transform: visible ? "translateY(0) scale(1)" : "translateY(16px) scale(.97)", pointerEvents: visible ? "auto" : "none" }}
         >
-          <div style={{ background: "#00182E", border: "1px solid #013FF6", borderRadius: "16px", boxShadow: "0 20px 60px rgba(0,0,0,0.6)", overflow: "hidden", display: "flex", height: "520px" }}>
+          <div style={{ background: "#00182E", borderRadius: "16px", boxShadow: "0 20px 60px rgba(0,0,0,0.6)", overflow: "hidden", display: "flex", height: "520px" }}>
 
             {/* ── SIDEBAR KIRI ── */}
             <div
               className={`flex flex-col w-full sm:w-[260px] shrink-0 ${view === "thread" ? "hidden sm:flex" : "flex"}`}
-              style={{ background: "#00182E", borderRight: "2px solid #013FF6" }}
+              style={{ background: "#00182E" }}
             >
               {/* Sidebar Header */}
-              <div style={{ padding: "16px", borderBottom: "1px solid #013FF6", background: "#001525" }}>
+              <div style={{ padding: "16px", background: "#001525" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                     <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: getAvatarColor(session?.user?.name ?? null), display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "11px", fontWeight: "bold", flexShrink: 0 }}>
@@ -415,7 +415,7 @@ export default function ChatWidget({
                       placeholder="Cari..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      style={{ width: "100%", paddingLeft: "30px", paddingRight: "10px", paddingTop: "7px", paddingBottom: "7px", background: "#012444", border: "1px solid #013FF6", borderRadius: "8px", color: "#ffffff", outline: "none", fontSize: "12px", boxSizing: "border-box" }}
+                      style={{ width: "100%", paddingLeft: "30px", paddingRight: "10px", paddingTop: "7px", paddingBottom: "7px", background: "#012444", border: "none", borderRadius: "8px", color: "#ffffff", outline: "none", fontSize: "12px", boxSizing: "border-box" }}
                     />
                   </div>
                 )}
@@ -424,13 +424,13 @@ export default function ChatWidget({
               {/* New Chat view */}
               {view === "new" && (
                 <>
-                  <div style={{ padding: "10px 12px", borderBottom: "1px solid rgba(1,63,246,0.3)", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div style={{ padding: "10px 12px", display: "flex", alignItems: "center", gap: "8px" }}>
                     <button onClick={goBack} style={{ background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.5)", display: "flex", padding: "4px" }}>
                       <ChevronLeft style={{ width: "16px", height: "16px" }} />
                     </button>
                     <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px", fontWeight: 600 }}>Pilih Siswa</span>
                   </div>
-                  <div style={{ padding: "10px 12px", borderBottom: "1px solid rgba(1,63,246,0.3)" }}>
+                  <div style={{ padding: "10px 12px" }}>
                     <div style={{ position: "relative" }}>
                       <Search style={{ width: "13px", height: "13px", position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.3)", pointerEvents: "none" }} />
                       <input
@@ -439,7 +439,7 @@ export default function ChatWidget({
                         value={recipientSearch}
                         onChange={(e) => setRecipientSearch(e.target.value)}
                         autoFocus
-                        style={{ width: "100%", paddingLeft: "30px", paddingRight: "10px", paddingTop: "7px", paddingBottom: "7px", background: "#012444", border: "1px solid #013FF6", borderRadius: "8px", color: "#ffffff", outline: "none", fontSize: "12px", boxSizing: "border-box" }}
+                        style={{ width: "100%", paddingLeft: "30px", paddingRight: "10px", paddingTop: "7px", paddingBottom: "7px", background: "#012444", border: "none", borderRadius: "8px", color: "#ffffff", outline: "none", fontSize: "12px", boxSizing: "border-box" }}
                       />
                     </div>
                   </div>
@@ -459,7 +459,7 @@ export default function ChatWidget({
                         <button
                           key={r.id}
                           onClick={() => startChat(r.id)}
-                          style={{ width: "100%", display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", background: "transparent", border: "none", borderBottom: "1px solid rgba(1,63,246,0.2)", cursor: "pointer", textAlign: "left", transition: "background .15s" }}
+                          style={{ width: "100%", display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", background: "transparent", border: "none", cursor: "pointer", textAlign: "left", transition: "background .15s" }}
                           onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(1,63,246,0.1)"; }}
                           onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                         >
@@ -539,7 +539,7 @@ export default function ChatWidget({
                       grouped.map((group, gi) => (
                         <div key={gi}>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", margin: "12px 0" }}>
-                            <span style={{ background: "#012444", color: "rgba(255,255,255,0.4)", padding: "3px 10px", borderRadius: "20px", fontSize: "10px", border: "1px solid #013FF6" }}>
+                            <span style={{ background: "#012444", color: "rgba(255,255,255,0.4)", padding: "3px 10px", borderRadius: "20px", fontSize: "10px" }}>
                               {formatDateDivider(group.date)}
                             </span>
                           </div>
@@ -558,7 +558,7 @@ export default function ChatWidget({
                   </div>
 
                   {/* Input */}
-                  <div style={{ background: "#00182E", padding: "12px 16px", borderTop: "2px solid #ACEC00", display: "flex", gap: "10px", alignItems: "flex-end", flexShrink: 0 }}>
+                  <div style={{ background: "#00182E", padding: "12px 16px", display: "flex", gap: "10px", alignItems: "flex-end", flexShrink: 0 }}>
                     <textarea
                       ref={inputRef}
                       value={messageInput}
@@ -566,7 +566,7 @@ export default function ChatWidget({
                       onKeyDown={handleKey}
                       placeholder={`Pesan ke ${activeConv.otherUser?.name ?? ""}...`}
                       rows={1}
-                      style={{ flex: 1, background: "#012444", border: "1px solid #013FF6", borderRadius: "20px", padding: "8px 16px", color: "#ffffff", outline: "none", fontSize: "13px", resize: "none", lineHeight: 1.5, maxHeight: "80px", overflowY: "auto", fontFamily: "inherit" }}
+                      style={{ flex: 1, background: "#012444", border: "none", borderRadius: "20px", padding: "8px 16px", color: "#ffffff", outline: "none", fontSize: "13px", resize: "none", lineHeight: 1.5, maxHeight: "80px", overflowY: "auto", fontFamily: "inherit" }}
                       onInput={(e) => { const t = e.currentTarget; t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 80) + "px"; }}
                     />
                     <button
@@ -580,7 +580,7 @@ export default function ChatWidget({
                 </>
               ) : (
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "12px", background: "#001525" }}>
-                  <div style={{ width: "56px", height: "56px", borderRadius: "14px", background: "#012444", border: "2px solid #013FF6", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ width: "56px", height: "56px", borderRadius: "14px", background: "#012444", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <MessageCircle style={{ width: "28px", height: "28px", color: "#013FF6" }} />
                   </div>
                   <div style={{ textAlign: "center" }}>
@@ -606,7 +606,7 @@ function ConvItem({ conv, isActive, currentUserId, onClick }: { conv: Conversati
   return (
     <button
       onClick={onClick}
-      style={{ width: "100%", display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", cursor: "pointer", textAlign: "left", background: isActive ? "#012444" : "transparent", borderTop: "none", borderRight: "none", borderBottom: "1px solid rgba(1,63,246,0.15)", borderLeft: isActive ? "3px solid #ACEC00" : "3px solid transparent", transition: "background .15s", boxSizing: "border-box" }}
+      style={{ width: "100%", display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", cursor: "pointer", textAlign: "left", background: isActive ? "#012444" : "transparent", border: "none", borderLeft: isActive ? "3px solid #ACEC00" : "3px solid transparent", transition: "background .15s", boxSizing: "border-box" }}
       onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "#011f3a"; }}
       onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
     >
@@ -662,7 +662,7 @@ function MsgBubble({ message, isOwn, showAvatar }: { message: Message; isOwn: bo
         <div style={
           isOwn
             ? { alignSelf: "flex-end", background: "#013FF6", color: "#ffffff", padding: "8px 14px", borderRadius: "16px 16px 4px 16px", maxWidth: "100%", fontSize: "13px" }
-            : { alignSelf: "flex-start", background: "#012444", color: "#ffffff", padding: "8px 14px", borderRadius: "16px 16px 16px 4px", maxWidth: "100%", fontSize: "13px", border: "1px solid #013FF6" }
+            : { alignSelf: "flex-start", background: "#012444", color: "#ffffff", padding: "8px 14px", borderRadius: "16px 16px 16px 4px", maxWidth: "100%", fontSize: "13px" }
         }>
           <p style={{ margin: 0, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{message.content}</p>
           <div style={{ display: "flex", alignItems: "center", gap: "3px", marginTop: "3px", justifyContent: isOwn ? "flex-end" : "flex-start" }}>
