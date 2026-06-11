@@ -2,6 +2,7 @@
 
 import Sidebar from "@/components/layout/SidebarSiswa";
 import TopBar from "@/components/layout/TopBar";
+import MediaModal from "@/components/absensi/MediaModal";
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import dynamic from "next/dynamic";
@@ -32,7 +33,6 @@ import {
   BookOpen,
   ChevronLeft,
   ChevronRight,
-  Image as ImageIcon,
   X,
   CheckCircle2,
   AlertCircle,
@@ -87,7 +87,8 @@ export default function SiswaAbsensi() {
   const [error, setError] = useState<string | null>(null);
   const [presensiData, setPresensiData] = useState<any[]>([]);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [previewType, setPreviewType] = useState<"foto" | "ttd">("foto");
+  const [previewType, setPreviewType] = useState<"foto" | "ttd" | "lokasi">("foto");
+  const [fotoPreviewUrl, setFotoPreviewUrl] = useState<string | null>(null);
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [jamSekarang, setJamSekarang] = useState("");
@@ -180,12 +181,7 @@ export default function SiswaAbsensi() {
         const siswaRes = await fetch("/api/data-siswa");
         if (siswaRes.ok) {
           const siswaRaw = await siswaRes.json();
-          const siswa =
-            Array.isArray(siswaRaw) && siswaRaw.length > 0
-              ? siswaRaw[0]
-              : Array.isArray(siswaRaw)
-                ? null
-                : siswaRaw;
+          const siswa = siswaRaw?.data?.[0] ?? (Array.isArray(siswaRaw) ? siswaRaw[0] : null);
           if (siswa) {
             setSiswaData({
               nama: siswa.name || session.user?.name || "",
@@ -265,19 +261,19 @@ export default function SiswaAbsensi() {
     setPreviewType(type);
   };
 
-  const compressImage = (
-    file: File,
-    maxWidth = 800,
-    quality = 0.6,
-  ): Promise<File> => {
+  const compressImage = (file: File): Promise<File> => {
     return new Promise((resolve) => {
+      if (file.size <= 1024 * 1024) { resolve(file); return; }
       const img = new Image();
       const url = URL.createObjectURL(file);
       img.onload = () => {
         URL.revokeObjectURL(url);
-        const scale = Math.min(1, maxWidth / img.width);
-        const w = Math.round(img.width * scale);
-        const h = Math.round(img.height * scale);
+        const maxDim = 1280;
+        let { width: w, height: h } = img;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) { h = Math.round((h / w) * maxDim); w = maxDim; }
+          else { w = Math.round((w / h) * maxDim); h = maxDim; }
+        }
         const canvas = document.createElement("canvas");
         canvas.width = w;
         canvas.height = h;
@@ -287,21 +283,24 @@ export default function SiswaAbsensi() {
           (blob) => {
             canvas.width = 0;
             canvas.height = 0;
-            resolve(
-              blob
-                ? new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), {
-                    type: "image/jpeg",
-                  })
-                : file,
-            );
+            resolve(blob ? new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" }) : file);
           },
           "image/jpeg",
-          quality,
+          0.75,
         );
       };
       img.onerror = () => resolve(file);
       img.src = url;
     });
+  };
+
+  const handleFotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const compressed = await compressImage(file);
+    if (fotoPreviewUrl) URL.revokeObjectURL(fotoPreviewUrl);
+    setFotoPreviewUrl(URL.createObjectURL(compressed));
+    setAbsenForm((prev) => ({ ...prev, foto: compressed }));
   };
 
   const uploadWithRetry = async (
@@ -337,16 +336,15 @@ export default function SiswaAbsensi() {
 
     setIsSubmitting(true);
     try {
-      const fotoKompres = await compressImage(absenForm.foto, 1280, 0.75);
       const fotoForm = new FormData();
-      fotoForm.append("foto", fotoKompres);
+      fotoForm.append("foto", absenForm.foto);
       const fotoRes = await uploadWithRetry("/api/upload?type=foto", fotoForm);
       if (!fotoRes.ok) throw new Error("Gagal upload foto");
       const fotoUrl = (await fotoRes.json()).url;
 
       let buktiUrl: string | null = null;
       if (absenForm.bukti) {
-        const buktiKompres = await compressImage(absenForm.bukti, 1280, 0.75);
+        const buktiKompres = await compressImage(absenForm.bukti);
         const buktiForm = new FormData();
         buktiForm.append("bukti", buktiKompres);
         const buktiRes = await uploadWithRetry(
@@ -391,6 +389,7 @@ export default function SiswaAbsensi() {
       setTimeout(() => setShowSuccess(false), 5000);
       setShowAbsenModal(false);
       clearSignature();
+      if (fotoPreviewUrl) { URL.revokeObjectURL(fotoPreviewUrl); setFotoPreviewUrl(null); }
       setAbsenForm({
         status: "Hadir",
         kegiatan: "",
@@ -631,14 +630,12 @@ export default function SiswaAbsensi() {
                         </td>
                         <td className="px-5 py-3.5 hidden sm:table-cell">
                           {item.lokasi ? (
-                            <a
-                              href={`https://www.google.com/maps?q=${item.lokasi}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                            <button
+                              onClick={() => { setPreviewUrl(item.lokasi); setPreviewType("lokasi"); }}
                               className="inline-flex items-center gap-1 text-xs text-[#013FF6] bg-[#013FF6]/8 hover:bg-[#013FF6]/15 px-2 py-1 rounded-lg border border-[#013FF6]/20 font-medium transition-colors"
                             >
-                              <MapPin className="w-3 h-3" /> Maps
-                            </a>
+                              <MapPin className="w-3 h-3" /> Lihat
+                            </button>
                           ) : (
                             <span className="text-gray-300">-</span>
                           )}
@@ -913,15 +910,24 @@ export default function SiswaAbsensi() {
                           accept="image/*"
                           capture="user"
                           disabled={isSubmitting}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0] || null;
-                            setAbsenForm((prev) => ({ ...prev, foto: file }));
-                          }}
+                          onChange={handleFotoChange}
                           className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#013FF6]/10 file:text-[#013FF6] hover:file:bg-[#013FF6]/15"
                         />
+                        {fotoPreviewUrl && (
+                          <div className="mt-2 relative rounded-xl overflow-hidden border border-[#013FF6]/20">
+                            <img src={fotoPreviewUrl} alt="Preview foto" className="w-full max-h-36 object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => { URL.revokeObjectURL(fotoPreviewUrl); setFotoPreviewUrl(null); setAbsenForm(prev => ({ ...prev, foto: null })); }}
+                              className="absolute top-1.5 right-1.5 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
-                        Wajib ambil foto selfie terbaru.
+                        Wajib ambil foto selfie terbaru. {absenForm.foto && !fotoPreviewUrl ? "" : absenForm.foto ? <span className="text-green-600 font-medium">✓ Foto dipilih</span> : ""}
                       </p>
                     </div>
 
@@ -1045,122 +1051,7 @@ export default function SiswaAbsensi() {
       </div>
 
       {previewUrl && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center"
-          style={{ animation: "fadeIn 0.2s ease" }}
-          onClick={() => setPreviewUrl(null)}
-        >
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,27,75,0.95) 100%)",
-              backdropFilter: "blur(20px)",
-            }}
-          />
-          <div
-            className="absolute top-0 left-0 w-96 h-96 rounded-full opacity-10"
-            style={{
-              background: "radial-gradient(circle, #6366f1, transparent)",
-              filter: "blur(60px)",
-              transform: "translate(-30%, -30%)",
-            }}
-          />
-          <div
-            className="absolute bottom-0 right-0 w-96 h-96 rounded-full opacity-10"
-            style={{
-              background: "radial-gradient(circle, #8b5cf6, transparent)",
-              filter: "blur(60px)",
-              transform: "translate(30%, 30%)",
-            }}
-          />
-          <div
-            className="relative w-full mx-4 flex flex-col items-center"
-            style={{
-              maxWidth: previewType === "ttd" ? "480px" : "720px",
-              animation: "scaleIn 0.25s cubic-bezier(0.34,1.56,0.64,1)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center gap-3 mb-4 self-start">
-              <div
-                className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase"
-                style={{
-                  background: "rgba(99,102,241,0.2)",
-                  border: "1px solid rgba(99,102,241,0.4)",
-                  color: "#a5b4fc",
-                }}
-              >
-                {previewType === "ttd" ? (
-                  <PenTool className="w-3 h-3" />
-                ) : (
-                  <ImageIcon className="w-3 h-3" />
-                )}
-                {previewType === "ttd" ? "Tanda Tangan" : "Foto Absensi"}
-              </div>
-            </div>
-            <div
-              className="w-full rounded-2xl overflow-hidden relative"
-              style={{
-                background:
-                  previewType === "ttd"
-                    ? "rgba(255,255,255,0.98)"
-                    : "transparent",
-                boxShadow:
-                  "0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08)",
-                padding: previewType === "ttd" ? "32px" : "0",
-              }}
-            >
-              {previewType !== "ttd" && (
-                <div
-                  className="absolute inset-0 rounded-2xl"
-                  style={{
-                    background:
-                      "linear-gradient(to bottom, transparent 60%, rgba(15,23,42,0.8))",
-                    zIndex: 1,
-                    pointerEvents: "none",
-                  }}
-                />
-              )}
-              <img
-                src={previewUrl}
-                alt={previewType === "foto" ? "Foto Absensi" : "Tanda Tangan"}
-                className="w-full block"
-                style={{
-                  maxHeight: previewType === "ttd" ? "200px" : "70vh",
-                  objectFit: previewType === "ttd" ? "contain" : "cover",
-                  borderRadius: previewType === "ttd" ? "0" : "16px",
-                }}
-              />
-            </div>
-            <div className="flex items-center justify-between w-full mt-4 px-1">
-              <p className="text-xs" style={{ color: "rgba(165,180,252,0.6)" }}>
-                Klik di luar untuk menutup
-              </p>
-              <button
-                onClick={() => setPreviewUrl(null)}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
-                style={{
-                  background: "rgba(255,255,255,0.08)",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  color: "rgba(255,255,255,0.8)",
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.background = "rgba(255,255,255,0.15)")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = "rgba(255,255,255,0.08)")
-                }
-              >
-                <X className="w-4 h-4" /> Tutup
-              </button>
-            </div>
-          </div>
-          <style>{`
-            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-            @keyframes scaleIn { from { opacity: 0; transform: scale(0.92) translateY(12px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-          `}</style>
-        </div>
+        <MediaModal type={previewType} data={previewUrl} onClose={() => setPreviewUrl(null)} />
       )}
 
       {showSuccess && (

@@ -2,6 +2,7 @@
 
 import Sidebar from "@/components/layout/SidebarGuru";
 import TopBar from "@/components/layout/TopBar";
+import MediaModal from "@/components/absensi/MediaModal";
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useExportPDF } from "@/hooks/useExportPDF";
@@ -502,7 +503,7 @@ export default function GuruAbsensi() {
   const [currentPage, setCurrentPage] = useState(1);
   const [modalSiswa, setModalSiswa] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [previewType, setPreviewType] = useState<"foto" | "ttd">("foto");
+  const [previewType, setPreviewType] = useState<"foto" | "ttd" | "lokasi">("foto");
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -1011,14 +1012,12 @@ export default function GuruAbsensi() {
                       </td>
                       <td className="px-4 py-3">
                         {item.lokasi ? (
-                          <a
-                            href={`https://www.google.com/maps?q=${item.lokasi}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            onClick={() => { setPreviewUrl(item.lokasi); setPreviewType("lokasi"); }}
                             className="inline-flex items-center gap-1 text-xs text-[#013FF6] bg-[#013FF6]/8 hover:bg-[#013FF6]/15 px-2 py-1 rounded-lg border border-[#013FF6]/20 font-medium transition-colors"
                           >
-                            <MapPin className="w-3 h-3" /> Maps
-                          </a>
+                            <MapPin className="w-3 h-3" /> Lihat
+                          </button>
                         ) : (
                           <span className="text-slate-300">—</span>
                         )}
@@ -1084,53 +1083,7 @@ export default function GuruAbsensi() {
       )}
 
       {previewUrl && (
-        <div
-          className="fixed inset-0 z-100 flex items-center justify-center p-4"
-          style={{ animation: "fadeIn .15s ease" }}
-          onClick={() => setPreviewUrl(null)}
-        >
-          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md" />
-          <div
-            className="relative max-w-2xl w-full flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-            style={{ animation: "scaleIn .2s cubic-bezier(0.34,1.56,0.64,1)" }}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                {previewType === "ttd" ? (
-                  <PenTool className="w-3 h-3" />
-                ) : (
-                  <ImageIcon className="w-3 h-3" />
-                )}
-                {previewType === "ttd" ? "Tanda Tangan" : "Foto Absensi"}
-              </span>
-              <button
-                onClick={() => setPreviewUrl(null)}
-                className="p-2 hover:bg-white/10 rounded-xl transition-colors"
-              >
-                <X className="w-4 h-4 text-slate-400" />
-              </button>
-            </div>
-            <div
-              className={`rounded-2xl overflow-hidden shadow-2xl ${previewType === "ttd" ? "bg-white p-8" : ""}`}
-            >
-              <img
-                src={previewUrl}
-                alt=""
-                className="w-full block"
-                style={{
-                  maxHeight: "72vh",
-                  objectFit: previewType === "ttd" ? "contain" : "cover",
-                  borderRadius: previewType === "ttd" ? 0 : 16,
-                }}
-              />
-            </div>
-            <p className="text-center text-xs text-gray-500 mt-3">
-              Klik di luar untuk menutup
-            </p>
-          </div>
-          <style>{`@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes scaleIn{from{opacity:0;transform:scale(0.94) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}`}</style>
-        </div>
+        <MediaModal type={previewType} data={previewUrl} onClose={() => setPreviewUrl(null)} />
       )}
       <style>{`@keyframes slideUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}`}</style>
     </div>

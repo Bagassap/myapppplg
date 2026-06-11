@@ -109,16 +109,22 @@ export async function GET(req: NextRequest) {
             );
         }
         if (role === "GURU") {
+            const guruUser = await prisma.user.findUnique({
+                where: { id: Number(userId) },
+                select: { name: true, username: true },
+            });
+            const guruSearchVals = [guruUser?.name, guruUser?.username].filter(Boolean) as string[];
+            const guruWhere = guruSearchVals.length > 0
+                ? { OR: guruSearchVals.map(v => ({ guruPembimbing: { contains: v, mode: "insensitive" as const } })) }
+                : { guruPembimbing: "" };
+
             const siswaBimbingan = await cachedQuery(
                 `guru:siswa:${userId}`,
                 120,
                 () =>
                     prisma.dataSiswa.findMany({
                         where: {
-                            guruPembimbing: {
-                                equals: session.user?.name ?? "",
-                                mode: "insensitive",
-                            },
+                            ...guruWhere,
                             ...(kelasFilter ? { kelas: kelasFilter } : {}),
                         },
                         select: { userId: true, kelas: true, tempatPKL: true },
