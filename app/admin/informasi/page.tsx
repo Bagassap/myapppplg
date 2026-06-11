@@ -1,180 +1,158 @@
 "use client";
-
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import Sidebar from "@/components/layout/SidebarAdmin";
 import TopBar from "@/components/layout/TopBar";
-import { useState, useEffect, useCallback } from "react";
-import { Plus, X, Pencil, Trash2, Loader2, Megaphone } from "lucide-react";
 
 interface Informasi {
   id: number;
   judul: string;
   konten: string;
-  pembuat: string;
   createdAt: string;
+  pembuat: string;
 }
 
-function formatRelTime(raw: string) {
-  const diff = Date.now() - new Date(raw).getTime();
-  const m = Math.floor(diff / 60000);
-  const h = Math.floor(diff / 3600000);
-  const d = Math.floor(diff / 86400000);
-  if (m < 1) return "Baru saja";
-  if (m < 60) return `${m} mnt lalu`;
-  if (h < 24) return `${h} jam lalu`;
-  if (d < 7) return `${d} hari lalu`;
-  return new Date(raw).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
-}
+const clamp2: React.CSSProperties = {
+  overflow: "hidden",
+  display: "-webkit-box",
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: "vertical",
+};
 
-const EMPTY = { judul: "", konten: "" };
-
-export default function AdminInformasi() {
-  const [items, setItems] = useState<Informasi[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [detailItem, setDetailItem] = useState<Informasi | null>(null);
+export default function AdminInformasiPage() {
+  useSession();
+  const [list, setList] = useState<Informasi[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<Informasi | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [editingItem, setEditingItem] = useState<Informasi | null>(null);
-  const [form, setForm] = useState(EMPTY);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [judul, setJudul] = useState("");
+  const [konten, setKonten] = useState("");
+  const [hoveredId, setHoveredId] = useState<number | null>(null);
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch("/api/informasi");
-      const json = await res.json();
-      setItems(json.data || []);
-    } catch {
-      setItems([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const loadData = () => {
+    setLoading(true);
+    fetch("/api/informasi")
+      .then(r => r.json())
+      .then(d => { setList(d.data || []); setLoading(false); })
+      .catch(() => setLoading(false));
+  };
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { loadData(); }, []);
 
-  const openCreate = () => { setEditingItem(null); setForm(EMPTY); setShowForm(true); };
+  const openCreate = () => { setEditingId(null); setJudul(""); setKonten(""); setShowForm(true); };
   const openEdit = (item: Informasi) => {
-    setDetailItem(null);
-    setEditingItem(item);
-    setForm({ judul: item.judul, konten: item.konten });
+    setSelected(null);
+    setEditingId(item.id);
+    setJudul(item.judul);
+    setKonten(item.konten);
     setShowForm(true);
   };
-  const closeForm = () => { setShowForm(false); setEditingItem(null); setForm(EMPTY); };
+  const closeForm = () => { setShowForm(false); setEditingId(null); setJudul(""); setKonten(""); };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      const url = editingItem ? `/api/informasi/${editingItem.id}` : "/api/informasi";
-      const method = editingItem ? "PUT" : "POST";
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      if (!res.ok) throw new Error();
-      closeForm();
-      fetchData();
-    } catch {
-      alert("Terjadi kesalahan. Coba lagi.");
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleSubmit = async () => {
+    if (!judul.trim() || !konten.trim()) return;
+    const url = editingId ? `/api/informasi/${editingId}` : "/api/informasi";
+    const method = editingId ? "PUT" : "POST";
+    await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ judul, konten }),
+    });
+    closeForm();
+    loadData();
   };
 
   const handleDelete = async (id: number) => {
     if (!confirm("Hapus informasi ini?")) return;
-    setDetailItem(null);
-    try {
-      await fetch(`/api/informasi/${id}`, { method: "DELETE" });
-      fetchData();
-    } catch { alert("Gagal menghapus."); }
+    setSelected(null);
+    await fetch(`/api/informasi/${id}`, { method: "DELETE" });
+    loadData();
   };
 
   return (
-    <div className="flex h-screen bg-[#00182E] overflow-hidden">
+    <div style={{ display: "flex", height: "100vh", background: "#00182E", overflow: "hidden" }}>
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
         <TopBar />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-[#00182E] px-4 sm:px-6 lg:px-8 py-8">
+        <main style={{ flex: 1, overflowY: "auto", padding: "28px 32px", background: "#00182E" }}>
 
           {/* Header */}
-          <div className="flex items-start justify-between gap-4 mb-8">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "28px" }}>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              <h1 style={{ color: "#ACEC00", fontSize: "26px", fontWeight: 800, margin: 0, letterSpacing: "-0.3px" }}>
                 Informasi PKL
               </h1>
-              <p className="text-white/50 text-sm mt-1.5">
-                {isLoading ? "Memuat..." : `${items.length} informasi`}
+              <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "13px", marginTop: "6px", marginBottom: 0 }}>
+                {loading ? "Memuat..." : `${list.length} informasi`}
               </p>
             </div>
             <button
               onClick={openCreate}
-              className="shrink-0 flex items-center gap-2 bg-[#ACEC00] text-[#00182E] font-bold rounded-xl px-4 py-2.5 text-sm hover:brightness-105 transition-all shadow-lg"
+              style={{ background: "#ACEC00", color: "#00182E", padding: "10px 20px", borderRadius: "10px", fontWeight: 700, border: "none", cursor: "pointer", fontSize: "14px", whiteSpace: "nowrap", flexShrink: 0 }}
             >
-              <Plus className="w-4 h-4" /> Tulis Informasi
+              + Tulis Informasi
             </button>
           </div>
 
-          {/* Feed */}
-          {isLoading ? (
-            <div className="flex items-center justify-center py-32">
-              <Loader2 className="w-6 h-6 text-[#ACEC00] animate-spin" />
-            </div>
-          ) : items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-28 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-white/8 flex items-center justify-center mb-5">
-                <Megaphone className="w-7 h-7 text-white/30" />
-              </div>
-              <p className="font-bold text-white/60 text-sm mb-1.5">Belum ada informasi</p>
-              <p className="text-white/30 text-xs mb-5">Klik &quot;Tulis Informasi&quot; untuk memulai.</p>
-              <button
-                onClick={openCreate}
-                className="flex items-center gap-2 bg-[#ACEC00] text-[#00182E] font-bold rounded-xl px-4 py-2 text-xs hover:brightness-105 transition-all"
-              >
-                <Plus className="w-3.5 h-3.5" /> Tulis Sekarang
+          {loading && (
+            <p style={{ color: "rgba(255,255,255,0.5)", textAlign: "center", marginTop: "80px", fontSize: "14px" }}>Memuat...</p>
+          )}
+
+          {!loading && list.length === 0 && (
+            <div style={{ textAlign: "center", marginTop: "80px" }}>
+              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "16px", marginBottom: "8px" }}>Belum ada informasi</p>
+              <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "13px", marginBottom: "20px" }}>Klik &quot;Tulis Informasi&quot; untuk memulai.</p>
+              <button onClick={openCreate} style={{ background: "#ACEC00", color: "#00182E", padding: "8px 20px", borderRadius: "8px", fontWeight: 700, border: "none", cursor: "pointer", fontSize: "13px" }}>
+                + Tulis Sekarang
               </button>
             </div>
-          ) : (
-            <div className="space-y-3 max-w-3xl">
-              {items.map((item) => (
+          )}
+
+          {!loading && list.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxWidth: "768px" }}>
+              {list.map(item => (
                 <div
                   key={item.id}
-                  onClick={() => setDetailItem(item)}
-                  className="relative bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 group"
+                  onClick={() => setSelected(item)}
+                  onMouseEnter={() => setHoveredId(item.id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                  style={{
+                    background: "white",
+                    borderRadius: "14px",
+                    padding: "18px 20px 18px 22px",
+                    borderLeft: "4px solid #ACEC00",
+                    cursor: "pointer",
+                    transform: hoveredId === item.id ? "translateY(-2px)" : "none",
+                    boxShadow: hoveredId === item.id ? "0 8px 24px rgba(0,0,0,0.2)" : "0 1px 4px rgba(0,0,0,0.08)",
+                    transition: "transform 0.15s, box-shadow 0.15s",
+                  }}
                 >
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#ACEC00]" />
-                  <div className="pl-6 pr-5 py-5">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-[#00182E] text-base leading-snug">
-                          {item.judul}
-                        </h3>
-                        <p className="text-gray-500 text-sm leading-relaxed mt-1.5 line-clamp-2">
-                          {item.konten}
-                        </p>
-                        <div className="flex items-center gap-2 mt-3">
-                          <span className="text-xs font-semibold text-gray-400">{item.pembuat}</span>
-                          <span className="w-1 h-1 rounded-full bg-gray-300" />
-                          <span className="text-xs text-gray-400">{formatRelTime(item.createdAt)}</span>
-                        </div>
-                      </div>
-                      <div
-                        className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={e => e.stopPropagation()}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px" }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <h2 style={{ color: "#00182E", fontWeight: 700, fontSize: "15px", margin: "0 0 6px 0", lineHeight: "1.4" }}>
+                        {item.judul}
+                      </h2>
+                      <p style={{ ...clamp2, color: "#555", fontSize: "13px", margin: "0 0 10px 0", lineHeight: "1.5" }}>
+                        {item.konten}
+                      </p>
+                      <p style={{ color: "#999", fontSize: "12px", margin: 0 }}>
+                        {item.pembuat} · {new Date(item.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                      </p>
+                    </div>
+                    <div style={{ display: "flex", gap: "6px", flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                      <button
+                        onClick={() => openEdit(item)}
+                        style={{ background: "transparent", border: "1px solid #ddd", borderRadius: "8px", padding: "5px 12px", cursor: "pointer", color: "#013FF6", fontSize: "12px", fontWeight: 600 }}
                       >
-                        <button
-                          onClick={() => openEdit(item)}
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-[#013FF6] hover:bg-blue-50 transition-colors"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item.id)}
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(item.id)}
+                        style={{ background: "transparent", border: "1px solid #ddd", borderRadius: "8px", padding: "5px 12px", cursor: "pointer", color: "#e53e3e", fontSize: "12px", fontWeight: 600 }}
+                      >
+                        Hapus
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -185,42 +163,24 @@ export default function AdminInformasi() {
       </div>
 
       {/* Detail Modal */}
-      {detailItem && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setDetailItem(null)} />
-          <div className="relative bg-white w-full sm:max-w-lg max-h-[90vh] sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex items-start justify-between px-5 pt-5 pb-4 border-b border-gray-100">
-              <div className="flex-1 min-w-0 pr-2">
-                <h2 className="font-extrabold text-[#00182E] text-lg leading-snug">{detailItem.judul}</h2>
-                <div className="flex items-center gap-1.5 mt-1">
-                  <span className="text-xs text-gray-400 font-medium">{detailItem.pembuat}</span>
-                  <span className="text-gray-300">·</span>
-                  <span className="text-xs text-gray-400">{formatRelTime(detailItem.createdAt)}</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  onClick={() => openEdit(detailItem)}
-                  className="p-2 rounded-xl text-gray-400 hover:text-[#013FF6] hover:bg-blue-50 transition-colors"
-                >
-                  <Pencil className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(detailItem.id)}
-                  className="p-2 rounded-xl text-gray-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setDetailItem(null)}
-                  className="p-2 rounded-xl text-gray-400 hover:bg-gray-100 transition-colors ml-1"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-            <div className="flex-1 overflow-y-auto px-5 py-5">
-              <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{detailItem.konten}</p>
+      {selected && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: "16px" }}>
+          <div style={{ background: "white", borderRadius: "16px", padding: "28px", maxWidth: "600px", width: "100%", maxHeight: "80vh", overflowY: "auto" }}>
+            <h2 style={{ color: "#00182E", fontWeight: 800, fontSize: "20px", margin: "0 0 8px 0" }}>{selected.judul}</h2>
+            <p style={{ color: "#999", fontSize: "12px", margin: "0 0 20px 0" }}>
+              {selected.pembuat} · {new Date(selected.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+            </p>
+            <p style={{ color: "#333", lineHeight: 1.7, whiteSpace: "pre-wrap", margin: 0, fontSize: "14px" }}>{selected.konten}</p>
+            <div style={{ display: "flex", gap: "8px", marginTop: "24px", flexWrap: "wrap" }}>
+              <button onClick={() => openEdit(selected)} style={{ background: "#013FF6", color: "white", padding: "8px 20px", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: 600, fontSize: "13px" }}>
+                Edit
+              </button>
+              <button onClick={() => handleDelete(selected.id)} style={{ background: "#e53e3e", color: "white", padding: "8px 20px", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: 600, fontSize: "13px" }}>
+                Hapus
+              </button>
+              <button onClick={() => setSelected(null)} style={{ background: "#f0f0f0", color: "#555", padding: "8px 20px", borderRadius: "8px", border: "none", cursor: "pointer", fontSize: "13px" }}>
+                Tutup
+              </button>
             </div>
           </div>
         </div>
@@ -228,65 +188,48 @@ export default function AdminInformasi() {
 
       {/* Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeForm} />
-          <div className="relative bg-white w-full sm:max-w-lg max-h-[92vh] sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-              <p className="font-bold text-[#00182E]">
-                {editingItem ? "Edit Informasi" : "Tulis Informasi Baru"}
-              </p>
-              <button onClick={closeForm} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
-                <X className="w-5 h-5 text-gray-400" />
-              </button>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: "16px" }}>
+          <div style={{ background: "white", borderRadius: "16px", padding: "28px", maxWidth: "500px", width: "100%" }}>
+            <h2 style={{ color: "#00182E", fontWeight: 700, margin: "0 0 20px 0", fontSize: "18px" }}>
+              {editingId ? "Edit Informasi" : "Tulis Informasi Baru"}
+            </h2>
+            <div style={{ marginBottom: "14px" }}>
+              <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#666", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Judul
+              </label>
+              <input
+                value={judul}
+                onChange={e => setJudul(e.target.value)}
+                placeholder="Judul informasi..."
+                style={{ width: "100%", padding: "10px 12px", border: "1.5px solid #e0e0e0", borderRadius: "8px", fontSize: "14px", outline: "none", boxSizing: "border-box" }}
+              />
             </div>
-            <div className="flex-1 overflow-y-auto px-5 py-5">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider">
-                    Judul
-                  </label>
-                  <input
-                    type="text"
-                    value={form.judul}
-                    required
-                    onChange={e => setForm({ ...form, judul: e.target.value })}
-                    placeholder="Judul informasi..."
-                    className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm focus:ring-2 focus:ring-[#013FF6]/30 outline-none transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider">
-                    Konten
-                  </label>
-                  <textarea
-                    value={form.konten}
-                    required
-                    rows={7}
-                    onChange={e => setForm({ ...form, konten: e.target.value })}
-                    placeholder="Tulis konten informasi di sini..."
-                    className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm focus:ring-2 focus:ring-[#013FF6]/30 outline-none resize-none transition-all"
-                  />
-                </div>
-                <div className="flex gap-3 pt-1">
-                  <button
-                    type="button"
-                    onClick={closeForm}
-                    className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors text-sm font-semibold"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="flex-1 py-2.5 bg-[#ACEC00] text-[#00182E] font-bold rounded-xl hover:brightness-105 transition-all shadow-sm disabled:opacity-60 flex justify-center items-center gap-2 text-sm"
-                  >
-                    {isSubmitting
-                      ? <Loader2 className="w-4 h-4 animate-spin" />
-                      : editingItem ? "Simpan" : "Publikasikan"
-                    }
-                  </button>
-                </div>
-              </form>
+            <div style={{ marginBottom: "20px" }}>
+              <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#666", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Konten
+              </label>
+              <textarea
+                value={konten}
+                onChange={e => setKonten(e.target.value)}
+                placeholder="Tulis konten informasi..."
+                rows={6}
+                style={{ width: "100%", padding: "10px 12px", border: "1.5px solid #e0e0e0", borderRadius: "8px", fontSize: "14px", outline: "none", resize: "vertical", boxSizing: "border-box" }}
+              />
+            </div>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button
+                onClick={handleSubmit}
+                disabled={!judul.trim() || !konten.trim()}
+                style={{ background: "#ACEC00", color: "#00182E", padding: "10px 24px", borderRadius: "8px", fontWeight: 700, border: "none", cursor: "pointer", fontSize: "14px" }}
+              >
+                {editingId ? "Simpan" : "Publikasikan"}
+              </button>
+              <button
+                onClick={closeForm}
+                style={{ background: "#f0f0f0", color: "#555", padding: "10px 20px", borderRadius: "8px", border: "none", cursor: "pointer", fontSize: "14px" }}
+              >
+                Batal
+              </button>
             </div>
           </div>
         </div>
