@@ -51,14 +51,14 @@ export default function SiswaDataSiswa() {
     finally { setSubmitting(false); }
   };
 
-  const inp: React.CSSProperties = { width: "100%", padding: "9px 12px", border: "1.5px solid #e5e7eb", borderRadius: 8, fontSize: 13, outline: "none", boxSizing: "border-box", color: "#111827" };
+  const inp: React.CSSProperties = { width: "100%", padding: "9px 12px", border: "1.5px solid var(--bd)", borderRadius: 8, fontSize: 13, outline: "none", boxSizing: "border-box", color: "var(--t1)", background: "var(--inp)" };
 
   return (
-    <div style={{ display: "flex", height: "100vh", background: "#f9fafb", overflow: "hidden" }}>
+    <div style={{ display: "flex", height: "100vh", background: "var(--bg)", overflow: "hidden" }}>
       <Sidebar />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
         <TopBar />
-        <main style={{ flex: 1, overflowY: "auto", padding: "28px 32px", background: "#f9fafb" }}>
+        <main style={{ flex: 1, overflowY: "auto", padding: "28px 32px", background: "var(--bg)" }}>
 
           {/* Header */}
           <div style={{ marginBottom: 24 }}>
@@ -66,38 +66,38 @@ export default function SiswaDataSiswa() {
               <span style={{ display: "block", width: 4, height: 26, background: "#ACEC00", borderRadius: 4 }} />
               <h1 style={{ color: "#00182E", fontSize: 22, fontWeight: 800, margin: 0 }}>Profil Saya</h1>
             </div>
-            <p style={{ color: "#6b7280", fontSize: 13, marginLeft: 14 }}>Data diri dan informasi PKL</p>
+            <p style={{ color: "var(--t3)", fontSize: 13, marginLeft: 14 }}>Data diri dan informasi PKL</p>
           </div>
 
           {/* Loading skeleton */}
           {loading && (
-            <div style={{ maxWidth: 680, background: "white", borderRadius: 16, padding: 28, border: "1px solid #e5e7eb", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-              <div style={{ display: "flex", gap: 20, alignItems: "center", marginBottom: 28, paddingBottom: 24, borderBottom: "1px solid #f3f4f6" }}>
-                <div style={{ width: 80, height: 80, borderRadius: "50%", background: "#f3f4f6" }} />
+            <div style={{ maxWidth: 680, background: "var(--surface)", borderRadius: 16, padding: 28, border: "1px solid var(--bd)", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+              <div style={{ display: "flex", gap: 20, alignItems: "center", marginBottom: 28, paddingBottom: 24, borderBottom: "1px solid var(--bd2)" }}>
+                <div style={{ width: 80, height: 80, borderRadius: "50%", background: "var(--sk)" }} />
                 <div style={{ flex: 1 }}>
-                  <div style={{ height: 20, background: "#f3f4f6", borderRadius: 8, width: "55%", marginBottom: 10 }} />
-                  <div style={{ height: 14, background: "#f3f4f6", borderRadius: 8, width: "35%" }} />
+                  <div style={{ height: 20, background: "var(--sk)", borderRadius: 8, width: "55%", marginBottom: 10 }} />
+                  <div style={{ height: 14, background: "var(--sk)", borderRadius: 8, width: "35%" }} />
                 </div>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                {[1,2,3,4].map(i => <div key={i} style={{ height: 64, background: "#f3f4f6", borderRadius: 10 }} />)}
+                {[1,2,3,4].map(i => <div key={i} style={{ height: 64, background: "var(--sk)", borderRadius: 10 }} />)}
               </div>
             </div>
           )}
 
           {/* No profile */}
           {!loading && !profile && (
-            <div style={{ maxWidth: 680, background: "white", borderRadius: 16, padding: "56px 28px", textAlign: "center", border: "1px solid #e5e7eb" }}>
-              <div style={{ width: 56, height: 56, background: "#f3f4f6", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 24 }}>👤</div>
-              <p style={{ color: "#374151", fontSize: 15, fontWeight: 600, marginBottom: 6 }}>Data profil belum tersedia</p>
-              <p style={{ color: "#9ca3af", fontSize: 13 }}>Hubungi admin atau guru pembimbing kamu.</p>
+            <div style={{ maxWidth: 680, background: "var(--surface)", borderRadius: 16, padding: "56px 28px", textAlign: "center", border: "1px solid var(--bd)" }}>
+              <div style={{ width: 56, height: 56, background: "var(--sk)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 24 }}>👤</div>
+              <p style={{ color: "var(--t2)", fontSize: 15, fontWeight: 600, marginBottom: 6 }}>Data profil belum tersedia</p>
+              <p style={{ color: "var(--t4)", fontSize: 13 }}>Hubungi admin atau guru pembimbing kamu.</p>
             </div>
           )}
 
           {/* Profile card */}
           {!loading && profile && (
             <div style={{ maxWidth: 680 }}>
-              <div style={{ background: "white", borderRadius: 16, border: "1px solid #e5e7eb", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+              <div style={{ background: "var(--surface)", borderRadius: 16, border: "1px solid var(--bd)", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
 
                 {/* Top banner + avatar */}
                 <div style={{ background: "#00182E", padding: "24px 28px 0", position: "relative" }}>
@@ -127,46 +127,46 @@ export default function SiswaDataSiswa() {
                       { label: "Tempat PKL", value: profile.tempatPKL || "Belum diisi", icon: "🏢", mono: false },
                       { label: "Guru Pembimbing", value: profile.guruPembimbing || "Belum ditugaskan", icon: "👨‍🏫", mono: false },
                     ].map(f => (
-                      <div key={f.label} style={{ background: "#f9fafb", borderRadius: 10, padding: "12px 16px", border: "1px solid #f3f4f6" }}>
-                        <p style={{ color: "#9ca3af", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 5px 0" }}>{f.icon} {f.label}</p>
-                        <p style={{ color: f.value.startsWith("Belum") ? "#d1d5db" : "#111827", fontSize: 13, fontWeight: 600, margin: 0, fontFamily: f.mono ? "monospace" : "inherit" }}>{f.value}</p>
+                      <div key={f.label} style={{ background: "var(--field)", borderRadius: 10, padding: "12px 16px", border: "1px solid var(--bd2)" }}>
+                        <p style={{ color: "var(--t4)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 5px 0" }}>{f.icon} {f.label}</p>
+                        <p style={{ color: f.value.startsWith("Belum") ? "#d1d5db" : "var(--t1)", fontSize: 13, fontWeight: 600, margin: 0, fontFamily: f.mono ? "monospace" : "inherit" }}>{f.value}</p>
                       </div>
                     ))}
 
                     {/* No HP — editable */}
-                    <div style={{ background: "#f9fafb", borderRadius: 10, padding: "12px 16px", border: editing ? "1.5px solid #ACEC00" : "1px solid #f3f4f6" }}>
-                      <p style={{ color: "#9ca3af", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 5px 0" }}>📱 No HP <span style={{ color: "#ACEC00", fontSize: 9 }}>{editing ? "✎ Edit" : ""}</span></p>
+                    <div style={{ background: "var(--field)", borderRadius: 10, padding: "12px 16px", border: editing ? "1.5px solid #ACEC00" : "1px solid var(--bd2)" }}>
+                      <p style={{ color: "var(--t4)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 5px 0" }}>📱 No HP <span style={{ color: "#ACEC00", fontSize: 9 }}>{editing ? "✎ Edit" : ""}</span></p>
                       {editing ? (
                         <input type="text" value={form.noHp} onChange={e => setForm({ ...form, noHp: e.target.value })} placeholder="08xxxxxxxxxx"
-                          style={{ ...inp, padding: "0", fontSize: 13, border: "none", background: "transparent" }} />
+                          style={{ width: "100%", padding: 0, fontSize: 13, border: "none", background: "transparent", color: "var(--t1)", outline: "none" }} />
                       ) : (
-                        <p style={{ color: profile.noHp ? "#111827" : "#d1d5db", fontSize: 13, fontWeight: 600, margin: 0 }}>{profile.noHp || "Belum diisi"}</p>
+                        <p style={{ color: profile.noHp ? "var(--t1)" : "#d1d5db", fontSize: 13, fontWeight: 600, margin: 0 }}>{profile.noHp || "Belum diisi"}</p>
                       )}
                     </div>
 
                     {/* Alamat — editable, full width */}
-                    <div style={{ background: "#f9fafb", borderRadius: 10, padding: "12px 16px", border: editing ? "1.5px solid #ACEC00" : "1px solid #f3f4f6", gridColumn: "1/-1" }}>
-                      <p style={{ color: "#9ca3af", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 5px 0" }}>📍 Alamat <span style={{ color: "#ACEC00", fontSize: 9 }}>{editing ? "✎ Edit" : ""}</span></p>
+                    <div style={{ background: "var(--field)", borderRadius: 10, padding: "12px 16px", border: editing ? "1.5px solid #ACEC00" : "1px solid var(--bd2)", gridColumn: "1/-1" }}>
+                      <p style={{ color: "var(--t4)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 5px 0" }}>📍 Alamat <span style={{ color: "#ACEC00", fontSize: 9 }}>{editing ? "✎ Edit" : ""}</span></p>
                       {editing ? (
                         <textarea value={form.alamat} onChange={e => setForm({ ...form, alamat: e.target.value })} placeholder="Alamat lengkap..." rows={2}
-                          style={{ width: "100%", border: "none", background: "transparent", fontSize: 13, fontWeight: 600, color: "#111827", resize: "none", outline: "none", fontFamily: "inherit" }} />
+                          style={{ width: "100%", border: "none", background: "transparent", fontSize: 13, fontWeight: 600, color: "var(--t1)", resize: "none", outline: "none", fontFamily: "inherit" }} />
                       ) : (
-                        <p style={{ color: profile.alamat ? "#111827" : "#d1d5db", fontSize: 13, fontWeight: 600, margin: 0, lineHeight: 1.6 }}>{profile.alamat || "Belum diisi"}</p>
+                        <p style={{ color: profile.alamat ? "var(--t1)" : "#d1d5db", fontSize: 13, fontWeight: 600, margin: 0, lineHeight: 1.6 }}>{profile.alamat || "Belum diisi"}</p>
                       )}
                     </div>
 
                     {/* Password — only when editing */}
                     {editing && (
-                      <div style={{ background: "#f9fafb", borderRadius: 10, padding: "12px 16px", border: "1.5px solid #ACEC00", gridColumn: "1/-1" }}>
-                        <p style={{ color: "#9ca3af", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 5px 0" }}>🔑 Ganti Password (opsional)</p>
+                      <div style={{ background: "var(--field)", borderRadius: 10, padding: "12px 16px", border: "1.5px solid #ACEC00", gridColumn: "1/-1" }}>
+                        <p style={{ color: "var(--t4)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 5px 0" }}>🔑 Ganti Password (opsional)</p>
                         <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="Kosongkan jika tidak ingin ganti"
-                          style={{ width: "100%", border: "none", background: "transparent", fontSize: 13, color: "#111827", outline: "none" }} />
+                          style={{ width: "100%", border: "none", background: "transparent", fontSize: 13, color: "var(--t1)", outline: "none" }} />
                       </div>
                     )}
                   </div>
 
                   {/* Actions */}
-                  <div style={{ display: "flex", gap: 8, paddingTop: 8, borderTop: "1px solid #f3f4f6" }}>
+                  <div style={{ display: "flex", gap: 8, paddingTop: 8, borderTop: "1px solid var(--bd2)" }}>
                     {editing ? (
                       <>
                         <button onClick={handleSave} disabled={submitting}
@@ -174,7 +174,7 @@ export default function SiswaDataSiswa() {
                           {submitting ? "Menyimpan..." : "Simpan Perubahan"}
                         </button>
                         <button onClick={() => { setEditing(false); setForm({ noHp: profile.noHp || "", alamat: profile.alamat || "", password: "" }); }}
-                          style={{ background: "#f3f4f6", color: "#6b7280", padding: "9px 18px", borderRadius: 9, border: "none", cursor: "pointer", fontSize: 13 }}>
+                          style={{ background: "var(--sk)", color: "var(--t3)", padding: "9px 18px", borderRadius: 9, border: "none", cursor: "pointer", fontSize: 13 }}>
                           Batal
                         </button>
                       </>

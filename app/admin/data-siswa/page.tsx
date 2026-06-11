@@ -17,7 +17,6 @@ function initials(name: string) {
   return name.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?";
 }
 
-// Group and sort classes alphabetically
 function groupByKelas(list: Siswa[]): { kelas: string; siswa: Siswa[] }[] {
   const map: Record<string, Siswa[]> = {};
   list.forEach(s => {
@@ -33,7 +32,6 @@ interface TableProps {
   onDetail: (s: Siswa) => void;
   onEdit: (s: Siswa, e: React.MouseEvent) => void;
   onDelete: (id: number, e: React.MouseEvent) => void;
-  // pagination
   page: number;
   setPage: (p: number) => void;
 }
@@ -44,10 +42,10 @@ function KelasTable({ kelas, siswa, onDetail, onEdit, onDelete, page, setPage }:
   const paginated = siswa.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const startNo = (page - 1) * PAGE_SIZE;
 
-  const thS: React.CSSProperties = { padding: "11px 14px", color: "white", fontWeight: 700, textAlign: "left", fontSize: 12, letterSpacing: "0.3px", whiteSpace: "nowrap" };
+  const thS: React.CSSProperties = { padding: "11px 14px", color: "var(--t3)", fontWeight: 700, textAlign: "left", fontSize: 12, letterSpacing: "0.3px", whiteSpace: "nowrap", background: "var(--th)" };
 
   return (
-    <div style={{ background: "white", borderRadius: 16, border: "1px solid #e5e7eb", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+    <div style={{ background: "var(--surface)", borderRadius: 16, border: "1px solid var(--bd)", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
       {/* Class header */}
       <div style={{ background: "#00182E", padding: "13px 18px", display: "flex", alignItems: "center", gap: 10 }}>
         <span style={{ fontSize: 16 }}>📚</span>
@@ -65,13 +63,13 @@ function KelasTable({ kelas, siswa, onDetail, onEdit, onDelete, page, setPage }:
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
-            <tr style={{ background: "#f8fafc", borderBottom: "2px solid #e5e7eb" }}>
-              <th style={{ ...thS, color: "#6b7280", textAlign: "center", width: 48 }}>No</th>
-              <th style={{ ...thS, color: "#6b7280" }}>Nama Siswa</th>
-              <th style={{ ...thS, color: "#6b7280" }}>NIS</th>
-              <th style={{ ...thS, color: "#6b7280" }}>Jurusan</th>
-              <th style={{ ...thS, color: "#6b7280" }}>Status</th>
-              <th style={{ ...thS, color: "#6b7280", textAlign: "center", width: 90 }}>Aksi</th>
+            <tr style={{ borderBottom: "2px solid var(--bd)" }}>
+              <th style={{ ...thS, textAlign: "center", width: 48 }}>No</th>
+              <th style={thS}>Nama Siswa</th>
+              <th style={thS}>NIS</th>
+              <th style={thS}>Jurusan</th>
+              <th style={thS}>Status</th>
+              <th style={{ ...thS, textAlign: "center", width: 90 }}>Aksi</th>
             </tr>
           </thead>
           <tbody>
@@ -80,30 +78,30 @@ function KelasTable({ kelas, siswa, onDetail, onEdit, onDelete, page, setPage }:
                 onClick={() => onDetail(s)}
                 onMouseEnter={() => setHoveredRow(s.id)}
                 onMouseLeave={() => setHoveredRow(null)}
-                style={{ background: hoveredRow === s.id ? "rgba(172,236,0,0.08)" : idx % 2 === 0 ? "white" : "#fafafa", cursor: "pointer", borderTop: "1px solid #f3f4f6", transition: "background 0.1s" }}>
-                <td style={{ padding: "10px 14px", textAlign: "center", color: "#9ca3af", fontSize: 12 }}>{startNo + idx + 1}</td>
+                style={{ background: hoveredRow === s.id ? "var(--hover)" : idx % 2 === 0 ? "var(--surface)" : "var(--surface-alt)", cursor: "pointer", borderTop: "1px solid var(--bd2)", transition: "background 0.1s" }}>
+                <td style={{ padding: "10px 14px", textAlign: "center", color: "var(--t4)", fontSize: 12 }}>{startNo + idx + 1}</td>
                 <td style={{ padding: "10px 14px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#013FF6", color: "white", fontWeight: 700, fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       {initials(s.name)}
                     </div>
                     <div>
-                      <p style={{ margin: 0, fontWeight: 600, color: "#111827", fontSize: 13 }}>{s.name}</p>
-                      <p style={{ margin: 0, fontSize: 11, color: "#9ca3af" }}>{s.email}</p>
+                      <p style={{ margin: 0, fontWeight: 600, color: "var(--t1)", fontSize: 13 }}>{s.name}</p>
+                      <p style={{ margin: 0, fontSize: 11, color: "var(--t4)" }}>{s.email}</p>
                     </div>
                   </div>
                 </td>
-                <td style={{ padding: "10px 14px", color: "#374151", fontFamily: "monospace", fontSize: 12 }}>{s.userId}</td>
-                <td style={{ padding: "10px 14px", color: "#6b7280", fontSize: 12 }}>{s.jurusan || "—"}</td>
+                <td style={{ padding: "10px 14px", color: "var(--t2)", fontFamily: "monospace", fontSize: 12 }}>{s.userId}</td>
+                <td style={{ padding: "10px 14px", color: "var(--t3)", fontSize: 12 }}>{s.jurusan || "—"}</td>
                 <td style={{ padding: "10px 14px" }}>
-                  <span style={{ background: s.isActive ? "rgba(172,236,0,0.18)" : "#f3f4f6", color: s.isActive ? "#3a7d00" : "#9ca3af", padding: "2px 8px", borderRadius: 5, fontSize: 11, fontWeight: 700 }}>
+                  <span style={{ background: s.isActive ? "rgba(172,236,0,0.18)" : "var(--sk)", color: s.isActive ? "#3a7d00" : "var(--t4)", padding: "2px 8px", borderRadius: 5, fontSize: 11, fontWeight: 700 }}>
                     {s.isActive ? "Aktif" : "Nonaktif"}
                   </span>
                 </td>
                 <td style={{ padding: "10px 14px", textAlign: "center" }}>
                   <div style={{ display: "flex", gap: 6, justifyContent: "center" }} onClick={e => e.stopPropagation()}>
                     <button onClick={e => onEdit(s, e)} title="Edit"
-                      style={{ width: 28, height: 28, border: "1.5px solid #e5e7eb", borderRadius: 7, background: "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>
+                      style={{ width: 28, height: 28, border: "1.5px solid var(--bd)", borderRadius: 7, background: "var(--surface)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>
                       ✏️
                     </button>
                     <button onClick={e => onDelete(s.id, e)} title="Hapus"
@@ -120,19 +118,19 @@ function KelasTable({ kelas, siswa, onDetail, onEdit, onDelete, page, setPage }:
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div style={{ padding: "10px 16px", borderTop: "1px solid #f3f4f6", display: "flex", gap: 6, alignItems: "center", justifyContent: "flex-end" }}>
+        <div style={{ padding: "10px 16px", borderTop: "1px solid var(--bd2)", display: "flex", gap: 6, alignItems: "center", justifyContent: "flex-end" }}>
           <button onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1}
-            style={{ padding: "4px 12px", borderRadius: 7, border: "1.5px solid #e5e7eb", background: "white", fontSize: 12, cursor: page === 1 ? "default" : "pointer", color: page === 1 ? "#d1d5db" : "#374151", fontWeight: 600 }}>
+            style={{ padding: "4px 12px", borderRadius: 7, border: "1.5px solid var(--bd)", background: "var(--surface)", fontSize: 12, cursor: page === 1 ? "default" : "pointer", color: page === 1 ? "#d1d5db" : "var(--t2)", fontWeight: 600 }}>
             ← Prev
           </button>
           {Array.from({ length: totalPages }).map((_, i) => (
             <button key={i} onClick={() => setPage(i + 1)}
-              style={{ width: 28, height: 28, borderRadius: 7, border: page === i + 1 ? "none" : "1.5px solid #e5e7eb", background: page === i + 1 ? "#00182E" : "white", color: page === i + 1 ? "white" : "#374151", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>
+              style={{ width: 28, height: 28, borderRadius: 7, border: page === i + 1 ? "none" : "1.5px solid var(--bd)", background: page === i + 1 ? "#00182E" : "var(--surface)", color: page === i + 1 ? "white" : "var(--t2)", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>
               {i + 1}
             </button>
           ))}
           <button onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages}
-            style={{ padding: "4px 12px", borderRadius: 7, border: "1.5px solid #e5e7eb", background: "white", fontSize: 12, cursor: page === totalPages ? "default" : "pointer", color: page === totalPages ? "#d1d5db" : "#374151", fontWeight: 600 }}>
+            style={{ padding: "4px 12px", borderRadius: 7, border: "1.5px solid var(--bd)", background: "var(--surface)", fontSize: 12, cursor: page === totalPages ? "default" : "pointer", color: page === totalPages ? "#d1d5db" : "var(--t2)", fontWeight: 600 }}>
             Next →
           </button>
         </div>
@@ -151,7 +149,6 @@ export default function AdminDataSiswa() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [pages, setPages] = useState<Record<string, number>>({});
-  // for flat search table
   const [hoveredSearch, setHoveredSearch] = useState<number | null>(null);
   const [searchPage, setSearchPage] = useState(1);
 
@@ -162,7 +159,6 @@ export default function AdminDataSiswa() {
       .catch(() => setLoading(false));
   };
   useEffect(() => { loadData(); }, []);
-  // Reset search page when search changes
   useEffect(() => { setSearchPage(1); }, [search]);
 
   const getPage = (kelas: string) => pages[kelas] ?? 1;
@@ -216,15 +212,15 @@ export default function AdminDataSiswa() {
     } catch { alert("Gagal menghapus"); }
   };
 
-  const inp: React.CSSProperties = { width: "100%", padding: "9px 12px", border: "1.5px solid #e5e7eb", borderRadius: 8, fontSize: 13, outline: "none", boxSizing: "border-box", color: "#111827" };
+  const inp: React.CSSProperties = { width: "100%", padding: "9px 12px", border: "1.5px solid var(--bd)", borderRadius: 8, fontSize: 13, outline: "none", boxSizing: "border-box", color: "var(--t1)", background: "var(--inp)" };
   const thS: React.CSSProperties = { padding: "11px 14px", color: "white", fontWeight: 700, textAlign: "left", fontSize: 12, letterSpacing: "0.3px", whiteSpace: "nowrap", background: "#00182E" };
 
   return (
-    <div style={{ display: "flex", height: "100vh", background: "#f9fafb", overflow: "hidden" }}>
+    <div style={{ display: "flex", height: "100vh", background: "var(--bg)", overflow: "hidden" }}>
       <Sidebar />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
         <TopBar />
-        <main style={{ flex: 1, overflowY: "auto", padding: "28px 32px", background: "#f9fafb" }}>
+        <main style={{ flex: 1, overflowY: "auto", padding: "28px 32px", background: "var(--bg)" }}>
 
           {/* Page header */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
@@ -233,7 +229,7 @@ export default function AdminDataSiswa() {
                 <span style={{ display: "block", width: 4, height: 26, background: "#ACEC00", borderRadius: 4 }} />
                 <h1 style={{ color: "#00182E", fontSize: 22, fontWeight: 800, margin: 0 }}>Data Siswa PKL</h1>
               </div>
-              <p style={{ color: "#6b7280", fontSize: 13, marginLeft: 14 }}>
+              <p style={{ color: "var(--t3)", fontSize: 13, marginLeft: 14 }}>
                 {loading ? "Memuat..." : `${list.length} siswa · ${groups.length} kelas`}
               </p>
             </div>
@@ -247,21 +243,21 @@ export default function AdminDataSiswa() {
           <div style={{ marginBottom: 24 }}>
             <input value={search} onChange={e => setSearch(e.target.value)}
               placeholder="🔍  Cari nama, NIS, atau kelas... (kosongkan untuk tampilan per kelas)"
-              style={{ width: "100%", maxWidth: 480, padding: "9px 14px", borderRadius: 9, border: "1.5px solid #e5e7eb", background: "white", fontSize: 13, outline: "none", boxSizing: "border-box", color: "#111827" }} />
+              style={{ width: "100%", maxWidth: 480, padding: "9px 14px", borderRadius: 9, border: "1.5px solid var(--bd)", background: "var(--inp)", fontSize: 13, outline: "none", boxSizing: "border-box", color: "var(--t1)" }} />
           </div>
 
           {/* Loading skeletons */}
           {loading && (
             <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
               {[1, 2].map(g => (
-                <div key={g} style={{ background: "white", borderRadius: 16, border: "1px solid #e5e7eb", overflow: "hidden" }}>
+                <div key={g} style={{ background: "var(--surface)", borderRadius: 16, border: "1px solid var(--bd)", overflow: "hidden" }}>
                   <div style={{ background: "#00182E", padding: "13px 18px", height: 44 }} />
                   {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} style={{ padding: "12px 18px", display: "flex", gap: 16, borderTop: "1px solid #f3f4f6", background: i % 2 === 0 ? "white" : "#fafafa" }}>
-                      <div style={{ height: 12, background: "#f3f4f6", borderRadius: 6, width: 30 }} />
-                      <div style={{ height: 12, background: "#f3f4f6", borderRadius: 6, flex: 1 }} />
-                      <div style={{ height: 12, background: "#f3f4f6", borderRadius: 6, width: 80 }} />
-                      <div style={{ height: 12, background: "#f3f4f6", borderRadius: 6, width: 80 }} />
+                    <div key={i} style={{ padding: "12px 18px", display: "flex", gap: 16, borderTop: "1px solid var(--bd2)", background: i % 2 === 0 ? "var(--surface)" : "var(--surface-alt)" }}>
+                      <div style={{ height: 12, background: "var(--sk)", borderRadius: 6, width: 30 }} />
+                      <div style={{ height: 12, background: "var(--sk)", borderRadius: 6, flex: 1 }} />
+                      <div style={{ height: 12, background: "var(--sk)", borderRadius: 6, width: 80 }} />
+                      <div style={{ height: 12, background: "var(--sk)", borderRadius: 6, width: 80 }} />
                     </div>
                   ))}
                 </div>
@@ -272,11 +268,11 @@ export default function AdminDataSiswa() {
           {/* Search mode — flat table */}
           {!loading && search.trim() && (
             <div>
-              <p style={{ color: "#6b7280", fontSize: 13, marginBottom: 12 }}>
+              <p style={{ color: "var(--t3)", fontSize: 13, marginBottom: 12 }}>
                 {searchFiltered.length > 0 ? `${searchFiltered.length} hasil untuk "${search}"` : `Tidak ada hasil untuk "${search}"`}
               </p>
               {searchFiltered.length > 0 && (
-                <div style={{ background: "white", borderRadius: 16, border: "1px solid #e5e7eb", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+                <div style={{ background: "var(--surface)", borderRadius: 16, border: "1px solid var(--bd)", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
                   <div style={{ overflowX: "auto" }}>
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                       <thead>
@@ -296,33 +292,33 @@ export default function AdminDataSiswa() {
                             onClick={() => setDetail(s)}
                             onMouseEnter={() => setHoveredSearch(s.id)}
                             onMouseLeave={() => setHoveredSearch(null)}
-                            style={{ background: hoveredSearch === s.id ? "rgba(172,236,0,0.08)" : idx % 2 === 0 ? "white" : "#fafafa", cursor: "pointer", borderTop: "1px solid #f3f4f6", transition: "background 0.1s" }}>
-                            <td style={{ padding: "10px 14px", textAlign: "center", color: "#9ca3af", fontSize: 12 }}>{(searchPage - 1) * PAGE_SIZE + idx + 1}</td>
+                            style={{ background: hoveredSearch === s.id ? "var(--hover)" : idx % 2 === 0 ? "var(--surface)" : "var(--surface-alt)", cursor: "pointer", borderTop: "1px solid var(--bd2)", transition: "background 0.1s" }}>
+                            <td style={{ padding: "10px 14px", textAlign: "center", color: "var(--t4)", fontSize: 12 }}>{(searchPage - 1) * PAGE_SIZE + idx + 1}</td>
                             <td style={{ padding: "10px 14px" }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                                 <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#013FF6", color: "white", fontWeight: 700, fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                                   {initials(s.name)}
                                 </div>
                                 <div>
-                                  <p style={{ margin: 0, fontWeight: 600, color: "#111827", fontSize: 13 }}>{s.name}</p>
-                                  <p style={{ margin: 0, fontSize: 11, color: "#9ca3af" }}>{s.email}</p>
+                                  <p style={{ margin: 0, fontWeight: 600, color: "var(--t1)", fontSize: 13 }}>{s.name}</p>
+                                  <p style={{ margin: 0, fontSize: 11, color: "var(--t4)" }}>{s.email}</p>
                                 </div>
                               </div>
                             </td>
-                            <td style={{ padding: "10px 14px", color: "#374151", fontFamily: "monospace", fontSize: 12 }}>{s.userId}</td>
+                            <td style={{ padding: "10px 14px", color: "var(--t2)", fontFamily: "monospace", fontSize: 12 }}>{s.userId}</td>
                             <td style={{ padding: "10px 14px" }}>
                               <span style={{ background: "rgba(1,63,246,0.09)", color: "#013FF6", padding: "2px 8px", borderRadius: 5, fontSize: 11, fontWeight: 600 }}>{s.kelas}</span>
                             </td>
-                            <td style={{ padding: "10px 14px", color: "#6b7280", fontSize: 12 }}>{s.jurusan || "—"}</td>
+                            <td style={{ padding: "10px 14px", color: "var(--t3)", fontSize: 12 }}>{s.jurusan || "—"}</td>
                             <td style={{ padding: "10px 14px" }}>
-                              <span style={{ background: s.isActive ? "rgba(172,236,0,0.18)" : "#f3f4f6", color: s.isActive ? "#3a7d00" : "#9ca3af", padding: "2px 8px", borderRadius: 5, fontSize: 11, fontWeight: 700 }}>
+                              <span style={{ background: s.isActive ? "rgba(172,236,0,0.18)" : "var(--sk)", color: s.isActive ? "#3a7d00" : "var(--t4)", padding: "2px 8px", borderRadius: 5, fontSize: 11, fontWeight: 700 }}>
                                 {s.isActive ? "Aktif" : "Nonaktif"}
                               </span>
                             </td>
                             <td style={{ padding: "10px 14px", textAlign: "center" }}>
                               <div style={{ display: "flex", gap: 6, justifyContent: "center" }} onClick={e => e.stopPropagation()}>
                                 <button onClick={e => openEdit(s, e)} title="Edit"
-                                  style={{ width: 28, height: 28, border: "1.5px solid #e5e7eb", borderRadius: 7, background: "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>✏️</button>
+                                  style={{ width: 28, height: 28, border: "1.5px solid var(--bd)", borderRadius: 7, background: "var(--surface)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>✏️</button>
                                 <button onClick={e => handleDelete(s.id, e)} title="Hapus"
                                   style={{ width: 28, height: 28, border: "1.5px solid #fca5a5", borderRadius: 7, background: "#fff5f5", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>🗑️</button>
                               </div>
@@ -333,17 +329,17 @@ export default function AdminDataSiswa() {
                     </table>
                   </div>
                   {searchTotalPages > 1 && (
-                    <div style={{ padding: "10px 16px", borderTop: "1px solid #f3f4f6", display: "flex", gap: 6, alignItems: "center", justifyContent: "flex-end" }}>
+                    <div style={{ padding: "10px 16px", borderTop: "1px solid var(--bd2)", display: "flex", gap: 6, alignItems: "center", justifyContent: "flex-end" }}>
                       <button onClick={() => setSearchPage(p => Math.max(1, p - 1))} disabled={searchPage === 1}
-                        style={{ padding: "4px 12px", borderRadius: 7, border: "1.5px solid #e5e7eb", background: "white", fontSize: 12, cursor: searchPage === 1 ? "default" : "pointer", color: searchPage === 1 ? "#d1d5db" : "#374151", fontWeight: 600 }}>← Prev</button>
+                        style={{ padding: "4px 12px", borderRadius: 7, border: "1.5px solid var(--bd)", background: "var(--surface)", fontSize: 12, cursor: searchPage === 1 ? "default" : "pointer", color: searchPage === 1 ? "#d1d5db" : "var(--t2)", fontWeight: 600 }}>← Prev</button>
                       {Array.from({ length: searchTotalPages }).map((_, i) => (
                         <button key={i} onClick={() => setSearchPage(i + 1)}
-                          style={{ width: 28, height: 28, borderRadius: 7, border: searchPage === i + 1 ? "none" : "1.5px solid #e5e7eb", background: searchPage === i + 1 ? "#00182E" : "white", color: searchPage === i + 1 ? "white" : "#374151", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>
+                          style={{ width: 28, height: 28, borderRadius: 7, border: searchPage === i + 1 ? "none" : "1.5px solid var(--bd)", background: searchPage === i + 1 ? "#00182E" : "var(--surface)", color: searchPage === i + 1 ? "white" : "var(--t2)", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>
                           {i + 1}
                         </button>
                       ))}
                       <button onClick={() => setSearchPage(p => Math.min(searchTotalPages, p + 1))} disabled={searchPage === searchTotalPages}
-                        style={{ padding: "4px 12px", borderRadius: 7, border: "1.5px solid #e5e7eb", background: "white", fontSize: 12, cursor: searchPage === searchTotalPages ? "default" : "pointer", color: searchPage === searchTotalPages ? "#d1d5db" : "#374151", fontWeight: 600 }}>Next →</button>
+                        style={{ padding: "4px 12px", borderRadius: 7, border: "1.5px solid var(--bd)", background: "var(--surface)", fontSize: 12, cursor: searchPage === searchTotalPages ? "default" : "pointer", color: searchPage === searchTotalPages ? "#d1d5db" : "var(--t2)", fontWeight: 600 }}>Next →</button>
                     </div>
                   )}
                 </div>
@@ -355,8 +351,8 @@ export default function AdminDataSiswa() {
           {!loading && !search.trim() && (
             <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
               {groups.length === 0 && (
-                <div style={{ background: "white", borderRadius: 16, border: "1px solid #e5e7eb", padding: "56px 0", textAlign: "center" }}>
-                  <p style={{ color: "#9ca3af", fontSize: 14, marginBottom: 12 }}>Belum ada data siswa</p>
+                <div style={{ background: "var(--surface)", borderRadius: 16, border: "1px solid var(--bd)", padding: "56px 0", textAlign: "center" }}>
+                  <p style={{ color: "var(--t4)", fontSize: 14, marginBottom: 12 }}>Belum ada data siswa</p>
                   <button onClick={openAdd}
                     style={{ background: "#00182E", color: "white", padding: "8px 18px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
                     + Tambah Siswa
@@ -384,9 +380,9 @@ export default function AdminDataSiswa() {
       {detail && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }}
           onClick={() => setDetail(null)}>
-          <div style={{ background: "white", borderRadius: 20, padding: 28, maxWidth: 480, width: "100%", maxHeight: "88vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
+          <div style={{ background: "var(--surface)", borderRadius: 20, padding: 28, maxWidth: 480, width: "100%", maxHeight: "88vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
             onClick={e => e.stopPropagation()}>
-            <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 20, paddingBottom: 20, borderBottom: "1px solid #f3f4f6" }}>
+            <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 20, paddingBottom: 20, borderBottom: "1px solid var(--bd2)" }}>
               <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#013FF6", color: "white", fontWeight: 800, fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 {initials(detail.name)}
               </div>
@@ -404,15 +400,15 @@ export default function AdminDataSiswa() {
                 { label: "Tempat PKL", value: detail.tempatPKL || "—" },
                 { label: "Status", value: detail.isActive ? "Aktif" : "Nonaktif" },
               ].map(f => (
-                <div key={f.label} style={{ background: "#f9fafb", borderRadius: 10, padding: "10px 14px" }}>
-                  <p style={{ color: "#9ca3af", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 4px 0" }}>{f.label}</p>
-                  <p style={{ color: "#111827", fontSize: 13, fontWeight: 600, margin: 0 }}>{f.value}</p>
+                <div key={f.label} style={{ background: "var(--field)", borderRadius: 10, padding: "10px 14px" }}>
+                  <p style={{ color: "var(--t4)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 4px 0" }}>{f.label}</p>
+                  <p style={{ color: "var(--t1)", fontSize: 13, fontWeight: 600, margin: 0 }}>{f.value}</p>
                 </div>
               ))}
               {detail.alamat && (
-                <div style={{ background: "#f9fafb", borderRadius: 10, padding: "10px 14px", gridColumn: "1/-1" }}>
-                  <p style={{ color: "#9ca3af", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 4px 0" }}>Alamat</p>
-                  <p style={{ color: "#111827", fontSize: 13, fontWeight: 600, margin: 0 }}>{detail.alamat}</p>
+                <div style={{ background: "var(--field)", borderRadius: 10, padding: "10px 14px", gridColumn: "1/-1" }}>
+                  <p style={{ color: "var(--t4)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 4px 0" }}>Alamat</p>
+                  <p style={{ color: "var(--t1)", fontSize: 13, fontWeight: 600, margin: 0 }}>{detail.alamat}</p>
                 </div>
               )}
             </div>
@@ -422,7 +418,7 @@ export default function AdminDataSiswa() {
               <button onClick={e => handleDelete(detail.id, e)}
                 style={{ background: "#fee2e2", color: "#dc2626", padding: "9px 20px", borderRadius: 9, border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13 }}>Hapus</button>
               <button onClick={() => setDetail(null)}
-                style={{ background: "#f3f4f6", color: "#6b7280", padding: "9px 20px", borderRadius: 9, border: "none", cursor: "pointer", fontSize: 13 }}>Tutup</button>
+                style={{ background: "var(--sk)", color: "var(--t3)", padding: "9px 20px", borderRadius: 9, border: "none", cursor: "pointer", fontSize: 13 }}>Tutup</button>
             </div>
           </div>
         </div>
@@ -432,7 +428,7 @@ export default function AdminDataSiswa() {
       {showForm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }}
           onClick={closeForm}>
-          <div style={{ background: "white", borderRadius: 20, padding: 28, maxWidth: 540, width: "100%", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
+          <div style={{ background: "var(--surface)", borderRadius: 20, padding: 28, maxWidth: 540, width: "100%", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
             onClick={e => e.stopPropagation()}>
             <h2 style={{ color: "#00182E", fontWeight: 700, fontSize: 18, margin: "0 0 20px 0" }}>
               {editingId ? "Edit Data Siswa" : "Tambah Siswa Baru"}
@@ -445,32 +441,32 @@ export default function AdminDataSiswa() {
                 { label: editingId ? "Password (kosongkan jika tidak ubah)" : "Password *", key: "password", type: "password", placeholder: "••••••••", disabled: false, span2: true },
               ].map(f => (
                 <div key={f.key} style={{ gridColumn: f.span2 ? "1/-1" : undefined }}>
-                  <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#6b7280", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>{f.label}</label>
+                  <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--t3)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>{f.label}</label>
                   <input type={f.type} value={(form as any)[f.key]} disabled={f.disabled}
                     onChange={e => setForm({ ...form, [f.key]: e.target.value })}
                     placeholder={f.placeholder} style={{ ...inp, opacity: f.disabled ? 0.5 : 1 }} />
                 </div>
               ))}
               <div>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#6b7280", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>Kelas *</label>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--t3)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>Kelas *</label>
                 <select value={form.kelas} onChange={e => setForm({ ...form, kelas: e.target.value })} style={inp}>
                   {KELAS_OPTIONS.map(k => <option key={k} value={k}>{k}</option>)}
                 </select>
               </div>
               <div>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#6b7280", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>Jurusan</label>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--t3)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>Jurusan</label>
                 <input type="text" value={form.jurusan} onChange={e => setForm({ ...form, jurusan: e.target.value })} placeholder="Jurusan siswa" style={inp} />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#6b7280", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>Tempat PKL</label>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--t3)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>Tempat PKL</label>
                 <input type="text" value={form.tempatPKL} onChange={e => setForm({ ...form, tempatPKL: e.target.value })} placeholder="Nama tempat PKL" style={inp} />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#6b7280", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>No HP</label>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--t3)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>No HP</label>
                 <input type="text" value={form.noHp} onChange={e => setForm({ ...form, noHp: e.target.value })} placeholder="08xxxxxxxxxx" style={inp} />
               </div>
               <div style={{ gridColumn: "1/-1" }}>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#6b7280", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>Alamat</label>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--t3)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>Alamat</label>
                 <textarea value={form.alamat} onChange={e => setForm({ ...form, alamat: e.target.value })} placeholder="Alamat lengkap" rows={3} style={{ ...inp, resize: "vertical" }} />
               </div>
             </div>
@@ -480,7 +476,7 @@ export default function AdminDataSiswa() {
                 {submitting ? "Menyimpan..." : editingId ? "Simpan" : "Tambahkan"}
               </button>
               <button onClick={closeForm}
-                style={{ background: "#f3f4f6", color: "#6b7280", padding: "10px 20px", borderRadius: 9, border: "none", cursor: "pointer", fontSize: 13 }}>Batal</button>
+                style={{ background: "var(--sk)", color: "var(--t3)", padding: "10px 20px", borderRadius: 9, border: "none", cursor: "pointer", fontSize: 13 }}>Batal</button>
             </div>
           </div>
         </div>
