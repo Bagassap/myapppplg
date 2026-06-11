@@ -226,10 +226,11 @@ export default function AdminDataSiswa() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-                <span style={{ display: "block", width: 4, height: 26, background: "#ACEC00", borderRadius: 4 }} />
-                <h1 style={{ color: "var(--t1)", fontSize: 22, fontWeight: 800, margin: 0 }}>Data Siswa PKL</h1>
+                <span style={{ display: "block", width: 4, height: 32, background: "#ACEC00", borderRadius: 2, flexShrink: 0 }} />
+                <span style={{ fontSize: 22, lineHeight: 1 }}>👥</span>
+                <h1 style={{ color: "var(--text-primary)", fontSize: 28, fontWeight: 700, margin: 0, letterSpacing: "-0.3px" }}>Data Siswa PKL</h1>
               </div>
-              <p style={{ color: "var(--t3)", fontSize: 13, marginLeft: 14 }}>
+              <p style={{ color: "var(--text-secondary)", fontSize: 13, paddingLeft: 16 }}>
                 {loading ? "Memuat..." : `${list.length} siswa · ${groups.length} kelas`}
               </p>
             </div>

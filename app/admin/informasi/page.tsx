@@ -80,12 +80,13 @@ export default function AdminInformasiPage() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "28px" }}>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
-                <span style={{ display: "block", width: "4px", height: "24px", background: "#013FF6", borderRadius: "4px" }} />
-                <h1 style={{ color: "var(--t1)", fontSize: "22px", fontWeight: 700, margin: 0, letterSpacing: "-0.3px" }}>
+                <span style={{ display: "block", width: 4, height: 32, background: "#ACEC00", borderRadius: 2, flexShrink: 0 }} />
+                <span style={{ fontSize: 22, lineHeight: 1 }}>📢</span>
+                <h1 style={{ color: "var(--text-primary)", fontSize: 28, fontWeight: 700, margin: 0, letterSpacing: "-0.3px" }}>
                   Informasi PKL
                 </h1>
               </div>
-              <p style={{ color: "var(--t3)", fontSize: "13px", marginLeft: "14px" }}>
+              <p style={{ color: "var(--text-secondary)", fontSize: "13px", marginLeft: "14px" }}>
                 {loading ? "Memuat data..." : `${list.length} informasi dipublikasikan`}
               </p>
             </div>

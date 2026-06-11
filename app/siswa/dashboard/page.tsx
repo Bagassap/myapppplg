@@ -2,6 +2,7 @@
 import Sidebar from "@/components/layout/SidebarSiswa";
 import GreetingBanner from "@/components/GreetingBanner";
 import TopBar from "@/components/layout/TopBar";
+import PageHeader from "@/components/layout/PageHeader";
 import { useState, useEffect } from "react";
 import {
   Bell,
@@ -145,6 +146,7 @@ export default function SiswaDashboard() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar />
         <main className="flex-1 overflow-y-auto overflow-x-hidden p-5 lg:p-8 bg-slate-100">
+          <PageHeader icon="📊" title="Dashboard" subtitle="Rekap kehadiran PKL bulan ini" />
           <GreetingBanner />
 
           {/* ═══ HERO CARD ═══ */}

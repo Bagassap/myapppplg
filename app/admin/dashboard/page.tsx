@@ -2,6 +2,7 @@
 import Sidebar from "@/components/layout/SidebarAdmin";
 import TopBar from "@/components/layout/TopBar";
 import GreetingBanner from "@/components/GreetingBanner";
+import PageHeader from "@/components/layout/PageHeader";
 import { useState, useEffect, useMemo } from "react";
 import {
   Users,
@@ -288,6 +289,7 @@ export default function AdminDashboard() {
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
         <main className="flex-1 overflow-y-auto overflow-x-hidden p-5 lg:p-8 bg-slate-100">
+          <PageHeader icon="📊" title="Dashboard" subtitle="Ringkasan kehadiran siswa hari ini" />
           <GreetingBanner />
 
           {/* ═══ HERO CARD ═══ */}

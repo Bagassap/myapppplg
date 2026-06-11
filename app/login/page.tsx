@@ -184,7 +184,7 @@ export default function LoginPage() {
           <p className="text-center text-[#013FF6] text-sm font-semibold mb-1">
             Pengembangan Perangkat Lunak dan GIM
           </p>
-          <p className="text-center text-gray-400 text-xs mb-6">
+          <p className="text-center text-xs mb-6" style={{ color: "var(--text-secondary)" }}>
             Masuk ke akun Anda untuk melakukan presensi
           </p>
 
@@ -202,11 +202,11 @@ export default function LoginPage() {
 
             {/* Email */}
             <div>
-              <label className="block text-xs font-bold text-[#00182E] uppercase tracking-widest mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-primary)" }}>
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#00182E]/30 w-4 h-4" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-secondary)", opacity: 0.5 }} />
                 <input
                   type="email"
                   placeholder="nama@sekolah.sch.id"
@@ -223,7 +223,7 @@ export default function LoginPage() {
 
             {/* Password */}
             <div>
-              <label className="block text-xs font-bold text-[#00182E] uppercase tracking-widest mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-primary)" }}>
                 Password
               </label>
               <div className="relative">
@@ -271,7 +271,7 @@ export default function LoginPage() {
             </Link>
           </p>
 
-          <p className="text-center text-gray-300 text-xs mt-6">
+          <p className="text-center text-xs mt-6" style={{ color: "var(--text-secondary)" }}>
             © 2026 PPLG Nusa — Sistem Presensi PKL
           </p>
         </div>

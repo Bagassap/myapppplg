@@ -450,12 +450,13 @@ export default function SiswaAbsensi() {
           <div className="mb-7 flex items-start justify-between">
             <div>
               <div className="flex items-center gap-2.5 mb-1">
-                <span className="block w-1 h-6 bg-[#013FF6] rounded-full" />
-                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+                <span style={{ display: "block", width: 4, height: 32, background: "#ACEC00", borderRadius: 2, flexShrink: 0 }} />
+                <span style={{ fontSize: 22, lineHeight: 1 }}>📋</span>
+                <h1 className="font-bold tracking-tight" style={{ color: "var(--text-primary)", fontSize: 28, margin: 0 }}>
                   Absensi
                 </h1>
               </div>
-              <p className="text-gray-500 text-sm pl-3.5">
+              <p className="text-sm" style={{ color: "var(--text-secondary)", paddingLeft: 16 }}>
                 Lakukan absen setiap hari dengan konsisten.
               </p>
             </div>
