@@ -42,7 +42,7 @@ async function buildTrendData(allUserIds: string[]) {
         where: {
             userId: { in: allUserIds },
             tanggal: { gte: windowStart, lte: windowEnd },
-            tipe: "masuk",
+            tipe: { in: ["masuk", "absen"] },
         },
         select: { tanggal: true, status: true },
     });
@@ -105,7 +105,7 @@ export async function GET(req: NextRequest) {
                 where: {
                     userId: { in: allUserIds },
                     tanggal: tanggalWhere,
-                    tipe: "masuk",
+                    tipe: { in: ["masuk", "absen"] },
                 },
                 select: { userId: true, status: true },
             });
@@ -152,7 +152,7 @@ export async function GET(req: NextRequest) {
             });
 
             const absensiTerbaruRaw = await prisma.absensi.findMany({
-                where: { tanggal: tanggalWhere, tipe: "masuk" },
+                where: { tanggal: tanggalWhere, tipe: { in: ["masuk", "absen"] } },
                 orderBy: { createdAt: "desc" },
                 take: 10,
                 select: { userId: true, status: true, waktu: true, createdAt: true },
@@ -243,7 +243,7 @@ export async function GET(req: NextRequest) {
                     where: {
                         userId: { in: studentIds },
                         tanggal: tanggalWhere,
-                        tipe: "masuk",
+                        tipe: { in: ["masuk", "absen"] },
                     },
                     select: { userId: true, status: true },
                 }),
@@ -251,7 +251,7 @@ export async function GET(req: NextRequest) {
                     where: {
                         userId: { in: studentIds },
                         tanggal: { gte: startBulan, lte: endBulan },
-                        tipe: "masuk",
+                        tipe: { in: ["masuk", "absen"] },
                     },
                     select: { userId: true, status: true },
                 }),
@@ -355,7 +355,7 @@ export async function GET(req: NextRequest) {
                     where: {
                         userId: userData.username,
                         tanggal: { gte: startBulan, lte: endBulan },
-                        tipe: "masuk",
+                        tipe: { in: ["masuk", "absen"] },
                     },
                     select: { status: true },
                 }),
@@ -363,7 +363,7 @@ export async function GET(req: NextRequest) {
                     where: {
                         userId: userData.username,
                         tanggal: { gte: todayStart, lte: todayEnd },
-                        tipe: "masuk",
+                        tipe: { in: ["masuk", "absen"] },
                     },
                 }),
             ]);
