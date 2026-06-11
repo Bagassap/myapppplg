@@ -18,11 +18,10 @@ export default function GuruDataSiswa() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [detail, setDetail] = useState<Siswa | null>(null);
-  const [hoveredId, setHoveredId] = useState<number | null>(null);
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch("/api/data-siswa")
-      .then(r => r.json())
+    fetch("/api/data-siswa").then(r => r.json())
       .then(d => { setList(d.data || []); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
@@ -31,135 +30,122 @@ export default function GuruDataSiswa() {
     ? list.filter(s =>
         s.name.toLowerCase().includes(search.toLowerCase()) ||
         s.userId.toLowerCase().includes(search.toLowerCase()) ||
-        s.kelas.toLowerCase().includes(search.toLowerCase())
-      )
+        s.kelas.toLowerCase().includes(search.toLowerCase()))
     : list;
 
-  const cardStyle = (id: number): React.CSSProperties => ({
-    position: "relative", background: hoveredId === id ? "#01305e" : "#012444",
-    borderRadius: "16px", padding: "20px", cursor: "pointer",
-    border: hoveredId === id ? "1px solid rgba(172,236,0,0.35)" : "1px solid rgba(255,255,255,0.07)",
-    transition: "all 0.18s",
-    transform: hoveredId === id ? "translateY(-3px)" : "none",
-    boxShadow: hoveredId === id ? "0 10px 32px rgba(0,0,0,0.4)" : "none",
-  });
+  const thStyle: React.CSSProperties = { padding: "13px 14px", color: "white", fontWeight: 700, textAlign: "left", fontSize: 12, letterSpacing: "0.3px", whiteSpace: "nowrap" };
 
   return (
-    <div style={{ display: "flex", height: "100vh", background: "#00182E", overflow: "hidden" }}>
+    <div style={{ display: "flex", height: "100vh", background: "#f9fafb", overflow: "hidden" }}>
       <Sidebar />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
         <TopBar />
-        <main style={{ flex: 1, overflowY: "auto", padding: "28px 32px", background: "#00182E" }}>
+        <main style={{ flex: 1, overflowY: "auto", padding: "28px 32px", background: "#f9fafb" }}>
 
           {/* Header */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-                <span style={{ display: "block", width: 4, height: 28, background: "#ACEC00", borderRadius: 4 }} />
-                <h1 style={{ color: "white", fontSize: 24, fontWeight: 800, margin: 0 }}>Siswa Bimbingan</h1>
-              </div>
-              <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 13, marginLeft: 14 }}>
-                {loading ? "Memuat..." : `${list.length} siswa bimbingan`}
-              </p>
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+              <span style={{ display: "block", width: 4, height: 26, background: "#ACEC00", borderRadius: 4 }} />
+              <h1 style={{ color: "#00182E", fontSize: 22, fontWeight: 800, margin: 0 }}>Siswa Bimbingan</h1>
             </div>
-          </div>
-
-          {/* Stats */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
-            {[
-              { label: "Total Siswa", value: list.length, color: "#ACEC00" },
-              { label: "Kelas", value: new Set(list.map(s => s.kelas)).size, color: "#013FF6" },
-              { label: "Aktif", value: list.filter(s => s.isActive).length, color: "#ACEC00" },
-            ].map(s => (
-              <div key={s.label} style={{ background: "#012444", borderRadius: 14, padding: "16px 20px", border: "1px solid rgba(255,255,255,0.07)" }}>
-                <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, margin: "0 0 6px 0" }}>{s.label}</p>
-                <p style={{ color: s.color, fontSize: 28, fontWeight: 800, margin: 0 }}>{s.value}</p>
-              </div>
-            ))}
+            <p style={{ color: "#6b7280", fontSize: 13, marginLeft: 14 }}>
+              {loading ? "Memuat..." : `${list.length} siswa bimbingan`}
+            </p>
           </div>
 
           {/* Search */}
-          <div style={{ marginBottom: 20 }}>
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
+          <div style={{ marginBottom: 16 }}>
+            <input value={search} onChange={e => setSearch(e.target.value)}
               placeholder="🔍  Cari nama, NIS, atau kelas..."
-              style={{ width: "100%", maxWidth: 420, padding: "10px 16px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.06)", color: "white", fontSize: 14, outline: "none", boxSizing: "border-box" }}
-            />
+              style={{ width: "100%", maxWidth: 380, padding: "9px 14px", borderRadius: 9, border: "1.5px solid #e5e7eb", background: "white", fontSize: 13, outline: "none", boxSizing: "border-box", color: "#111827" }} />
           </div>
 
-          {/* Loading */}
-          {loading && (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
-              {[1,2,3,4,5,6].map(i => (
-                <div key={i} style={{ background: "#012444", borderRadius: 16, padding: 20, border: "1px solid rgba(255,255,255,0.07)" }}>
-                  <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 16 }}>
-                    <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(255,255,255,0.08)" }} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ height: 14, background: "rgba(255,255,255,0.08)", borderRadius: 6, marginBottom: 8, width: "70%" }} />
-                      <div style={{ height: 11, background: "rgba(255,255,255,0.05)", borderRadius: 6, width: "50%" }} />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Table */}
+          <div style={{ background: "white", borderRadius: 16, border: "1px solid #e5e7eb", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                <thead>
+                  <tr style={{ background: "#00182E" }}>
+                    <th style={{ ...thStyle, textAlign: "center", width: 48 }}>No</th>
+                    <th style={thStyle}>Nama Siswa</th>
+                    <th style={thStyle}>NIS</th>
+                    <th style={thStyle}>Kelas</th>
+                    <th style={thStyle}>Jurusan</th>
+                    <th style={thStyle}>Tempat PKL</th>
+                    <th style={thStyle}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading && Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i} style={{ background: i % 2 === 0 ? "white" : "#fafafa", borderTop: "1px solid #f3f4f6" }}>
+                      {[40, 200, 80, 80, 90, 120, 60].map((w, c) => (
+                        <td key={c} style={{ padding: "12px 14px" }}>
+                          <div style={{ height: 12, background: "#f3f4f6", borderRadius: 6, width: w }} />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
 
-          {/* Empty */}
-          {!loading && filtered.length === 0 && (
-            <div style={{ textAlign: "center", paddingTop: 80 }}>
-              <div style={{ width: 64, height: 64, background: "#012444", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 28 }}>👥</div>
-              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 15 }}>
-                {search ? "Tidak ada hasil" : "Belum ada siswa bimbingan"}
-              </p>
-              {!search && <p style={{ color: "rgba(255,255,255,0.3)", fontSize: 13 }}>Hubungi admin untuk mengatur penugasan.</p>}
-            </div>
-          )}
-
-          {/* Cards */}
-          {!loading && filtered.length > 0 && (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
-              {filtered.map(s => (
-                <div key={s.id} style={cardStyle(s.id)}
-                  onClick={() => setDetail(s)}
-                  onMouseEnter={() => setHoveredId(s.id)}
-                  onMouseLeave={() => setHoveredId(null)}>
-                  <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 14 }}>
-                    <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#013FF6", color: "white", fontWeight: 700, fontSize: 17, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      {initials(s.name)}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ color: "white", fontWeight: 700, fontSize: 15, margin: "0 0 4px 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</p>
-                      <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, margin: 0, fontFamily: "monospace" }}>{s.userId}</p>
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
-                    <span style={{ display: "inline-block", padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600, background: "rgba(1,63,246,0.2)", color: "#6ca3ff" }}>{s.kelas}</span>
-                    {s.jurusan && <span style={{ display: "inline-block", padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600, background: "rgba(172,236,0,0.1)", color: "#ACEC00" }}>{s.jurusan}</span>}
-                    <span style={{ display: "inline-block", padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600, background: s.isActive ? "rgba(172,236,0,0.15)" : "rgba(255,255,255,0.08)", color: s.isActive ? "#ACEC00" : "rgba(255,255,255,0.4)" }}>
-                      {s.isActive ? "Aktif" : "Nonaktif"}
-                    </span>
-                  </div>
-                  {s.tempatPKL && (
-                    <p style={{ color: "rgba(255,255,255,0.35)", fontSize: 11, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      📍 {s.tempatPKL}
-                    </p>
+                  {!loading && filtered.length === 0 && (
+                    <tr>
+                      <td colSpan={7} style={{ padding: "56px 0", textAlign: "center", color: "#9ca3af", fontSize: 14 }}>
+                        {search ? `Tidak ada hasil untuk "${search}"` : "Belum ada siswa bimbingan"}
+                      </td>
+                    </tr>
                   )}
-                </div>
-              ))}
+
+                  {!loading && filtered.map((s, idx) => (
+                    <tr key={s.id}
+                      onClick={() => setDetail(s)}
+                      onMouseEnter={() => setHoveredRow(s.id)}
+                      onMouseLeave={() => setHoveredRow(null)}
+                      style={{ background: hoveredRow === s.id ? "rgba(172,236,0,0.08)" : idx % 2 === 0 ? "white" : "#fafafa", cursor: "pointer", borderTop: "1px solid #f3f4f6", transition: "background 0.1s" }}>
+                      <td style={{ padding: "11px 14px", textAlign: "center", color: "#9ca3af", fontSize: 12 }}>{idx + 1}</td>
+                      <td style={{ padding: "11px 14px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#013FF6", color: "white", fontWeight: 700, fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                            {initials(s.name)}
+                          </div>
+                          <div>
+                            <p style={{ margin: 0, fontWeight: 600, color: "#111827", fontSize: 13 }}>{s.name}</p>
+                            <p style={{ margin: 0, fontSize: 11, color: "#9ca3af" }}>{s.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td style={{ padding: "11px 14px", color: "#374151", fontFamily: "monospace", fontSize: 12 }}>{s.userId}</td>
+                      <td style={{ padding: "11px 14px" }}>
+                        <span style={{ background: "rgba(1,63,246,0.09)", color: "#013FF6", padding: "2px 8px", borderRadius: 5, fontSize: 11, fontWeight: 600 }}>{s.kelas}</span>
+                      </td>
+                      <td style={{ padding: "11px 14px", color: "#6b7280", fontSize: 12 }}>{s.jurusan || "—"}</td>
+                      <td style={{ padding: "11px 14px", color: "#6b7280", fontSize: 12, maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.tempatPKL || "—"}</td>
+                      <td style={{ padding: "11px 14px" }}>
+                        <span style={{ background: s.isActive ? "rgba(172,236,0,0.18)" : "#f3f4f6", color: s.isActive ? "#3a7d00" : "#9ca3af", padding: "2px 8px", borderRadius: 5, fontSize: 11, fontWeight: 700 }}>
+                          {s.isActive ? "Aktif" : "Nonaktif"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
+          </div>
+
+          {!loading && filtered.length > 0 && (
+            <p style={{ color: "#9ca3af", fontSize: 12, marginTop: 10 }}>
+              Klik baris untuk lihat detail • Menampilkan {filtered.length} dari {list.length} siswa
+            </p>
           )}
         </main>
       </div>
 
       {/* Detail Modal */}
       {detail && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }}
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }}
           onClick={() => setDetail(null)}>
-          <div style={{ background: "white", borderRadius: 20, padding: 28, maxWidth: 480, width: "100%", maxHeight: "88vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}
+          <div style={{ background: "white", borderRadius: 20, padding: 28, maxWidth: 480, width: "100%", maxHeight: "88vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
             onClick={e => e.stopPropagation()}>
             <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 20, paddingBottom: 20, borderBottom: "1px solid #f3f4f6" }}>
-              <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#013FF6", color: "white", fontWeight: 700, fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#013FF6", color: "white", fontWeight: 800, fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 {initials(detail.name)}
               </div>
               <div>
@@ -188,7 +174,8 @@ export default function GuruDataSiswa() {
                 </div>
               )}
             </div>
-            <button onClick={() => setDetail(null)} style={{ background: "#00182E", color: "#ACEC00", padding: "9px 24px", borderRadius: 9, border: "none", cursor: "pointer", fontWeight: 700, fontSize: 13 }}>
+            <button onClick={() => setDetail(null)}
+              style={{ background: "#00182E", color: "white", padding: "9px 24px", borderRadius: 9, border: "none", cursor: "pointer", fontWeight: 700, fontSize: 13 }}>
               Tutup
             </button>
           </div>
