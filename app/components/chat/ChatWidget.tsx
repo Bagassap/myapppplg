@@ -330,10 +330,10 @@ export default function ChatWidget({
       {/* Widget Panel */}
       {mounted && (
         <div
-          className="sm:w-185"
+          className="sm:w-185 chat-widget-panel"
           style={{ position: "fixed", bottom: "84px", right: "16px", zIndex: 50, width: "calc(100vw - 2rem)", maxWidth: "740px", transition: "opacity .28s, transform .28s cubic-bezier(.32,1.25,.6,1)", opacity: visible ? 1 : 0, transform: visible ? "translateY(0) scale(1)" : "translateY(16px) scale(.97)", pointerEvents: visible ? "auto" : "none" }}
         >
-          <div style={{ background: "#00182E", borderRadius: "16px", boxShadow: "0 20px 60px rgba(0,0,0,0.6)", overflow: "hidden", display: "flex", height: "520px" }}>
+          <div className="chat-widget-inner" style={{ background: "#00182E", borderRadius: "16px", boxShadow: "0 20px 60px rgba(0,0,0,0.6)", overflow: "hidden", display: "flex", height: "520px" }}>
 
             {/* ── SIDEBAR KIRI ── */}
             <div

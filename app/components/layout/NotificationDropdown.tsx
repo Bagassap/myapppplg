@@ -117,7 +117,7 @@ export default function NotificationDropdown({ onOpenChat }: { onOpenChat?: (con
       {/* Dropdown panel */}
       {open && (
         <div
-          style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, width: "360px", background: "var(--surface, #ffffff)", borderRadius: "16px", boxShadow: "0 8px 40px rgba(0,0,0,0.18)", zIndex: 1000, overflow: "hidden", border: "1px solid var(--bd, #e5e7eb)" }}
+          style={{ position: "fixed", top: "60px", right: "8px", width: "min(360px, calc(100vw - 16px))", maxHeight: "80vh", background: "var(--surface, #ffffff)", borderRadius: "16px", boxShadow: "0 8px 40px rgba(0,0,0,0.18)", zIndex: 1000, overflow: "hidden", border: "1px solid var(--bd, #e5e7eb)", display: "flex", flexDirection: "column" }}
         >
           {/* Header */}
           <div style={{ background: "#00182E", padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -133,7 +133,7 @@ export default function NotificationDropdown({ onOpenChat }: { onOpenChat?: (con
           </div>
 
           {/* List */}
-          <div style={{ maxHeight: "380px", overflowY: "auto" }}>
+          <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
             {merged.length === 0 ? (
               <div style={{ padding: "36px 20px", textAlign: "center" }}>
                 <div style={{ fontSize: "36px", marginBottom: "8px" }}>🎉</div>

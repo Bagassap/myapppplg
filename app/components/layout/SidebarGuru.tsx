@@ -48,7 +48,7 @@ export default function SidebarGuru() {
 
       <aside
         className={`
-          bg-[#00182E] text-white flex flex-col justify-between shadow-2xl min-h-screen transition-all duration-300
+          bg-[#00182E] text-white flex flex-col justify-between shadow-2xl h-screen overflow-hidden transition-all duration-300
           ${isOpen ? "w-72" : "w-20"}
           rounded-r-2xl
           fixed inset-y-0 left-0 z-50
