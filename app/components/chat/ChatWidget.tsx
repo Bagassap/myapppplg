@@ -89,11 +89,15 @@ function ToastNotif({ toast, onClose, onOpen }: {
 export default function ChatWidget({
   isOpen: isOpenProp,
   onClose: onCloseProp,
+  onOpen: onOpenProp,
   showFAB = true,
+  openConversationId,
 }: {
   isOpen?: boolean;
   onClose?: () => void;
+  onOpen?: () => void;
   showFAB?: boolean;
+  openConversationId?: number | null;
 }) {
   const { data: session } = useSession();
   const [internalOpen, setInternalOpen] = useState(false);
@@ -126,6 +130,7 @@ export default function ChatWidget({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const openedConvIdRef = useRef<number | null>(null);
 
   const userId = Number(session?.user?.id);
   const role = session?.user?.role as string;
@@ -192,7 +197,24 @@ export default function ChatWidget({
     setMessages([]);
     setLoadingMsgs(true);
     setTimeout(() => inputRef.current?.focus(), 150);
+    if (conv.unreadCount > 0) {
+      fetch("/api/chat/read", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversationId: conv.id }),
+      }).catch(() => {});
+      setConversations((prev) => prev.map((c) => c.id === conv.id ? { ...c, unreadCount: 0 } : c));
+      setUnreadFAB((prev) => Math.max(0, prev - conv.unreadCount));
+    }
   };
+
+  // Buka conversation tertentu dari luar (via openConversationId prop)
+  useEffect(() => {
+    if (!openConversationId) { openedConvIdRef.current = null; return; }
+    if (openedConvIdRef.current === openConversationId) return;
+    const conv = conversations.find((c) => c.id === openConversationId);
+    if (conv) { openedConvIdRef.current = openConversationId; selectConversation(conv); }
+  }, [openConversationId, conversations]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSend = async () => {
     if (!activeConv || !messageInput.trim() || sending) return;
@@ -278,7 +300,7 @@ export default function ChatWidget({
       {/* FAB */}
       {showFAB && (
         <button
-          onClick={isOpen ? (onCloseProp ?? handleClose) : (isOpenProp !== undefined ? () => {} : handleOpen)}
+          onClick={isOpen ? (onCloseProp ?? handleClose) : (onOpenProp ?? handleOpen)}
           aria-label="Chat"
           style={{ position: "fixed", bottom: "20px", right: "20px", zIndex: 50, height: "52px", padding: "0 20px", borderRadius: "16px", boxShadow: "0 8px 25px rgba(0,24,46,0.4)", display: "flex", alignItems: "center", gap: "10px", border: "none", cursor: "pointer", background: isOpen ? "#012444" : "#013FF6", transition: "all .2s", userSelect: "none" }}
           className="hover:scale-105 active:scale-95 transition-transform"

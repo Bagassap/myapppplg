@@ -1,12 +1,14 @@
 // components/layout/TopBar.tsx
 "use client";
 
+import { useState } from "react";
 import { Search, Sun, Moon, Loader, Menu } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useSidebar } from "@/contexts/SidebarContext";
 import ChatWidget from "@/components/chat/ChatWidget";
+import NotificationDropdown from "@/components/layout/NotificationDropdown";
 
 export default function TopBar() {
   const { theme, setTheme } = useTheme();
@@ -14,7 +16,17 @@ export default function TopBar() {
   const { data: session, status } = useSession();
   const { toggleMobileSidebar } = useSidebar();
 
+  const [chatOpen, setChatOpen] = useState(false);
+  const [openConvId, setOpenConvId] = useState<number | null>(null);
+
   const toggleTheme = () => setTheme(theme === "Dark" ? "Light" : "Dark");
+
+  const handleOpenChat = (convId: number) => {
+    setChatOpen(true);
+    setOpenConvId(convId);
+    // reset setelah widget memproses, agar klik notif yg sama bisa buka lagi
+    setTimeout(() => setOpenConvId(null), 400);
+  };
 
   if (status === "loading") {
     return (
@@ -73,21 +85,15 @@ export default function TopBar() {
           </div>
         </div>
 
-        {/* Kanan: search + theme + user */}
+        {/* Kanan: search + notif + theme + user */}
         <div className="flex items-center gap-2 sm:gap-3">
 
           {/* Search */}
           <div
             className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl border"
-            style={{
-              background: "var(--bg-input)",
-              borderColor: "var(--border-color)",
-            }}
+            style={{ background: "var(--bg-input)", borderColor: "var(--border-color)" }}
           >
-            <Search
-              className="w-4 h-4 shrink-0"
-              style={{ color: "var(--text-secondary)" }}
-            />
+            <Search className="w-4 h-4 shrink-0" style={{ color: "var(--text-secondary)" }} />
             <input
               type="text"
               placeholder="Cari..."
@@ -95,6 +101,9 @@ export default function TopBar() {
               style={{ color: "var(--text-primary)" }}
             />
           </div>
+
+          {/* Notification Bell */}
+          <NotificationDropdown onOpenChat={handleOpenChat} />
 
           {/* Theme toggle */}
           <button
@@ -132,7 +141,12 @@ export default function TopBar() {
         </div>
       </header>
 
-      <ChatWidget />
+      <ChatWidget
+        isOpen={chatOpen}
+        onOpen={() => setChatOpen(true)}
+        onClose={() => setChatOpen(false)}
+        openConversationId={openConvId}
+      />
     </>
   );
 }
