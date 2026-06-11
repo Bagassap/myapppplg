@@ -4,68 +4,25 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
-  Search,
-  Plus,
-  MessageCircle,
-  Send,
-  ChevronLeft,
-  Check,
-  CheckCheck,
-  Loader2,
-  Users,
-  X,
-  MoreVertical,
+  Search, Plus, MessageCircle, Send, ChevronLeft,
+  Check, CheckCheck, Loader2, Users, X,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-interface OtherUser {
-  id: number;
-  name: string | null;
-  role: string;
-}
-interface LastMessage {
-  id: number;
-  content: string;
-  senderId: number;
-  isRead: boolean;
-  createdAt: string;
-}
-interface Conversation {
-  id: number;
-  otherUser: OtherUser | null;
-  lastMessage: LastMessage | null;
-  unreadCount: number;
-  updatedAt: string;
-}
-interface Message {
-  id: number;
-  conversationId: number;
-  senderId: number;
-  content: string;
-  isRead: boolean;
-  readAt: string | null;
-  createdAt: string;
-  sender: { id: number; name: string | null; role: string };
-}
-interface Recipient {
-  id: number;
-  name: string;
-  username: string;
-  kelas: string;
-  tempatPKL: string;
-}
+interface OtherUser { id: number; name: string | null; role: string; }
+interface LastMessage { id: number; content: string; senderId: number; isRead: boolean; createdAt: string; }
+interface Conversation { id: number; otherUser: OtherUser | null; lastMessage: LastMessage | null; unreadCount: number; updatedAt: string; }
+interface Message { id: number; conversationId: number; senderId: number; content: string; isRead: boolean; readAt: string | null; createdAt: string; sender: { id: number; name: string | null; role: string }; }
+interface Recipient { id: number; name: string; username: string; kelas: string; tempatPKL: string; }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatTime(iso: string) {
-  const d = new Date(iso);
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-  const diffDay = Math.floor(diffMs / 86400000);
+  const d = new Date(iso), now = new Date();
+  const diffMin = Math.floor((now.getTime() - d.getTime()) / 60000);
+  const diffDay = Math.floor(diffMin / 1440);
   if (diffMin < 1) return "Baru saja";
   if (diffMin < 60) return `${diffMin}m`;
-  if (diffDay < 1)
-    return d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+  if (diffDay < 1) return d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
   if (diffDay === 1) return "Kemarin";
   if (diffDay < 7) return d.toLocaleDateString("id-ID", { weekday: "short" });
   return d.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
@@ -76,8 +33,7 @@ function formatFullTime(iso: string) {
 }
 
 function formatDateDivider(iso: string) {
-  const d = new Date(iso);
-  const now = new Date();
+  const d = new Date(iso), now = new Date();
   const diffDay = Math.floor((now.getTime() - d.getTime()) / 86400000);
   if (diffDay === 0) return "Hari Ini";
   if (diffDay === 1) return "Kemarin";
@@ -90,19 +46,9 @@ function getInitials(name: string | null) {
 }
 
 function getAvatarColor(name: string | null) {
-  const colors = [
-    "#6366f1", "#8b5cf6", "#ec4899", "#f59e0b",
-    "#10b981", "#3b82f6", "#ef4444", "#14b8a6",
-    "#f97316", "#84cc16",
-  ];
+  const colors = ["#6366f1","#8b5cf6","#ec4899","#f59e0b","#10b981","#3b82f6","#ef4444","#14b8a6","#f97316","#84cc16"];
   if (!name) return colors[0];
   return colors[name.charCodeAt(0) % colors.length];
-}
-
-function getRoleBadge(role: string) {
-  if (role === "ADMIN") return { label: "Admin", bg: "rgba(239,68,68,0.12)", fg: "#dc2626" };
-  if (role === "GURU")  return { label: "Guru",  bg: "rgba(1,63,246,0.12)",  fg: "#013FF6" };
-  return { label: "Siswa", bg: "rgba(172,236,0,0.2)", fg: "#00182E" };
 }
 
 function groupByDate(messages: Message[]) {
@@ -110,12 +56,8 @@ function groupByDate(messages: Message[]) {
   let lastDate = "";
   for (const m of messages) {
     const d = new Date(m.createdAt).toDateString();
-    if (d !== lastDate) {
-      groups.push({ date: m.createdAt, messages: [m] });
-      lastDate = d;
-    } else {
-      groups[groups.length - 1].messages.push(m);
-    }
+    if (d !== lastDate) { groups.push({ date: m.createdAt, messages: [m] }); lastDate = d; }
+    else groups[groups.length - 1].messages.push(m);
   }
   return groups;
 }
@@ -140,10 +82,11 @@ export default function ChatPage() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const pollRef = useRef<NodeJS.Timeout | null>(null);
 
   const userId = Number(session?.user?.id);
   const role = session?.user?.role as string;
+  const canStartChat = role === "ADMIN" || role === "GURU";
+  const activeConvId = activeConv?.id;
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -162,42 +105,36 @@ export default function ChatPage() {
     if (status === "authenticated") loadConversations();
   }, [status, loadConversations]);
 
-  // Polling percakapan setiap 2 detik
+  // Polling daftar percakapan setiap 3 detik
   useEffect(() => {
     if (status !== "authenticated") return;
-    pollRef.current = setInterval(loadConversations, 2000);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+    const id = setInterval(loadConversations, 3000);
+    return () => clearInterval(id);
   }, [status, loadConversations]);
 
-  const loadMessages = useCallback(async (convId: number) => {
-    setLoadingMsgs(true);
-    try {
-      const r = await fetch(`/api/chat/messages?conversationId=${convId}`);
-      if (r.ok) {
-        setMessages(await r.json());
+  // SSE real-time untuk pesan aktif
+  useEffect(() => {
+    if (!activeConvId) return;
+    const es = new EventSource(`/api/chat/stream?conversationId=${activeConvId}`);
+    es.onmessage = (e) => {
+      try {
+        const msgs: Message[] = JSON.parse(e.data);
+        setMessages(msgs);
         setConversations((prev) =>
-          prev.map((c) => (c.id === convId ? { ...c, unreadCount: 0 } : c)),
+          prev.map((c) => (c.id === activeConvId ? { ...c, unreadCount: 0 } : c))
         );
-      }
-    } finally {
-      setLoadingMsgs(false);
-    }
-  }, []);
-
-  // Polling pesan setiap 2 detik
-  useEffect(() => {
-    if (!activeConv) return;
-    const id = setInterval(() => loadMessages(activeConv.id), 2000);
-    return () => clearInterval(id);
-  }, [activeConv, loadMessages]);
-
-  useEffect(() => {
-    setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 60);
-  }, [messages]);
+        setLoadingMsgs(false);
+        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+      } catch { /* ignore parse errors */ }
+    };
+    es.onerror = () => es.close();
+    return () => es.close();
+  }, [activeConvId]);
 
   const selectConversation = (conv: Conversation) => {
     setActiveConv(conv);
-    loadMessages(conv.id);
+    setMessages([]);
+    setLoadingMsgs(true);
     setShowMobile("chat");
     setTimeout(() => inputRef.current?.focus(), 150);
   };
@@ -207,6 +144,8 @@ export default function ChatPage() {
     setSending(true);
     const content = messageInput.trim();
     setMessageInput("");
+    // reset textarea height
+    if (inputRef.current) { inputRef.current.style.height = "auto"; }
     try {
       const r = await fetch("/api/chat/messages", {
         method: "POST",
@@ -218,13 +157,10 @@ export default function ChatPage() {
         setMessages((prev) => [...prev, msg]);
         setConversations((prev) =>
           prev
-            .map((c) =>
-              c.id === activeConv.id
-                ? { ...c, lastMessage: msg, updatedAt: msg.createdAt }
-                : c,
-            )
-            .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
+            .map((c) => c.id === activeConv.id ? { ...c, lastMessage: msg, updatedAt: msg.createdAt } : c)
+            .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
         );
+        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
       }
     } catch {
       setMessageInput(content);
@@ -234,18 +170,13 @@ export default function ChatPage() {
   };
 
   const handleKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
   const loadRecipients = async () => {
     const r = await fetch("/api/chat/recipients");
     if (r.ok) setRecipients(await r.json());
   };
-
-  const openNewChat = () => { setShowNewChat(true); loadRecipients(); };
 
   const startChat = async (targetId: number) => {
     const r = await fetch("/api/chat/conversations", {
@@ -257,120 +188,88 @@ export default function ChatPage() {
       const { conversationId } = await r.json();
       setShowNewChat(false);
       setRecipientSearch("");
-      await loadConversations();
-      const conv = conversations.find((c) => c.id === conversationId);
-      if (conv) selectConversation(conv);
-      else {
-        const res = await fetch("/api/chat/conversations");
-        if (res.ok) {
-          const convs: Conversation[] = await res.json();
-          setConversations(convs);
-          const fresh = convs.find((c) => c.id === conversationId);
-          if (fresh) selectConversation(fresh);
-        }
+      const res = await fetch("/api/chat/conversations");
+      if (res.ok) {
+        const convs: Conversation[] = await res.json();
+        setConversations(convs);
+        const fresh = convs.find((c) => c.id === conversationId);
+        if (fresh) selectConversation(fresh);
       }
     }
   };
 
   const filteredConvs = conversations.filter(
-    (c) => !searchQuery || (c.otherUser?.name ?? "").toLowerCase().includes(searchQuery.toLowerCase()),
+    (c) => !searchQuery || (c.otherUser?.name ?? "").toLowerCase().includes(searchQuery.toLowerCase())
   );
-
   const filteredRecipients = recipients.filter(
-    (r) =>
-      !recipientSearch ||
+    (r) => !recipientSearch ||
       r.name.toLowerCase().includes(recipientSearch.toLowerCase()) ||
       r.username.toLowerCase().includes(recipientSearch.toLowerCase()) ||
-      r.kelas.toLowerCase().includes(recipientSearch.toLowerCase()),
+      r.kelas.toLowerCase().includes(recipientSearch.toLowerCase())
   );
-
   const grouped = groupByDate(messages);
-  const canStartChat = role === "ADMIN" || role === "GURU";
-  const myBadge = getRoleBadge(role);
 
   if (status === "loading") {
     return (
-      <div className="flex items-center justify-center h-screen" style={{ background: "var(--bg)" }}>
-        <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#013FF6" }} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#00182E" }}>
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#ACEC00" }} />
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: "var(--bg)" }}>
+    <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#00182E" }}>
 
       {/* ── SIDEBAR ── */}
       <div
-        className={`flex flex-col w-full md:w-[360px] lg:w-[380px] shrink-0 ${showMobile === "chat" ? "hidden md:flex" : "flex"}`}
-        style={{ background: "var(--surface)", borderRight: "1px solid var(--bd)" }}
+        className="md:flex"
+        style={{
+          display: showMobile === "chat" ? "none" : "flex",
+          flexDirection: "column",
+          width: "320px",
+          flexShrink: 0,
+          background: "#00182E",
+          borderRight: "1px solid #013FF6",
+        }}
       >
         {/* Sidebar Header */}
-        <div className="px-4 pt-5 pb-3" style={{ background: "var(--surface)", borderBottom: "1px solid var(--bd)" }}>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
-                style={{ background: getAvatarColor(session?.user?.name ?? null) }}
-              >
-                {getInitials(session?.user?.name ?? null)}
-              </div>
-              <div>
-                <p className="font-semibold text-sm leading-tight" style={{ color: "var(--text-primary)" }}>
-                  {session?.user?.name ?? "Pengguna"}
-                </p>
-                <span
-                  className="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
-                  style={{ background: myBadge.bg, color: myBadge.fg }}
-                >
-                  {myBadge.label}
-                </span>
-              </div>
-            </div>
+        <div style={{ padding: "20px", borderBottom: "1px solid #013FF6", background: "#00182E" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+            <span style={{ color: "#ACEC00", fontWeight: "bold", fontSize: "20px" }}>💬 Chat</span>
             {canStartChat && (
               <button
-                onClick={openNewChat}
-                className="w-9 h-9 rounded-xl flex items-center justify-center transition-colors"
-                style={{ background: "rgba(172,236,0,0.15)", color: "#00182E" }}
+                onClick={() => { setShowNewChat(true); loadRecipients(); }}
                 title="Chat baru"
+                style={{ background: "#013FF6", color: "#ffffff", border: "none", borderRadius: "8px", width: "32px", height: "32px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
               >
-                <Plus className="w-4 h-4" />
+                <Plus style={{ width: "16px", height: "16px" }} />
               </button>
             )}
           </div>
-          {/* Search */}
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--text-secondary)" }} />
+          <div style={{ position: "relative" }}>
+            <Search style={{ width: "14px", height: "14px", position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.35)", pointerEvents: "none" }} />
             <input
               type="text"
               placeholder="Cari percakapan..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 rounded-xl text-sm focus:outline-none"
-              style={{
-                background: "var(--bg-input)",
-                border: "1px solid var(--bd)",
-                color: "var(--text-primary)",
-              }}
+              style={{ width: "100%", paddingLeft: "36px", paddingRight: "12px", paddingTop: "9px", paddingBottom: "9px", background: "#012444", border: "1px solid #013FF6", borderRadius: "10px", color: "#ffffff", outline: "none", fontSize: "13px", boxSizing: "border-box" }}
             />
           </div>
         </div>
 
         {/* Conversation List */}
-        <div className="flex-1 overflow-y-auto">
+        <div style={{ flex: 1, overflowY: "auto" }}>
           {loadingConvs ? (
-            <div className="flex items-center justify-center h-32 gap-2">
-              <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#013FF6" }} />
-              <span className="text-sm" style={{ color: "var(--text-secondary)" }}>Memuat percakapan...</span>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "80px", gap: "8px" }}>
+              <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#ACEC00" }} />
+              <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px" }}>Memuat...</span>
             </div>
           ) : filteredConvs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-48 gap-3 px-6 text-center">
-              <MessageCircle className="w-10 h-10 opacity-20" style={{ color: "var(--text-secondary)" }} />
-              <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Belum ada percakapan</p>
-              {canStartChat && (
-                <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                  Klik tombol + untuk mulai chat baru
-                </p>
-              )}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "160px", gap: "10px", padding: "0 20px", textAlign: "center" }}>
+              <MessageCircle style={{ width: "36px", height: "36px", color: "rgba(255,255,255,0.12)" }} />
+              <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px" }}>Belum ada percakapan</span>
+              {canStartChat && <span style={{ color: "rgba(172,236,0,0.65)", fontSize: "12px" }}>Klik + untuk chat baru</span>}
             </div>
           ) : (
             filteredConvs.map((conv) => (
@@ -387,78 +286,53 @@ export default function ChatPage() {
       </div>
 
       {/* ── CHAT AREA ── */}
-      <div className={`flex-1 flex flex-col ${showMobile === "list" ? "hidden md:flex" : "flex"}`}>
+      <div
+        className="md:flex"
+        style={{ flex: 1, display: showMobile === "list" ? "none" : "flex", flexDirection: "column" }}
+      >
         {activeConv ? (
           <>
             {/* Chat Header */}
-            <div
-              className="shrink-0 px-4 py-3 flex items-center gap-3 shadow-sm"
-              style={{ background: "#00182E", borderBottom: "1px solid rgba(255,255,255,0.1)" }}
-            >
+            <div style={{ background: "#00182E", padding: "16px 24px", borderBottom: "2px solid #ACEC00", display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 }}>
               <button
                 onClick={() => { setShowMobile("list"); setActiveConv(null); }}
-                className="md:hidden p-1.5 rounded-lg transition-colors"
-                style={{ color: "rgba(255,255,255,0.7)" }}
+                className="md:hidden"
+                style={{ color: "rgba(255,255,255,0.6)", background: "transparent", border: "none", cursor: "pointer", padding: "4px", borderRadius: "6px", display: "flex" }}
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft style={{ width: "20px", height: "20px" }} />
               </button>
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
-                style={{ background: getAvatarColor(activeConv.otherUser?.name ?? null) }}
-              >
+              <div style={{ width: "42px", height: "42px", borderRadius: "50%", background: getAvatarColor(activeConv.otherUser?.name ?? null), display: "flex", alignItems: "center", justifyContent: "center", color: "#ffffff", fontWeight: "bold", fontSize: "14px", flexShrink: 0 }}>
                 {getInitials(activeConv.otherUser?.name ?? null)}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm truncate" style={{ color: "#ffffff" }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ color: "#ffffff", fontWeight: "bold", fontSize: "18px", margin: 0, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {activeConv.otherUser?.name ?? "Pengguna"}
                 </p>
-                {(() => {
-                  const b = getRoleBadge(activeConv.otherUser?.role ?? "");
-                  return (
-                    <span
-                      className="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
-                      style={{ background: b.bg, color: b.fg }}
-                    >
-                      {b.label}
-                    </span>
-                  );
-                })()}
-              </div>
-              <div className="flex items-center gap-1">
-                <button className="p-2 rounded-xl transition-colors" style={{ color: "rgba(255,255,255,0.7)" }}>
-                  <MoreVertical className="w-4 h-4" />
-                </button>
+                <span style={{ color: "#ACEC00", fontSize: "12px" }}>
+                  {activeConv.otherUser?.role === "GURU" ? "Guru" : activeConv.otherUser?.role === "ADMIN" ? "Admin" : "Siswa"}
+                </span>
               </div>
             </div>
 
-            {/* Messages */}
-            <div
-              className="flex-1 overflow-y-auto px-4 py-4 space-y-1"
-              style={{ background: "var(--bg)" }}
-            >
+            {/* Messages Area */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "24px", display: "flex", flexDirection: "column", gap: "4px", background: "#010d1a" }}>
               {loadingMsgs ? (
-                <div className="flex items-center justify-center h-full">
-                  <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#013FF6" }} />
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                  <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#ACEC00" }} />
                 </div>
               ) : messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full gap-3">
-                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm" style={{ background: "var(--surface)" }}>
-                    <MessageCircle className="w-8 h-8" style={{ color: "#013FF6" }} />
-                  </div>
-                  <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Mulai percakapan</p>
-                  <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: "12px" }}>
+                  <MessageCircle style={{ width: "48px", height: "48px", color: "#013FF6" }} />
+                  <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "14px", margin: 0 }}>Mulai percakapan</p>
+                  <p style={{ color: "rgba(255,255,255,0.25)", fontSize: "12px", margin: 0 }}>
                     Kirim pesan pertamamu ke {activeConv.otherUser?.name}
                   </p>
                 </div>
               ) : (
                 grouped.map((group, gi) => (
                   <div key={gi}>
-                    {/* Date divider */}
-                    <div className="flex items-center justify-center my-4">
-                      <span
-                        className="px-3 py-1 rounded-full text-xs shadow-sm"
-                        style={{ background: "var(--surface)", color: "var(--text-secondary)", border: "1px solid var(--bd)" }}
-                      >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", margin: "16px 0" }}>
+                      <span style={{ background: "#012444", color: "rgba(255,255,255,0.45)", padding: "4px 14px", borderRadius: "20px", fontSize: "11px", border: "1px solid #013FF6" }}>
                         {formatDateDivider(group.date)}
                       </span>
                     </div>
@@ -476,73 +350,49 @@ export default function ChatPage() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
-            <div
-              className="shrink-0 px-4 py-3"
-              style={{ background: "var(--surface)", borderTop: "1px solid var(--bd)" }}
-            >
-              <div className="flex items-end gap-2">
-                <div className="flex-1 relative">
-                  <textarea
-                    ref={inputRef}
-                    value={messageInput}
-                    onChange={(e) => setMessageInput(e.target.value)}
-                    onKeyDown={handleKey}
-                    placeholder="Ketik pesan..."
-                    rows={1}
-                    className="w-full px-4 py-3 rounded-2xl text-sm focus:outline-none resize-none leading-relaxed max-h-32 overflow-y-auto"
-                    style={{
-                      background: "var(--bg-input)",
-                      border: "1.5px solid var(--bd)",
-                      color: "var(--text-primary)",
-                      minHeight: "44px",
-                    }}
-                    onFocus={(e) => { e.currentTarget.style.borderColor = "#ACEC00"; }}
-                    onBlur={(e) => { e.currentTarget.style.borderColor = "var(--bd)"; }}
-                    onInput={(e) => {
-                      const t = e.currentTarget;
-                      t.style.height = "auto";
-                      t.style.height = Math.min(t.scrollHeight, 128) + "px";
-                    }}
-                  />
-                </div>
-                <button
-                  onClick={handleSend}
-                  disabled={!messageInput.trim() || sending}
-                  className="w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-150 shadow-sm shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{ background: "#ACEC00", color: "#00182E" }}
-                >
-                  {sending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Send className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-              <p className="text-[10px] mt-1.5 text-right" style={{ color: "var(--text-secondary)" }}>
-                Enter kirim · Shift+Enter baris baru
-              </p>
+            {/* Input Area */}
+            <div style={{ background: "#00182E", padding: "16px 24px", borderTop: "2px solid #ACEC00", display: "flex", gap: "12px", alignItems: "flex-end", flexShrink: 0 }}>
+              <textarea
+                ref={inputRef}
+                value={messageInput}
+                onChange={(e) => setMessageInput(e.target.value)}
+                onKeyDown={handleKey}
+                placeholder="Ketik pesan..."
+                rows={1}
+                style={{ flex: 1, background: "#012444", border: "1px solid #013FF6", borderRadius: "24px", padding: "10px 20px", color: "#ffffff", outline: "none", fontSize: "14px", resize: "none", lineHeight: 1.5, maxHeight: "120px", overflowY: "auto", fontFamily: "inherit" }}
+                onInput={(e) => {
+                  const t = e.currentTarget;
+                  t.style.height = "auto";
+                  t.style.height = Math.min(t.scrollHeight, 120) + "px";
+                }}
+              />
+              <button
+                onClick={handleSend}
+                disabled={!messageInput.trim() || sending}
+                style={{ background: !messageInput.trim() || sending ? "rgba(172,236,0,0.35)" : "#ACEC00", color: "#00182E", border: "none", borderRadius: "50%", width: "44px", height: "44px", cursor: !messageInput.trim() || sending ? "not-allowed" : "pointer", fontWeight: "bold", fontSize: "18px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.15s" }}
+              >
+                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send style={{ width: "18px", height: "18px" }} />}
+              </button>
             </div>
           </>
         ) : (
-          // Empty state
-          <div className="flex-1 flex flex-col items-center justify-center gap-4" style={{ background: "var(--bg)" }}>
-            <div className="w-24 h-24 rounded-3xl flex items-center justify-center shadow-lg" style={{ background: "var(--surface)" }}>
-              <MessageCircle className="w-12 h-12" style={{ color: "#013FF6" }} />
+          // Empty state — belum pilih percakapan
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px", background: "#010d1a" }}>
+            <div style={{ width: "80px", height: "80px", borderRadius: "20px", background: "#012444", border: "2px solid #013FF6", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <MessageCircle style={{ width: "40px", height: "40px", color: "#013FF6" }} />
             </div>
-            <div className="text-center">
-              <h2 className="text-xl font-semibold" style={{ color: "var(--text-primary)" }}>Pilih Percakapan</h2>
-              <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
-                {canStartChat ? "Pilih percakapan atau mulai chat baru" : "Pilih percakapan untuk mulai membaca"}
+            <div style={{ textAlign: "center" }}>
+              <h2 style={{ color: "#ffffff", fontWeight: "bold", fontSize: "20px", margin: "0 0 8px" }}>Pilih Percakapan</h2>
+              <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "14px", margin: 0 }}>
+                {canStartChat ? "Pilih percakapan atau klik + untuk chat baru" : "Pilih percakapan untuk mulai membaca"}
               </p>
             </div>
             {canStartChat && (
               <button
-                onClick={openNewChat}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-sm"
-                style={{ background: "#ACEC00", color: "#00182E" }}
+                onClick={() => { setShowNewChat(true); loadRecipients(); }}
+                style={{ background: "#ACEC00", color: "#00182E", border: "none", borderRadius: "10px", padding: "10px 24px", fontWeight: "bold", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
               >
-                <Plus className="w-4 h-4" /> Chat Baru
+                <Plus style={{ width: "16px", height: "16px" }} /> Chat Baru
               </button>
             )}
           </div>
@@ -551,73 +401,60 @@ export default function ChatPage() {
 
       {/* ── MODAL: NEW CHAT ── */}
       {showNewChat && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" style={{ background: "var(--surface)" }}>
-            <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--bd)" }}>
+        <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px", background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)" }}>
+          <div style={{ background: "#00182E", border: "1px solid #013FF6", borderRadius: "16px", boxShadow: "0 20px 60px rgba(0,0,0,0.6)", width: "100%", maxWidth: "420px", overflow: "hidden" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px", borderBottom: "1px solid #013FF6" }}>
               <div>
-                <h3 className="font-semibold" style={{ color: "var(--text-primary)" }}>Chat Baru</h3>
-                <p className="text-xs mt-0.5" style={{ color: "var(--text-secondary)" }}>
+                <h3 style={{ color: "#ACEC00", fontWeight: "bold", fontSize: "16px", margin: 0 }}>Chat Baru</h3>
+                <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "12px", margin: "4px 0 0" }}>
                   {role === "GURU" ? "Pilih siswa yang Anda bimbing" : "Pilih siswa"}
                 </p>
               </div>
               <button
                 onClick={() => { setShowNewChat(false); setRecipientSearch(""); }}
-                className="p-2 rounded-xl transition-colors"
-                style={{ color: "var(--text-secondary)" }}
+                style={{ background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.45)", display: "flex", padding: "4px", borderRadius: "6px" }}
               >
-                <X className="w-4 h-4" />
+                <X style={{ width: "18px", height: "18px" }} />
               </button>
             </div>
-            <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--bd)" }}>
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-secondary)" }} />
+            <div style={{ padding: "16px 24px", borderBottom: "1px solid #013FF6" }}>
+              <div style={{ position: "relative" }}>
+                <Search style={{ width: "14px", height: "14px", position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.35)" }} />
                 <input
                   type="text"
                   placeholder="Cari nama, NIS, kelas..."
                   value={recipientSearch}
                   onChange={(e) => setRecipientSearch(e.target.value)}
                   autoFocus
-                  className="w-full pl-9 pr-4 py-2 rounded-xl text-sm focus:outline-none"
-                  style={{
-                    background: "var(--bg-input)",
-                    border: "1.5px solid var(--bd)",
-                    color: "var(--text-primary)",
-                  }}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = "#ACEC00"; }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = "var(--bd)"; }}
+                  style={{ width: "100%", paddingLeft: "36px", paddingRight: "12px", paddingTop: "9px", paddingBottom: "9px", background: "#012444", border: "1px solid #013FF6", borderRadius: "10px", color: "#ffffff", outline: "none", fontSize: "13px", boxSizing: "border-box" }}
                 />
               </div>
             </div>
-            <div className="overflow-y-auto max-h-72">
+            <div style={{ overflowY: "auto", maxHeight: "300px" }}>
               {filteredRecipients.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 gap-2">
-                  <Users className="w-8 h-8 opacity-30" style={{ color: "var(--text-secondary)" }} />
-                  <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Tidak ada siswa ditemukan</p>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", gap: "10px" }}>
+                  <Users style={{ width: "32px", height: "32px", color: "rgba(255,255,255,0.15)" }} />
+                  <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "13px", margin: 0 }}>Tidak ada siswa ditemukan</p>
                 </div>
               ) : (
                 filteredRecipients.map((r) => (
                   <button
                     key={r.id}
                     onClick={() => startChat(r.id)}
-                    className="w-full flex items-center gap-3 px-5 py-3.5 transition-colors text-left"
-                    style={{ borderBottom: "1px solid var(--bd)" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(1,63,246,0.05)"; }}
+                    style={{ width: "100%", display: "flex", alignItems: "center", gap: "12px", padding: "12px 24px", background: "transparent", border: "none", borderBottom: "1px solid rgba(1,63,246,0.25)", cursor: "pointer", textAlign: "left", transition: "background 0.15s" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(1,63,246,0.12)"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                   >
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
-                      style={{ background: getAvatarColor(r.name) }}
-                    >
+                    <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: getAvatarColor(r.name), display: "flex", alignItems: "center", justifyContent: "center", color: "#ffffff", fontWeight: "bold", fontSize: "13px", flexShrink: 0 }}>
                       {getInitials(r.name)}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate" style={{ color: "var(--text-primary)" }}>{r.name}</p>
-                      <p className="text-xs truncate" style={{ color: "var(--text-secondary)" }}>
-                        NIS: {r.username} · {r.kelas}
-                        {r.tempatPKL !== "—" && ` · ${r.tempatPKL}`}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ color: "#ffffff", fontWeight: 600, fontSize: "14px", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</p>
+                      <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "12px", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        NIS: {r.username} · {r.kelas}{r.tempatPKL !== "—" ? ` · ${r.tempatPKL}` : ""}
                       </p>
                     </div>
-                    <MessageCircle className="w-4 h-4 shrink-0" style={{ color: "#013FF6" }} />
+                    <MessageCircle style={{ width: "16px", height: "16px", color: "#013FF6", flexShrink: 0 }} />
                   </button>
                 ))
               )}
@@ -631,85 +468,69 @@ export default function ChatPage() {
 
 // ─── Conversation Item ────────────────────────────────────────────────────────
 function ConvItem({
-  conv,
-  isActive,
-  currentUserId,
-  onClick,
-}: {
-  conv: Conversation;
-  isActive: boolean;
-  currentUserId: number;
-  onClick: () => void;
-}) {
+  conv, isActive, currentUserId, onClick,
+}: { conv: Conversation; isActive: boolean; currentUserId: number; onClick: () => void; }) {
   const isMine = conv.lastMessage?.senderId === currentUserId;
 
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 px-4 py-3.5 transition-colors text-left relative"
       style={{
-        background: isActive ? "rgba(1,63,246,0.08)" : "transparent",
-        borderRight: isActive ? "2px solid #013FF6" : "2px solid transparent",
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        gap: "12px",
+        padding: "12px 16px",
+        cursor: "pointer",
+        textAlign: "left",
+        background: isActive ? "#012444" : "transparent",
+        borderTop: "none",
+        borderRight: "none",
+        borderBottom: "none",
+        borderLeft: isActive ? "3px solid #ACEC00" : "3px solid transparent",
+        transition: "background 0.15s",
+        boxSizing: "border-box",
       }}
-      onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "rgba(1,63,246,0.04)"; }}
+      onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "#011f3a"; }}
       onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
     >
       {/* Avatar */}
-      <div className="relative shrink-0">
-        <div
-          className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"
-          style={{ background: getAvatarColor(conv.otherUser?.name ?? null) }}
-        >
+      <div style={{ position: "relative", flexShrink: 0 }}>
+        <div style={{ width: "46px", height: "46px", borderRadius: "50%", background: getAvatarColor(conv.otherUser?.name ?? null), display: "flex", alignItems: "center", justifyContent: "center", color: "#ffffff", fontWeight: "bold", fontSize: "15px" }}>
           {getInitials(conv.otherUser?.name ?? null)}
         </div>
         {conv.unreadCount > 0 && (
-          <span
-            className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1"
-            style={{ background: "#013FF6" }}
-          >
+          <span style={{ position: "absolute", top: "-2px", right: "-2px", minWidth: "18px", height: "18px", background: "#ACEC00", color: "#00182E", borderRadius: "50%", fontSize: "11px", fontWeight: "bold", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 3px" }}>
             {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
           </span>
         )}
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <p
-            className="text-sm truncate"
-            style={{
-              fontWeight: conv.unreadCount > 0 ? 700 : 500,
-              color: "var(--text-primary)",
-            }}
-          >
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+          <p style={{ color: "#ffffff", fontWeight: conv.unreadCount > 0 ? 700 : 600, fontSize: "14px", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {conv.otherUser?.name ?? "Pengguna"}
           </p>
           {conv.lastMessage && (
-            <span
-              className="text-[10px] shrink-0"
-              style={{ color: conv.unreadCount > 0 ? "#013FF6" : "var(--text-secondary)", fontWeight: conv.unreadCount > 0 ? 600 : 400 }}
-            >
+            <span style={{ color: conv.unreadCount > 0 ? "#ACEC00" : "rgba(255,255,255,0.3)", fontSize: "11px", flexShrink: 0, fontWeight: conv.unreadCount > 0 ? 600 : 400 }}>
               {formatTime(conv.lastMessage.createdAt)}
             </span>
           )}
         </div>
         {conv.lastMessage ? (
-          <div className="flex items-center gap-1 mt-0.5">
+          <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "2px" }}>
             {isMine && (
               conv.lastMessage.isRead
-                ? <CheckCheck className="w-3 h-3 shrink-0" style={{ color: "#013FF6" }} />
-                : <Check className="w-3 h-3 shrink-0" style={{ color: "var(--text-secondary)" }} />
+                ? <CheckCheck style={{ width: "12px", height: "12px", color: "#ACEC00", flexShrink: 0 }} />
+                : <Check style={{ width: "12px", height: "12px", color: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
             )}
-            <p
-              className="text-xs truncate"
-              style={{ color: conv.unreadCount > 0 ? "var(--text-primary)" : "var(--text-secondary)", fontWeight: conv.unreadCount > 0 ? 500 : 400 }}
-            >
-              {isMine ? "Kamu: " : ""}
-              {conv.lastMessage.content}
+            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "13px", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {isMine ? "Kamu: " : ""}{conv.lastMessage.content}
             </p>
           </div>
         ) : (
-          <p className="text-xs mt-0.5 italic" style={{ color: "var(--text-secondary)" }}>Belum ada pesan</p>
+          <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "13px", margin: "2px 0 0", fontStyle: "italic" }}>Belum ada pesan</p>
         )}
       </div>
     </button>
@@ -718,63 +539,45 @@ function ConvItem({
 
 // ─── Message Bubble ───────────────────────────────────────────────────────────
 function MessageBubble({
-  message,
-  isOwn,
-  showAvatar,
-}: {
-  message: Message;
-  isOwn: boolean;
-  showAvatar: boolean;
-}) {
+  message, isOwn, showAvatar,
+}: { message: Message; isOwn: boolean; showAvatar: boolean; }) {
   return (
-    <div className={`flex items-end gap-2 mb-1 ${isOwn ? "justify-end" : "justify-start"}`}>
-      {/* Avatar (other user) */}
+    <div style={{ display: "flex", alignItems: "flex-end", gap: "8px", marginBottom: "4px", justifyContent: isOwn ? "flex-end" : "flex-start" }}>
+      {/* Avatar lawan */}
       {!isOwn && (
-        <div
-          className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0 mb-0.5 ${showAvatar ? "visible" : "invisible"}`}
-          style={{ background: getAvatarColor(message.sender.name) }}
-        >
+        <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: getAvatarColor(message.sender.name), display: "flex", alignItems: "center", justifyContent: "center", color: "#ffffff", fontSize: "10px", fontWeight: "bold", flexShrink: 0, marginBottom: "2px", visibility: showAvatar ? "visible" : "hidden" }}>
           {getInitials(message.sender.name)}
         </div>
       )}
 
-      <div className={`max-w-[72%] ${isOwn ? "items-end" : "items-start"} flex flex-col`}>
-        {/* Sender name (for received) */}
+      <div style={{ maxWidth: "65%", display: "flex", flexDirection: "column", alignItems: isOwn ? "flex-end" : "flex-start" }}>
         {!isOwn && showAvatar && (
-          <span className="text-[10px] font-semibold mb-1 ml-1" style={{ color: "#013FF6" }}>
+          <span style={{ color: "#ACEC00", fontSize: "11px", fontWeight: 600, marginBottom: "4px", marginLeft: "4px" }}>
             {message.sender.name}
           </span>
         )}
 
         {/* Bubble */}
-        <div
-          className="relative px-3.5 py-2.5 shadow-sm"
-          style={
-            isOwn
-              ? { background: "#013FF6", color: "#ffffff", borderRadius: "16px 16px 4px 16px" }
-              : { background: "var(--surface)", color: "var(--text-primary)", borderRadius: "16px 16px 16px 4px", border: "1px solid var(--bd)" }
-          }
-        >
-          <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
-          {/* Time + read status */}
-          <div className={`flex items-center gap-1 mt-1 ${isOwn ? "justify-end" : "justify-start"}`}>
-            <span
-              className="text-[10px]"
-              style={{ color: isOwn ? "rgba(255,255,255,0.6)" : "var(--text-secondary)" }}
-            >
+        <div style={
+          isOwn
+            ? { alignSelf: "flex-end", background: "#013FF6", color: "#ffffff", padding: "10px 16px", borderRadius: "18px 18px 4px 18px", maxWidth: "100%", fontSize: "14px" }
+            : { alignSelf: "flex-start", background: "#012444", color: "#ffffff", padding: "10px 16px", borderRadius: "18px 18px 18px 4px", maxWidth: "100%", fontSize: "14px", border: "1px solid #013FF6" }
+        }>
+          <p style={{ margin: 0, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{message.content}</p>
+          <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px", justifyContent: isOwn ? "flex-end" : "flex-start" }}>
+            <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "11px" }}>
               {formatFullTime(message.createdAt)}
             </span>
             {isOwn && (
               message.isRead
-                ? <CheckCheck className="w-3 h-3" style={{ color: "rgba(255,255,255,0.6)" }} />
-                : <Check className="w-3 h-3" style={{ color: "rgba(255,255,255,0.5)" }} />
+                ? <CheckCheck style={{ width: "12px", height: "12px", color: "rgba(255,255,255,0.4)" }} />
+                : <Check style={{ width: "12px", height: "12px", color: "rgba(255,255,255,0.3)" }} />
             )}
           </div>
         </div>
       </div>
 
-      {/* Spacer for own messages alignment */}
-      {isOwn && <div className="w-7 shrink-0" />}
+      {isOwn && <div style={{ width: "28px", flexShrink: 0 }} />}
     </div>
   );
 }
