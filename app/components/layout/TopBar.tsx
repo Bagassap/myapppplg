@@ -19,7 +19,7 @@ export default function TopBar() {
 
   if (status === "loading") {
     return (
-      <header className="flex items-center justify-between px-6 py-4 bg-white dark:bg-[#0d1f33] border-b-2 border-[#ACEC00]">
+      <header className="flex items-center justify-between px-6 py-4 border-b-2 border-[#ACEC00]" style={{ background: "var(--bg-topbar)" }}>
         <div className="flex items-center gap-2">
           <Loader className="w-5 h-5 animate-spin text-[#013FF6]" />
           <span className="text-sm text-[#00182E]/60 dark:text-white/60">Memuat...</span>
@@ -39,7 +39,7 @@ export default function TopBar() {
 
   return (
     <>
-      <header className="flex items-center justify-between px-4 sm:px-6 py-3 bg-white dark:bg-[#0d1f33] border-b-2 border-[#ACEC00] sticky top-0 z-30 shadow-sm">
+      <header className="flex items-center justify-between px-4 sm:px-6 py-3 border-b-2 border-[#ACEC00] sticky top-0 z-30 shadow-sm" style={{ background: "var(--bg-topbar)" }}>
 
         {/* Kiri: toggle + judul */}
         <div className="flex items-center gap-3">

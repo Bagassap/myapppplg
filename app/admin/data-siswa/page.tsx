@@ -227,7 +227,7 @@ export default function AdminDataSiswa() {
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
                 <span style={{ display: "block", width: 4, height: 26, background: "#ACEC00", borderRadius: 4 }} />
-                <h1 style={{ color: "#00182E", fontSize: 22, fontWeight: 800, margin: 0 }}>Data Siswa PKL</h1>
+                <h1 style={{ color: "var(--t1)", fontSize: 22, fontWeight: 800, margin: 0 }}>Data Siswa PKL</h1>
               </div>
               <p style={{ color: "var(--t3)", fontSize: 13, marginLeft: 14 }}>
                 {loading ? "Memuat..." : `${list.length} siswa · ${groups.length} kelas`}
@@ -387,7 +387,7 @@ export default function AdminDataSiswa() {
                 {initials(detail.name)}
               </div>
               <div>
-                <h2 style={{ color: "#00182E", fontWeight: 800, fontSize: 18, margin: "0 0 4px 0" }}>{detail.name}</h2>
+                <h2 style={{ color: "var(--t1)", fontWeight: 800, fontSize: 18, margin: "0 0 4px 0" }}>{detail.name}</h2>
                 <p style={{ color: "#013FF6", fontSize: 12, margin: 0, fontFamily: "monospace" }}>{detail.userId}</p>
               </div>
             </div>
@@ -430,7 +430,7 @@ export default function AdminDataSiswa() {
           onClick={closeForm}>
           <div style={{ background: "var(--surface)", borderRadius: 20, padding: 28, maxWidth: 540, width: "100%", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
             onClick={e => e.stopPropagation()}>
-            <h2 style={{ color: "#00182E", fontWeight: 700, fontSize: 18, margin: "0 0 20px 0" }}>
+            <h2 style={{ color: "var(--t1)", fontWeight: 700, fontSize: 18, margin: "0 0 20px 0" }}>
               {editingId ? "Edit Data Siswa" : "Tambah Siswa Baru"}
             </h2>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>

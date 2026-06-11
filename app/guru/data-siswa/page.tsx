@@ -167,7 +167,7 @@ export default function GuruDataSiswa() {
           <div style={{ marginBottom: 24 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
               <span style={{ display: "block", width: 4, height: 26, background: "#ACEC00", borderRadius: 4 }} />
-              <h1 style={{ color: "#00182E", fontSize: 22, fontWeight: 800, margin: 0 }}>Siswa Bimbingan</h1>
+              <h1 style={{ color: "var(--t1)", fontSize: 22, fontWeight: 800, margin: 0 }}>Siswa Bimbingan</h1>
             </div>
             <p style={{ color: "var(--t3)", fontSize: 13, marginLeft: 14 }}>
               {loading ? "Memuat..." : `${list.length} siswa · ${groups.length} kelas`}
@@ -308,7 +308,7 @@ export default function GuruDataSiswa() {
                 {initials(detail.name)}
               </div>
               <div>
-                <h2 style={{ color: "#00182E", fontWeight: 800, fontSize: 18, margin: "0 0 4px 0" }}>{detail.name}</h2>
+                <h2 style={{ color: "var(--t1)", fontWeight: 800, fontSize: 18, margin: "0 0 4px 0" }}>{detail.name}</h2>
                 <p style={{ color: "#013FF6", fontSize: 12, margin: 0, fontFamily: "monospace" }}>{detail.userId}</p>
               </div>
             </div>
