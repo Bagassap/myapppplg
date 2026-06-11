@@ -9,8 +9,119 @@ interface Siswa {
   guruPembimbing: string; noHp: string; alamat: string; isActive: boolean;
 }
 
+const PAGE_SIZE = 10;
+
 function initials(name: string) {
   return name.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?";
+}
+
+function groupByKelas(list: Siswa[]): { kelas: string; siswa: Siswa[] }[] {
+  const map: Record<string, Siswa[]> = {};
+  list.forEach(s => {
+    if (!map[s.kelas]) map[s.kelas] = [];
+    map[s.kelas].push(s);
+  });
+  return Object.keys(map).sort().map(kelas => ({ kelas, siswa: map[kelas] }));
+}
+
+interface KelasTableProps {
+  kelas: string;
+  siswa: Siswa[];
+  onDetail: (s: Siswa) => void;
+  page: number;
+  setPage: (p: number) => void;
+}
+
+function KelasTable({ kelas, siswa, onDetail, page, setPage }: KelasTableProps) {
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+  const totalPages = Math.ceil(siswa.length / PAGE_SIZE);
+  const paginated = siswa.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const startNo = (page - 1) * PAGE_SIZE;
+
+  const thS: React.CSSProperties = { padding: "11px 14px", color: "#6b7280", fontWeight: 700, textAlign: "left", fontSize: 12, letterSpacing: "0.3px", whiteSpace: "nowrap", background: "#f8fafc" };
+
+  return (
+    <div style={{ background: "white", borderRadius: 16, border: "1px solid #e5e7eb", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+      {/* Class header */}
+      <div style={{ background: "#00182E", padding: "13px 18px", display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ fontSize: 16 }}>📚</span>
+        <span style={{ color: "white", fontWeight: 700, fontSize: 14 }}>Kelas {kelas}</span>
+        <span style={{ background: "#ACEC00", color: "#00182E", fontSize: 11, fontWeight: 800, padding: "2px 9px", borderRadius: 20, marginLeft: 4 }}>
+          {siswa.length} Siswa
+        </span>
+        {totalPages > 1 && (
+          <span style={{ color: "rgba(255,255,255,0.45)", fontSize: 11, marginLeft: "auto" }}>
+            Hal. {page}/{totalPages}
+          </span>
+        )}
+      </div>
+
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+          <thead>
+            <tr style={{ borderBottom: "2px solid #e5e7eb" }}>
+              <th style={{ ...thS, textAlign: "center", width: 48 }}>No</th>
+              <th style={thS}>Nama Siswa</th>
+              <th style={thS}>NIS</th>
+              <th style={thS}>Jurusan</th>
+              <th style={thS}>Tempat PKL</th>
+              <th style={thS}>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {paginated.map((s, idx) => (
+              <tr key={s.id}
+                onClick={() => onDetail(s)}
+                onMouseEnter={() => setHoveredRow(s.id)}
+                onMouseLeave={() => setHoveredRow(null)}
+                style={{ background: hoveredRow === s.id ? "rgba(172,236,0,0.08)" : idx % 2 === 0 ? "white" : "#fafafa", cursor: "pointer", borderTop: "1px solid #f3f4f6", transition: "background 0.1s" }}>
+                <td style={{ padding: "10px 14px", textAlign: "center", color: "#9ca3af", fontSize: 12 }}>{startNo + idx + 1}</td>
+                <td style={{ padding: "10px 14px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#013FF6", color: "white", fontWeight: 700, fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      {initials(s.name)}
+                    </div>
+                    <div>
+                      <p style={{ margin: 0, fontWeight: 600, color: "#111827", fontSize: 13 }}>{s.name}</p>
+                      <p style={{ margin: 0, fontSize: 11, color: "#9ca3af" }}>{s.email}</p>
+                    </div>
+                  </div>
+                </td>
+                <td style={{ padding: "10px 14px", color: "#374151", fontFamily: "monospace", fontSize: 12 }}>{s.userId}</td>
+                <td style={{ padding: "10px 14px", color: "#6b7280", fontSize: 12 }}>{s.jurusan || "—"}</td>
+                <td style={{ padding: "10px 14px", color: "#6b7280", fontSize: 12, maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.tempatPKL || "—"}</td>
+                <td style={{ padding: "10px 14px" }}>
+                  <span style={{ background: s.isActive ? "rgba(172,236,0,0.18)" : "#f3f4f6", color: s.isActive ? "#3a7d00" : "#9ca3af", padding: "2px 8px", borderRadius: 5, fontSize: 11, fontWeight: 700 }}>
+                    {s.isActive ? "Aktif" : "Nonaktif"}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div style={{ padding: "10px 16px", borderTop: "1px solid #f3f4f6", display: "flex", gap: 6, alignItems: "center", justifyContent: "flex-end" }}>
+          <button onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1}
+            style={{ padding: "4px 12px", borderRadius: 7, border: "1.5px solid #e5e7eb", background: "white", fontSize: 12, cursor: page === 1 ? "default" : "pointer", color: page === 1 ? "#d1d5db" : "#374151", fontWeight: 600 }}>
+            ← Prev
+          </button>
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <button key={i} onClick={() => setPage(i + 1)}
+              style={{ width: 28, height: 28, borderRadius: 7, border: page === i + 1 ? "none" : "1.5px solid #e5e7eb", background: page === i + 1 ? "#00182E" : "white", color: page === i + 1 ? "white" : "#374151", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>
+              {i + 1}
+            </button>
+          ))}
+          <button onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages}
+            style={{ padding: "4px 12px", borderRadius: 7, border: "1.5px solid #e5e7eb", background: "white", fontSize: 12, cursor: page === totalPages ? "default" : "pointer", color: page === totalPages ? "#d1d5db" : "#374151", fontWeight: 600 }}>
+            Next →
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function GuruDataSiswa() {
@@ -18,22 +129,32 @@ export default function GuruDataSiswa() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [detail, setDetail] = useState<Siswa | null>(null);
-  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+  const [pages, setPages] = useState<Record<string, number>>({});
+  const [hoveredSearch, setHoveredSearch] = useState<number | null>(null);
+  const [searchPage, setSearchPage] = useState(1);
 
   useEffect(() => {
     fetch("/api/data-siswa").then(r => r.json())
       .then(d => { setList(d.data || []); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
+  useEffect(() => { setSearchPage(1); }, [search]);
 
-  const filtered = search
+  const getPage = (kelas: string) => pages[kelas] ?? 1;
+  const setKelasPage = (kelas: string, p: number) => setPages(prev => ({ ...prev, [kelas]: p }));
+
+  const groups = groupByKelas(list);
+
+  const searchFiltered = search.trim()
     ? list.filter(s =>
         s.name.toLowerCase().includes(search.toLowerCase()) ||
         s.userId.toLowerCase().includes(search.toLowerCase()) ||
         s.kelas.toLowerCase().includes(search.toLowerCase()))
-    : list;
+    : [];
+  const searchTotalPages = Math.ceil(searchFiltered.length / PAGE_SIZE);
+  const searchPaginated = searchFiltered.slice((searchPage - 1) * PAGE_SIZE, searchPage * PAGE_SIZE);
 
-  const thStyle: React.CSSProperties = { padding: "13px 14px", color: "white", fontWeight: 700, textAlign: "left", fontSize: 12, letterSpacing: "0.3px", whiteSpace: "nowrap" };
+  const thS: React.CSSProperties = { padding: "11px 14px", color: "white", fontWeight: 700, textAlign: "left", fontSize: 12, letterSpacing: "0.3px", whiteSpace: "nowrap", background: "#00182E" };
 
   return (
     <div style={{ display: "flex", height: "100vh", background: "#f9fafb", overflow: "hidden" }}>
@@ -49,91 +170,129 @@ export default function GuruDataSiswa() {
               <h1 style={{ color: "#00182E", fontSize: 22, fontWeight: 800, margin: 0 }}>Siswa Bimbingan</h1>
             </div>
             <p style={{ color: "#6b7280", fontSize: 13, marginLeft: 14 }}>
-              {loading ? "Memuat..." : `${list.length} siswa bimbingan`}
+              {loading ? "Memuat..." : `${list.length} siswa · ${groups.length} kelas`}
             </p>
           </div>
 
           {/* Search */}
-          <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 24 }}>
             <input value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="🔍  Cari nama, NIS, atau kelas..."
-              style={{ width: "100%", maxWidth: 380, padding: "9px 14px", borderRadius: 9, border: "1.5px solid #e5e7eb", background: "white", fontSize: 13, outline: "none", boxSizing: "border-box", color: "#111827" }} />
+              placeholder="🔍  Cari nama, NIS, atau kelas... (kosongkan untuk tampilan per kelas)"
+              style={{ width: "100%", maxWidth: 480, padding: "9px 14px", borderRadius: 9, border: "1.5px solid #e5e7eb", background: "white", fontSize: 13, outline: "none", boxSizing: "border-box", color: "#111827" }} />
           </div>
 
-          {/* Table */}
-          <div style={{ background: "white", borderRadius: 16, border: "1px solid #e5e7eb", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                <thead>
-                  <tr style={{ background: "#00182E" }}>
-                    <th style={{ ...thStyle, textAlign: "center", width: 48 }}>No</th>
-                    <th style={thStyle}>Nama Siswa</th>
-                    <th style={thStyle}>NIS</th>
-                    <th style={thStyle}>Kelas</th>
-                    <th style={thStyle}>Jurusan</th>
-                    <th style={thStyle}>Tempat PKL</th>
-                    <th style={thStyle}>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading && Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i} style={{ background: i % 2 === 0 ? "white" : "#fafafa", borderTop: "1px solid #f3f4f6" }}>
-                      {[40, 200, 80, 80, 90, 120, 60].map((w, c) => (
-                        <td key={c} style={{ padding: "12px 14px" }}>
-                          <div style={{ height: 12, background: "#f3f4f6", borderRadius: 6, width: w }} />
-                        </td>
-                      ))}
-                    </tr>
+          {/* Loading */}
+          {loading && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+              {[1, 2].map(g => (
+                <div key={g} style={{ background: "white", borderRadius: 16, border: "1px solid #e5e7eb", overflow: "hidden" }}>
+                  <div style={{ background: "#00182E", padding: "13px 18px", height: 44 }} />
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} style={{ padding: "12px 18px", display: "flex", gap: 16, borderTop: "1px solid #f3f4f6", background: i % 2 === 0 ? "white" : "#fafafa" }}>
+                      <div style={{ height: 12, background: "#f3f4f6", borderRadius: 6, width: 30 }} />
+                      <div style={{ height: 12, background: "#f3f4f6", borderRadius: 6, flex: 1 }} />
+                      <div style={{ height: 12, background: "#f3f4f6", borderRadius: 6, width: 80 }} />
+                    </div>
                   ))}
-
-                  {!loading && filtered.length === 0 && (
-                    <tr>
-                      <td colSpan={7} style={{ padding: "56px 0", textAlign: "center", color: "#9ca3af", fontSize: 14 }}>
-                        {search ? `Tidak ada hasil untuk "${search}"` : "Belum ada siswa bimbingan"}
-                      </td>
-                    </tr>
-                  )}
-
-                  {!loading && filtered.map((s, idx) => (
-                    <tr key={s.id}
-                      onClick={() => setDetail(s)}
-                      onMouseEnter={() => setHoveredRow(s.id)}
-                      onMouseLeave={() => setHoveredRow(null)}
-                      style={{ background: hoveredRow === s.id ? "rgba(172,236,0,0.08)" : idx % 2 === 0 ? "white" : "#fafafa", cursor: "pointer", borderTop: "1px solid #f3f4f6", transition: "background 0.1s" }}>
-                      <td style={{ padding: "11px 14px", textAlign: "center", color: "#9ca3af", fontSize: 12 }}>{idx + 1}</td>
-                      <td style={{ padding: "11px 14px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#013FF6", color: "white", fontWeight: 700, fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                            {initials(s.name)}
-                          </div>
-                          <div>
-                            <p style={{ margin: 0, fontWeight: 600, color: "#111827", fontSize: 13 }}>{s.name}</p>
-                            <p style={{ margin: 0, fontSize: 11, color: "#9ca3af" }}>{s.email}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td style={{ padding: "11px 14px", color: "#374151", fontFamily: "monospace", fontSize: 12 }}>{s.userId}</td>
-                      <td style={{ padding: "11px 14px" }}>
-                        <span style={{ background: "rgba(1,63,246,0.09)", color: "#013FF6", padding: "2px 8px", borderRadius: 5, fontSize: 11, fontWeight: 600 }}>{s.kelas}</span>
-                      </td>
-                      <td style={{ padding: "11px 14px", color: "#6b7280", fontSize: 12 }}>{s.jurusan || "—"}</td>
-                      <td style={{ padding: "11px 14px", color: "#6b7280", fontSize: 12, maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.tempatPKL || "—"}</td>
-                      <td style={{ padding: "11px 14px" }}>
-                        <span style={{ background: s.isActive ? "rgba(172,236,0,0.18)" : "#f3f4f6", color: s.isActive ? "#3a7d00" : "#9ca3af", padding: "2px 8px", borderRadius: 5, fontSize: 11, fontWeight: 700 }}>
-                          {s.isActive ? "Aktif" : "Nonaktif"}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                </div>
+              ))}
             </div>
-          </div>
+          )}
 
-          {!loading && filtered.length > 0 && (
-            <p style={{ color: "#9ca3af", fontSize: 12, marginTop: 10 }}>
-              Klik baris untuk lihat detail • Menampilkan {filtered.length} dari {list.length} siswa
-            </p>
+          {/* Search mode — flat table */}
+          {!loading && search.trim() && (
+            <div>
+              <p style={{ color: "#6b7280", fontSize: 13, marginBottom: 12 }}>
+                {searchFiltered.length > 0 ? `${searchFiltered.length} hasil untuk "${search}"` : `Tidak ada hasil untuk "${search}"`}
+              </p>
+              {searchFiltered.length > 0 && (
+                <div style={{ background: "white", borderRadius: 16, border: "1px solid #e5e7eb", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+                  <div style={{ overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                      <thead>
+                        <tr>
+                          <th style={{ ...thS, textAlign: "center", width: 48 }}>No</th>
+                          <th style={thS}>Nama Siswa</th>
+                          <th style={thS}>NIS</th>
+                          <th style={thS}>Kelas</th>
+                          <th style={thS}>Jurusan</th>
+                          <th style={thS}>Tempat PKL</th>
+                          <th style={thS}>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {searchPaginated.map((s, idx) => (
+                          <tr key={s.id}
+                            onClick={() => setDetail(s)}
+                            onMouseEnter={() => setHoveredSearch(s.id)}
+                            onMouseLeave={() => setHoveredSearch(null)}
+                            style={{ background: hoveredSearch === s.id ? "rgba(172,236,0,0.08)" : idx % 2 === 0 ? "white" : "#fafafa", cursor: "pointer", borderTop: "1px solid #f3f4f6", transition: "background 0.1s" }}>
+                            <td style={{ padding: "10px 14px", textAlign: "center", color: "#9ca3af", fontSize: 12 }}>{(searchPage - 1) * PAGE_SIZE + idx + 1}</td>
+                            <td style={{ padding: "10px 14px" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#013FF6", color: "white", fontWeight: 700, fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                  {initials(s.name)}
+                                </div>
+                                <div>
+                                  <p style={{ margin: 0, fontWeight: 600, color: "#111827", fontSize: 13 }}>{s.name}</p>
+                                  <p style={{ margin: 0, fontSize: 11, color: "#9ca3af" }}>{s.email}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td style={{ padding: "10px 14px", color: "#374151", fontFamily: "monospace", fontSize: 12 }}>{s.userId}</td>
+                            <td style={{ padding: "10px 14px" }}>
+                              <span style={{ background: "rgba(1,63,246,0.09)", color: "#013FF6", padding: "2px 8px", borderRadius: 5, fontSize: 11, fontWeight: 600 }}>{s.kelas}</span>
+                            </td>
+                            <td style={{ padding: "10px 14px", color: "#6b7280", fontSize: 12 }}>{s.jurusan || "—"}</td>
+                            <td style={{ padding: "10px 14px", color: "#6b7280", fontSize: 12, maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.tempatPKL || "—"}</td>
+                            <td style={{ padding: "10px 14px" }}>
+                              <span style={{ background: s.isActive ? "rgba(172,236,0,0.18)" : "#f3f4f6", color: s.isActive ? "#3a7d00" : "#9ca3af", padding: "2px 8px", borderRadius: 5, fontSize: 11, fontWeight: 700 }}>
+                                {s.isActive ? "Aktif" : "Nonaktif"}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {searchTotalPages > 1 && (
+                    <div style={{ padding: "10px 16px", borderTop: "1px solid #f3f4f6", display: "flex", gap: 6, alignItems: "center", justifyContent: "flex-end" }}>
+                      <button onClick={() => setSearchPage(p => Math.max(1, p - 1))} disabled={searchPage === 1}
+                        style={{ padding: "4px 12px", borderRadius: 7, border: "1.5px solid #e5e7eb", background: "white", fontSize: 12, cursor: searchPage === 1 ? "default" : "pointer", color: searchPage === 1 ? "#d1d5db" : "#374151", fontWeight: 600 }}>← Prev</button>
+                      {Array.from({ length: searchTotalPages }).map((_, i) => (
+                        <button key={i} onClick={() => setSearchPage(i + 1)}
+                          style={{ width: 28, height: 28, borderRadius: 7, border: searchPage === i + 1 ? "none" : "1.5px solid #e5e7eb", background: searchPage === i + 1 ? "#00182E" : "white", color: searchPage === i + 1 ? "white" : "#374151", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>
+                          {i + 1}
+                        </button>
+                      ))}
+                      <button onClick={() => setSearchPage(p => Math.min(searchTotalPages, p + 1))} disabled={searchPage === searchTotalPages}
+                        style={{ padding: "4px 12px", borderRadius: 7, border: "1.5px solid #e5e7eb", background: "white", fontSize: 12, cursor: searchPage === searchTotalPages ? "default" : "pointer", color: searchPage === searchTotalPages ? "#d1d5db" : "#374151", fontWeight: 600 }}>Next →</button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Grouped mode */}
+          {!loading && !search.trim() && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+              {groups.length === 0 && (
+                <div style={{ background: "white", borderRadius: 16, border: "1px solid #e5e7eb", padding: "56px 0", textAlign: "center", color: "#9ca3af", fontSize: 14 }}>
+                  Belum ada siswa bimbingan
+                </div>
+              )}
+              {groups.map(({ kelas, siswa }) => (
+                <KelasTable
+                  key={kelas}
+                  kelas={kelas}
+                  siswa={siswa}
+                  onDetail={setDetail}
+                  page={getPage(kelas)}
+                  setPage={p => setKelasPage(kelas, p)}
+                />
+              ))}
+            </div>
           )}
         </main>
       </div>
