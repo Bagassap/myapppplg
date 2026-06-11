@@ -57,14 +57,8 @@ model Absensi {
 model Informasi {
   id        Int      @id @default(autoincrement())
   judul     String
-  isi       String   @db.Text
-  tanggal   String
-  kategori  String
-  tipe      String   @default("umum")
-  tempatPKL String?
-  isPinned  Boolean  @default(false)
-  viewCount Int      @default(0)
-  target    String   @default("SEMUA")
+  konten    String   @db.Text
+  pembuat   String   @default("Admin")
   createdAt DateTime @default(now())
 
   komentar Komentar[]
