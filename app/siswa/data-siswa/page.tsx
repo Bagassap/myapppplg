@@ -1,423 +1,194 @@
 "use client";
-
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Sidebar from "@/components/layout/SidebarSiswa";
 import TopBar from "@/components/layout/TopBar";
-import {
-  User,
-  Edit,
-  Camera,
-  Phone,
-  Mail,
-  MapPin,
-  Calendar,
-  XCircle,
-  Save,
-  Loader2,
-  School,
-  Hash,
-  Building2,
-  CheckCircle2,
-} from "lucide-react";
+
+interface Siswa {
+  id: number; userId: string; name: string; email: string;
+  kelas: string; jurusan: string; tempatPKL: string;
+  guruPembimbing: string; noHp: string; alamat: string; isActive: boolean;
+}
+
+function initials(name: string) {
+  return name.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?";
+}
 
 export default function SiswaDataSiswa() {
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editForm, setEditForm] = useState<{
-    foto: File | null;
-    telepon: string;
-    email: string;
-  }>({
-    foto: null,
-    telepon: "",
-    email: "",
-  });
-  const [siswaData, setSiswaData] = useState({
-    nama: "",
-    nis: "",
-    kelas: "",
-    tempatPKL: "",
-    tanggalLahir: "",
-    alamat: "",
-    telepon: "",
-    email: "",
-    foto: null as string | null,
-  });
+  const [profile, setProfile] = useState<Siswa | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({ noHp: "", alamat: "", password: "" });
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch("/api/data-siswa");
-        if (!response.ok) throw new Error("Gagal mengambil data.");
-        const data = await response.json();
-        if (!data || data.length === 0)
-          throw new Error("Data tidak ditemukan.");
-        const siswa = data[0];
-        setSiswaData({
-          nama: siswa.name || "",
-          nis: siswa.userId || "",
-          kelas: siswa.kelas || "",
-          tempatPKL: siswa.tempatPKL || "",
-          tanggalLahir: siswa.tanggalLahir || "",
-          alamat: siswa.alamat || "",
-          telepon: siswa.telepon || "",
-          email: siswa.email || "",
-          foto: siswa.foto || null,
-        });
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Terjadi kesalahan.");
-      } finally {
+    fetch("/api/data-siswa")
+      .then(r => r.json())
+      .then(d => {
+        const p = d.data?.[0] ?? null;
+        setProfile(p);
+        if (p) setForm({ noHp: p.noHp || "", alamat: p.alamat || "", password: "" });
         setLoading(false);
-      }
-    };
-    fetchData();
+      })
+      .catch(() => setLoading(false));
   }, []);
 
-  const handleEditSubmit = async () => {
+  const handleSave = async () => {
+    if (!profile) return;
+    setSubmitting(true);
     try {
-      const responseFetch = await fetch("/api/data-siswa");
-      const data = await responseFetch.json();
-      const siswaId = data[0]?.id;
-      if (!siswaId) throw new Error("ID siswa tidak ditemukan.");
-      const formData = new FormData();
-      if (editForm.foto) formData.append("foto", editForm.foto);
-      formData.append("telepon", editForm.telepon);
-      formData.append("email", editForm.email);
-      const response = await fetch(`/api/data-siswa/${siswaId}`, {
+      const body: any = { noHp: form.noHp, alamat: form.alamat };
+      if (form.password.trim()) body.password = form.password;
+      const res = await fetch(`/api/data-siswa/${profile.id}`, {
         method: "PUT",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
       });
-      if (!response.ok) throw new Error("Gagal memperbarui data.");
-      setSiswaData({
-        ...siswaData,
-        telepon: editForm.telepon || siswaData.telepon,
-        email: editForm.email || siswaData.email,
-        foto: editForm.foto
-          ? URL.createObjectURL(editForm.foto)
-          : siswaData.foto,
-      });
-      setEditForm({ foto: null, telepon: "", email: "" });
-      setShowEditModal(false);
-      alert("Data berhasil diperbarui! Menunggu persetujuan admin.");
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Terjadi kesalahan.");
-    }
+      const json = await res.json();
+      if (!res.ok) return alert(json.error || "Gagal menyimpan");
+      setProfile(prev => prev ? { ...prev, noHp: form.noHp, alamat: form.alamat } : prev);
+      setEditing(false);
+      setForm(f => ({ ...f, password: "" }));
+    } catch { alert("Terjadi kesalahan"); }
+    finally { setSubmitting(false); }
   };
 
-  const handleCloseModal = () => {
-    setShowEditModal(false);
-    setEditForm({ foto: null, telepon: "", email: "" });
-  };
-
-  if (loading)
-    return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
-        <div className="flex items-center gap-3 text-gray-500">
-          <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
-          <span className="text-sm font-medium">Memuat data...</span>
-        </div>
-      </div>
-    );
-
-  if (error)
-    return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="w-12 h-12 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center mx-auto mb-3">
-            <XCircle className="w-6 h-6 text-red-500" />
-          </div>
-          <p className="text-red-600 font-medium text-sm">{error}</p>
-        </div>
-      </div>
-    );
-
-  const infoFields = [
-    {
-      label: "Nama Lengkap",
-      value: siswaData.nama,
-      icon: <User className="w-4 h-4 text-indigo-500" />,
-    },
-    {
-      label: "NIS",
-      value: siswaData.nis,
-      icon: <Hash className="w-4 h-4 text-indigo-500" />,
-    },
-    {
-      label: "Kelas",
-      value: siswaData.kelas,
-      icon: <School className="w-4 h-4 text-indigo-500" />,
-    },
-    {
-      label: "Tempat PKL",
-      value: siswaData.tempatPKL,
-      icon: <Building2 className="w-4 h-4 text-indigo-500" />,
-    },
-    {
-      label: "Tanggal Lahir",
-      value: siswaData.tanggalLahir,
-      icon: <Calendar className="w-4 h-4 text-indigo-500" />,
-    },
-    {
-      label: "Alamat",
-      value: siswaData.alamat,
-      icon: <MapPin className="w-4 h-4 text-indigo-500" />,
-    },
-    {
-      label: "Telepon",
-      value: siswaData.telepon,
-      icon: <Phone className="w-4 h-4 text-indigo-500" />,
-    },
-    {
-      label: "Email",
-      value: siswaData.email,
-      icon: <Mail className="w-4 h-4 text-indigo-500" />,
-    },
-  ];
-
-  const editableFields = ["Telepon", "Email", "Foto Profil"];
+  const inputStyle: React.CSSProperties = { width: "100%", padding: "11px 14px", border: "1.5px solid rgba(255,255,255,0.2)", borderRadius: 10, background: "rgba(255,255,255,0.07)", color: "white", fontSize: 14, outline: "none", boxSizing: "border-box" };
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div style={{ display: "flex", height: "100vh", background: "#00182E", overflow: "hidden" }}>
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
         <TopBar />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-7">
-          {/* Page Header */}
-          <div className="mb-7 flex items-start justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2.5 mb-1">
-                <span className="block w-1 h-6 bg-indigo-600 rounded-full" />
-                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-                  Data Pribadi
-                </h1>
-              </div>
-              <p className="text-gray-500 text-sm pl-3.5">
-                Lihat dan perbarui data pribadi Anda.
-              </p>
+        <main style={{ flex: 1, overflowY: "auto", padding: "28px 32px", background: "#00182E" }}>
+
+          {/* Header */}
+          <div style={{ marginBottom: 28 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+              <span style={{ display: "block", width: 4, height: 28, background: "#ACEC00", borderRadius: 4 }} />
+              <h1 style={{ color: "white", fontSize: 24, fontWeight: 800, margin: 0 }}>Profil Saya</h1>
             </div>
-            <button
-              onClick={() => setShowEditModal(true)}
-              className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors"
-            >
-              <Edit className="w-4 h-4" /> Edit Data
-            </button>
+            <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 13, marginLeft: 14 }}>Data diri dan informasi PKL</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-            {/* Profile Card */}
-            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-              {/* Cover */}
-              <div className="h-20 bg-gradient-to-br from-indigo-500 to-indigo-700" />
-              <div className="px-5 pb-5 -mt-10 flex flex-col items-center text-center">
-                {/* Avatar */}
-                <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-md overflow-hidden bg-indigo-100 flex items-center justify-center mb-3">
-                  {siswaData.foto ? (
-                    <img
-                      src={siswaData.foto}
-                      alt="Foto Profil"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-2xl font-bold text-indigo-600">
-                      {siswaData.nama.slice(0, 2).toUpperCase()}
-                    </span>
+          {/* Loading skeleton */}
+          {loading && (
+            <div style={{ maxWidth: 600, background: "#012444", borderRadius: 20, padding: 32, border: "1px solid rgba(255,255,255,0.07)" }}>
+              <div style={{ display: "flex", gap: 20, alignItems: "center", marginBottom: 28, paddingBottom: 24, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                <div style={{ width: 80, height: 80, borderRadius: "50%", background: "rgba(255,255,255,0.08)" }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ height: 20, background: "rgba(255,255,255,0.08)", borderRadius: 8, width: "60%", marginBottom: 10 }} />
+                  <div style={{ height: 14, background: "rgba(255,255,255,0.05)", borderRadius: 8, width: "40%" }} />
+                </div>
+              </div>
+              {[1,2,3,4].map(i => <div key={i} style={{ height: 14, background: "rgba(255,255,255,0.05)", borderRadius: 8, marginBottom: 14, width: i % 2 === 0 ? "70%" : "90%" }} />)}
+            </div>
+          )}
+
+          {/* No data */}
+          {!loading && !profile && (
+            <div style={{ maxWidth: 600, textAlign: "center", paddingTop: 80 }}>
+              <div style={{ width: 64, height: 64, background: "#012444", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 28 }}>👤</div>
+              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 15 }}>Data profil belum tersedia.</p>
+              <p style={{ color: "rgba(255,255,255,0.3)", fontSize: 13 }}>Hubungi admin atau guru pembimbing kamu.</p>
+            </div>
+          )}
+
+          {/* Profile card */}
+          {!loading && profile && (
+            <div style={{ maxWidth: 640 }}>
+              {/* Main card */}
+              <div style={{ background: "#012444", borderRadius: 20, padding: 28, border: "1px solid rgba(255,255,255,0.07)", marginBottom: 16 }}>
+                {/* Avatar + name */}
+                <div style={{ display: "flex", gap: 20, alignItems: "center", marginBottom: 24, paddingBottom: 20, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                  <div style={{ width: 80, height: 80, borderRadius: "50%", background: "#013FF6", color: "white", fontWeight: 800, fontSize: 28, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 4px 16px rgba(1,63,246,0.4)" }}>
+                    {initials(profile.name)}
+                  </div>
+                  <div>
+                    <h2 style={{ color: "white", fontWeight: 800, fontSize: 22, margin: "0 0 6px 0" }}>{profile.name}</h2>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <span style={{ display: "inline-block", padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, background: "rgba(1,63,246,0.2)", color: "#6ca3ff" }}>{profile.kelas}</span>
+                      {profile.jurusan && <span style={{ display: "inline-block", padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, background: "rgba(172,236,0,0.1)", color: "#ACEC00" }}>{profile.jurusan}</span>}
+                      <span style={{ display: "inline-block", padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, background: profile.isActive ? "rgba(172,236,0,0.15)" : "rgba(255,255,255,0.08)", color: profile.isActive ? "#ACEC00" : "rgba(255,255,255,0.4)" }}>
+                        {profile.isActive ? "Aktif" : "Nonaktif"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Info grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+                  {[
+                    { label: "NIS", value: profile.userId, icon: "🪪" },
+                    { label: "Email", value: profile.email, icon: "✉️" },
+                    { label: "Tempat PKL", value: profile.tempatPKL || "Belum diisi", icon: "🏢" },
+                    { label: "Guru Pembimbing", value: profile.guruPembimbing || "Belum ditugaskan", icon: "👨‍🏫" },
+                  ].map(f => (
+                    <div key={f.label} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "12px 16px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                      <p style={{ color: "rgba(255,255,255,0.35)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 6px 0" }}>{f.icon} {f.label}</p>
+                      <p style={{ color: f.value.startsWith("Belum") ? "rgba(255,255,255,0.3)" : "white", fontSize: 13, fontWeight: 600, margin: 0 }}>{f.value}</p>
+                    </div>
+                  ))}
+
+                  {/* No HP - editable */}
+                  <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "12px 16px", border: editing ? "1px solid rgba(172,236,0,0.3)" : "1px solid rgba(255,255,255,0.06)" }}>
+                    <p style={{ color: "rgba(255,255,255,0.35)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 6px 0" }}>📱 No HP</p>
+                    {editing ? (
+                      <input type="text" value={form.noHp} onChange={e => setForm({ ...form, noHp: e.target.value })} placeholder="08xxxxxxxxxx" style={{ ...inputStyle, padding: "6px 10px", fontSize: 13 }} />
+                    ) : (
+                      <p style={{ color: profile.noHp ? "white" : "rgba(255,255,255,0.3)", fontSize: 13, fontWeight: 600, margin: 0 }}>{profile.noHp || "Belum diisi"}</p>
+                    )}
+                  </div>
+
+                  {/* Alamat - editable, spans full */}
+                  <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "12px 16px", border: editing ? "1px solid rgba(172,236,0,0.3)" : "1px solid rgba(255,255,255,0.06)", gridColumn: "1/-1" }}>
+                    <p style={{ color: "rgba(255,255,255,0.35)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 6px 0" }}>📍 Alamat</p>
+                    {editing ? (
+                      <textarea value={form.alamat} onChange={e => setForm({ ...form, alamat: e.target.value })} placeholder="Alamat lengkap..." rows={3}
+                        style={{ ...inputStyle, resize: "vertical", fontSize: 13 }} />
+                    ) : (
+                      <p style={{ color: profile.alamat ? "white" : "rgba(255,255,255,0.3)", fontSize: 13, fontWeight: 600, margin: 0, lineHeight: 1.6 }}>{profile.alamat || "Belum diisi"}</p>
+                    )}
+                  </div>
+
+                  {/* Password — only when editing */}
+                  {editing && (
+                    <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "12px 16px", border: "1px solid rgba(172,236,0,0.3)", gridColumn: "1/-1" }}>
+                      <p style={{ color: "rgba(255,255,255,0.35)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 6px 0" }}>🔑 Ganti Password (opsional)</p>
+                      <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="Kosongkan jika tidak ingin ganti" style={{ ...inputStyle, padding: "6px 10px", fontSize: 13 }} />
+                    </div>
                   )}
                 </div>
-                <p className="font-bold text-gray-900 text-base">
-                  {siswaData.nama || "—"}
-                </p>
-                <p className="text-xs text-gray-400 mt-0.5 mb-3">
-                  {siswaData.nis || "—"}
-                </p>
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200">
-                  <School className="w-3 h-3" />
-                  {siswaData.kelas || "—"}
-                </span>
-              </div>
-              {/* Editable notice */}
-              <div className="mx-4 mb-4 p-3 bg-amber-50 border border-amber-100 rounded-xl">
-                <p className="text-xs text-amber-700 font-medium flex items-start gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-500" />
-                  Data yang bisa diedit: {editableFields.join(", ")}. Perubahan
-                  memerlukan persetujuan admin.
-                </p>
-              </div>
-            </div>
 
-            {/* Detail Fields */}
-            <div className="lg:col-span-2 bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
-                <User className="w-4 h-4 text-indigo-500" />
-                <h2 className="font-semibold text-gray-700 text-sm">
-                  Informasi Lengkap
-                </h2>
+                {/* Action buttons */}
+                <div style={{ display: "flex", gap: 10 }}>
+                  {editing ? (
+                    <>
+                      <button onClick={handleSave} disabled={submitting}
+                        style={{ background: "#ACEC00", color: "#00182E", padding: "10px 24px", borderRadius: 10, fontWeight: 700, border: "none", cursor: "pointer", fontSize: 14 }}>
+                        {submitting ? "Menyimpan..." : "Simpan"}
+                      </button>
+                      <button onClick={() => { setEditing(false); setForm({ noHp: profile.noHp || "", alamat: profile.alamat || "", password: "" }); }}
+                        style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)", padding: "10px 20px", borderRadius: 10, border: "none", cursor: "pointer", fontSize: 14 }}>
+                        Batal
+                      </button>
+                    </>
+                  ) : (
+                    <button onClick={() => setEditing(true)}
+                      style={{ background: "#013FF6", color: "white", padding: "10px 24px", borderRadius: 10, fontWeight: 700, border: "none", cursor: "pointer", fontSize: 14 }}>
+                      ✏️ Edit Profil
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {infoFields.map((field) => (
-                  <div
-                    key={field.label}
-                    className={`flex items-start gap-3 p-3 rounded-xl border transition-colors ${
-                      ["Telepon", "Email"].includes(field.label)
-                        ? "bg-indigo-50/60 border-indigo-100"
-                        : "bg-gray-50 border-gray-100"
-                    } ${field.label === "Alamat" ? "sm:col-span-2" : ""}`}
-                  >
-                    <div className="p-1.5 bg-white rounded-lg border border-gray-200 shrink-0 mt-0.5">
-                      {field.icon}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                        <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide">
-                          {field.label}
-                        </p>
-                        {["Telepon", "Email"].includes(field.label) && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-600 font-bold">
-                            Dapat diedit
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm font-semibold text-gray-800 break-words">
-                        {field.value || "—"}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+
+              {/* Read-only notice */}
+              <p style={{ color: "rgba(255,255,255,0.25)", fontSize: 12, textAlign: "center" }}>
+                NIS, email, kelas, dan tempat PKL hanya dapat diubah oleh admin.
+              </p>
             </div>
-          </div>
+          )}
         </main>
       </div>
-
-      {/* Modal Edit */}
-      {showEditModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div
-            className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
-            onClick={handleCloseModal}
-          />
-          <div
-            className="relative bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden"
-            style={{ animation: "slideUp .25s cubic-bezier(.32,1.25,.6,1)" }}
-          >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-indigo-50">
-                  <Edit className="w-4 h-4 text-indigo-600" />
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-800 text-sm">
-                    Edit Data Pribadi
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    Perubahan perlu persetujuan admin
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={handleCloseModal}
-                className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
-              >
-                <XCircle className="w-5 h-5 text-gray-400" />
-              </button>
-            </div>
-            <div className="p-5">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleEditSubmit();
-                }}
-                className="space-y-4"
-              >
-                {/* Foto */}
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                    <span className="flex items-center gap-1.5">
-                      <Camera className="w-3.5 h-3.5" />
-                      Foto Profil Baru
-                    </span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      id="foto-upload"
-                      onChange={(e) =>
-                        setEditForm({
-                          ...editForm,
-                          foto: e.target.files?.[0] || null,
-                        })
-                      }
-                      className="hidden"
-                    />
-                    <label
-                      htmlFor="foto-upload"
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 hover:border-indigo-300 hover:bg-indigo-50/50 cursor-pointer transition-colors"
-                    >
-                      <Camera className="w-4 h-4 text-gray-400 shrink-0" />
-                      <span className="text-sm text-gray-500 truncate">
-                        {editForm.foto ? editForm.foto.name : "Pilih foto..."}
-                      </span>
-                    </label>
-                  </div>
-                </div>
-                {/* Telepon */}
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                    <span className="flex items-center gap-1.5">
-                      <Phone className="w-3.5 h-3.5" />
-                      Nomor Telepon
-                    </span>
-                  </label>
-                  <input
-                    type="tel"
-                    placeholder={siswaData.telepon || "Masukkan nomor telepon"}
-                    value={editForm.telepon}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, telepon: e.target.value })
-                    }
-                    className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 focus:ring-2 focus:ring-indigo-300 outline-none"
-                  />
-                </div>
-                {/* Email */}
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                    <span className="flex items-center gap-1.5">
-                      <Mail className="w-3.5 h-3.5" />
-                      Email
-                    </span>
-                  </label>
-                  <input
-                    type="email"
-                    placeholder={siswaData.email || "Masukkan alamat email"}
-                    value={editForm.email}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, email: e.target.value })
-                    }
-                    className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 focus:ring-2 focus:ring-indigo-300 outline-none"
-                  />
-                </div>
-                <div className="flex gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={handleCloseModal}
-                    className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center gap-2 text-sm"
-                  >
-                    <Save className="w-4 h-4" /> Simpan
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-          <style>{`@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`}</style>
-        </div>
-      )}
     </div>
   );
 }

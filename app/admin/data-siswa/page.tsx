@@ -1,880 +1,325 @@
 "use client";
-
+import { useEffect, useState } from "react";
 import Sidebar from "@/components/layout/SidebarAdmin";
 import TopBar from "@/components/layout/TopBar";
-import {
-  Users,
-  School,
-  ChevronLeft,
-  ChevronRight,
-  XCircle,
-  SlidersHorizontal,
-  Plus,
-  Search,
-  Edit,
-  MapPin,
-  Hash,
-  BookOpen,
-  Building2,
-} from "lucide-react";
-import { useState, useEffect } from "react";
 
-type SiswaType = {
-  id: number;
-  userId: string;
-  name: string;
-  kelas: string;
-  tempatPKL: string | null;
-  guruPembimbing: string | null;
-};
-
-function Avatar({
-  name,
-  size = "sm",
-}: {
-  name: string;
-  size?: "sm" | "md" | "lg";
-}) {
-  const colors = [
-    "bg-indigo-100 text-indigo-700",
-    "bg-violet-100 text-violet-700",
-    "bg-sky-100 text-sky-700",
-    "bg-emerald-100 text-emerald-700",
-    "bg-amber-100 text-amber-700",
-    "bg-rose-100 text-rose-700",
-  ];
-  const color = colors[name.charCodeAt(0) % colors.length];
-  const sz =
-    size === "lg"
-      ? "w-14 h-14 text-lg"
-      : size === "md"
-        ? "w-10 h-10 text-sm"
-        : "w-8 h-8 text-xs";
-  return (
-    <div
-      className={`${sz} ${color} rounded-full font-bold flex items-center justify-center shrink-0 select-none`}
-    >
-      {name.slice(0, 2).toUpperCase()}
-    </div>
-  );
+interface Siswa {
+  id: number; userId: string; name: string; email: string;
+  kelas: string; jurusan: string; tempatPKL: string;
+  noHp: string; alamat: string; isActive: boolean;
 }
 
-function KelasBadge({ kelas }: { kelas: string }) {
-  return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200">
-      <BookOpen className="w-3 h-3" />
-      {kelas}
-    </span>
-  );
-}
-
-type ModalSiswaFormProps = {
-  title: string;
-  formData: {
-    username: string;
-    email?: string;
-    password: string;
-    namaLengkap: string;
-    kelas: string;
-    tempatPKL: string;
-  };
-  setFormData: React.Dispatch<
-    React.SetStateAction<{
-      username: string;
-      email?: string;
-      password: string;
-      namaLengkap: string;
-      kelas: string;
-      tempatPKL: string;
-    }>
-  >;
-  onClose: () => void;
-  onSubmit: () => void;
-  kelasOptions: string[];
-  isEdit: boolean;
+const EMPTY_FORM = {
+  namaLengkap: "", username: "", email: "", password: "",
+  kelas: "XII RPL 1", jurusan: "", tempatPKL: "", noHp: "", alamat: "",
 };
+const KELAS = ["XII PG 1", "XII RPL 1", "XII RPL 2"];
 
-function ModalSiswaForm({
-  title,
-  formData,
-  setFormData,
-  onClose,
-  onSubmit,
-  kelasOptions,
-  isEdit,
-}: ModalSiswaFormProps) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div
-        className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div
-        className="relative bg-white w-full sm:max-w-xl sm:rounded-2xl rounded-t-3xl shadow-2xl flex flex-col max-h-[92vh]"
-        style={{ animation: "slideUp .25s cubic-bezier(.32,1.25,.6,1)" }}
-      >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 sticky top-0 bg-white z-10 rounded-t-3xl sm:rounded-t-2xl">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-indigo-50">
-              <Users className="w-4 h-4 text-indigo-600" />
-            </div>
-            <p className="font-semibold text-gray-800">{title}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
-          >
-            <XCircle className="w-5 h-5 text-gray-400" />
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto px-5 py-5">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              onSubmit();
-            }}
-            className="space-y-4"
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                  NIS (Username)
-                </label>
-                <input
-                  type="text"
-                  value={formData.username}
-                  disabled={isEdit}
-                  required
-                  onChange={(e) =>
-                    setFormData({ ...formData, username: e.target.value })
-                  }
-                  placeholder="NIS siswa"
-                  className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 focus:ring-2 focus:ring-indigo-300 outline-none disabled:opacity-50"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                  Nama Lengkap
-                </label>
-                <input
-                  type="text"
-                  value={formData.namaLengkap}
-                  required
-                  onChange={(e) =>
-                    setFormData({ ...formData, namaLengkap: e.target.value })
-                  }
-                  placeholder="Nama lengkap"
-                  className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 focus:ring-2 focus:ring-indigo-300 outline-none"
-                />
-              </div>
-              {!isEdit && (
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.email || ""}
-                    required
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    placeholder="email@siswa.sch.id"
-                    className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 focus:ring-2 focus:ring-indigo-300 outline-none"
-                  />
-                </div>
-              )}
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                  {isEdit ? "Ubah Password (opsional)" : "Password Default"}
-                </label>
-                <input
-                  type="password"
-                  value={formData.password}
-                  required={!isEdit}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
-                  placeholder={
-                    isEdit ? "Kosongkan jika tidak ganti" : "Password default"
-                  }
-                  className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 focus:ring-2 focus:ring-indigo-300 outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                  Kelas
-                </label>
-                <select
-                  value={formData.kelas}
-                  required
-                  onChange={(e) =>
-                    setFormData({ ...formData, kelas: e.target.value })
-                  }
-                  className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 focus:ring-2 focus:ring-indigo-300 outline-none"
-                >
-                  {kelasOptions.map((k) => (
-                    <option key={k} value={k}>
-                      {k}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                  Tempat PKL
-                </label>
-                <input
-                  type="text"
-                  value={formData.tempatPKL}
-                  required
-                  onChange={(e) =>
-                    setFormData({ ...formData, tempatPKL: e.target.value })
-                  }
-                  placeholder="Nama tempat PKL"
-                  className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 focus:ring-2 focus:ring-indigo-300 outline-none"
-                />
-              </div>
-            </div>
-            <div className="flex gap-3 pt-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium"
-              >
-                Batal
-              </button>
-              <button
-                type="submit"
-                className="flex-1 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm text-sm"
-              >
-                {isEdit ? "Simpan Perubahan" : "Tambah Siswa"}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-      <style>{`@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`}</style>
-    </div>
-  );
+function initials(name: string) {
+  return name.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?";
 }
 
 export default function AdminDataSiswa() {
-  const [selectedClass, setSelectedClass] = useState("Semua Kelas");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [showModal, setShowModal] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedSiswa, setSelectedSiswa] = useState<null | SiswaType>(null);
-  const [siswaData, setSiswaData] = useState<Record<string, SiswaType[]>>({});
-  const itemsPerPage = 10;
+  const [list, setList] = useState<Siswa[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [detail, setDetail] = useState<Siswa | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [submitting, setSubmitting] = useState(false);
+  const [hoveredId, setHoveredId] = useState<number | null>(null);
 
-  const [formData, setFormData] = useState<{
-    username: string;
-    email?: string;
-    password: string;
-    namaLengkap: string;
-    kelas: string;
-    tempatPKL: string;
-  }>({
-    username: "",
-    email: "",
-    password: "",
-    namaLengkap: "",
-    kelas: "XII RPL 1",
-    tempatPKL: "",
-  });
+  const loadData = () => {
+    setLoading(true);
+    fetch("/api/data-siswa")
+      .then(r => r.json())
+      .then(d => { setList(d.data || []); setLoading(false); })
+      .catch(() => setLoading(false));
+  };
 
-  const kelasOptions = ["XII PG 1", "XII RPL 1", "XII RPL 2"];
+  useEffect(() => { loadData(); }, []);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const url =
-          selectedClass === "Semua Kelas"
-            ? "/api/data-siswa"
-            : `/api/data-siswa?kelas=${encodeURIComponent(selectedClass)}`;
-        const res = await fetch(url, { credentials: "include" });
-        if (!res.ok) throw new Error("Gagal memuat data");
-        const data: SiswaType[] = await res.json();
-        const grouped: Record<string, SiswaType[]> = {};
-        data.forEach((item) => {
-          const kelas = item.kelas || "Tidak Diketahui";
-          if (!grouped[kelas]) grouped[kelas] = [];
-          grouped[kelas].push(item);
+  const filtered = search
+    ? list.filter(s =>
+        s.name.toLowerCase().includes(search.toLowerCase()) ||
+        s.userId.toLowerCase().includes(search.toLowerCase()) ||
+        s.kelas.toLowerCase().includes(search.toLowerCase())
+      )
+    : list;
+
+  const openAdd = () => { setEditingId(null); setForm(EMPTY_FORM); setShowForm(true); };
+  const openEdit = (s: Siswa) => {
+    setDetail(null);
+    setEditingId(s.id);
+    setForm({ namaLengkap: s.name, username: s.userId, email: s.email, password: "", kelas: s.kelas, jurusan: s.jurusan, tempatPKL: s.tempatPKL, noHp: s.noHp, alamat: s.alamat });
+    setShowForm(true);
+  };
+  const closeForm = () => { setShowForm(false); setEditingId(null); setForm(EMPTY_FORM); };
+
+  const handleSubmit = async () => {
+    if (!form.namaLengkap.trim() || !form.kelas.trim()) return alert("Nama dan kelas wajib diisi!");
+    if (!editingId && (!form.username.trim() || !form.email.trim() || !form.password.trim())) return alert("NIS, email, dan password wajib untuk siswa baru!");
+    setSubmitting(true);
+    try {
+      let res: Response;
+      if (editingId) {
+        res = await fetch(`/api/data-siswa/${editingId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ namaLengkap: form.namaLengkap, kelas: form.kelas, jurusan: form.jurusan, tempatPKL: form.tempatPKL, noHp: form.noHp, alamat: form.alamat, ...(form.password ? { password: form.password } : {}) }),
         });
-        setSiswaData(grouped);
-        setCurrentPage(1);
-      } catch (error) {
-        alert((error as Error).message);
+      } else {
+        res = await fetch("/api/data-siswa", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        });
       }
-    }
-    fetchData();
-  }, [selectedClass]);
-
-  const classes = Object.keys(siswaData);
-  const filteredClasses =
-    selectedClass === "Semua Kelas" ? classes : [selectedClass];
-  const allSiswa: SiswaType[] = filteredClasses.flatMap(
-    (k) => siswaData[k] || [],
-  );
-
-  const searched = searchQuery.trim()
-    ? allSiswa.filter(
-        (s) =>
-          s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          s.userId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (s.tempatPKL || "").toLowerCase().includes(searchQuery.toLowerCase()),
-      )
-    : null;
-
-  const displayedSiswa = (kelas: string) => {
-    if (searched) return [];
-    const all = siswaData[kelas] || [];
-    if (selectedClass === kelas) {
-      const start = (currentPage - 1) * itemsPerPage;
-      return all.slice(start, start + itemsPerPage);
-    }
-    return all.slice(0, 10);
+      const json = await res.json();
+      if (!res.ok) return alert(json.error || "Gagal menyimpan");
+      closeForm();
+      loadData();
+    } catch { alert("Terjadi kesalahan"); }
+    finally { setSubmitting(false); }
   };
 
-  const totalPages = searched
-    ? Math.max(1, Math.ceil(searched.length / itemsPerPage))
-    : Math.ceil((siswaData[selectedClass] || []).length / itemsPerPage);
-
-  const searchedPage = searched
-    ? searched.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage,
-      )
-    : [];
-
-  const showPagination = searched
-    ? searched.length > itemsPerPage
-    : selectedClass !== "Semua Kelas" &&
-      (siswaData[selectedClass]?.length || 0) > itemsPerPage;
-
-  const openDetailModal = (s: SiswaType) => {
-    setSelectedSiswa(s);
-    setShowModal(true);
-  };
-  const closeDetailModal = () => {
-    setSelectedSiswa(null);
-    setShowModal(false);
-  };
-  const openAddModal = () => {
-    setFormData({
-      username: "",
-      email: "",
-      password: "",
-      namaLengkap: "",
-      kelas: classes[0] || "XII RPL 1",
-      tempatPKL: "",
-    });
-    setShowAddModal(true);
-  };
-  const openEditModal = () => {
-    if (!selectedSiswa) return;
-    setFormData({
-      username: selectedSiswa.userId,
-      email: "",
-      password: "",
-      namaLengkap: selectedSiswa.name,
-      kelas: selectedSiswa.kelas,
-      tempatPKL: selectedSiswa.tempatPKL || "",
-    });
-    setShowEditModal(true);
-  };
-  const handleAddSiswa = async () => {
-    const { username, email, password, namaLengkap, kelas, tempatPKL } =
-      formData;
-    if (
-      !username ||
-      !email ||
-      !password ||
-      !namaLengkap ||
-      !kelas ||
-      !tempatPKL
-    ) {
-      alert("Harap isi semua field!");
-      return;
-    }
+  const handleDelete = async (id: number) => {
+    if (!confirm("Hapus siswa ini? Semua data absensinya juga akan dihapus.")) return;
+    setDetail(null);
     try {
-      const res = await fetch("/api/data-siswa", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username,
-          email,
-          password,
-          namaLengkap,
-          kelas,
-          tempatPKL,
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Gagal menambahkan siswa");
-      }
-      alert("Siswa berhasil ditambahkan");
-      setShowAddModal(false);
-      setSelectedClass("Semua Kelas");
-    } catch (error) {
-      alert((error as Error).message);
-    }
-  };
-  const handleEditSiswa = async () => {
-    if (!selectedSiswa) return;
-    const { username, password, namaLengkap, kelas, tempatPKL } = formData;
-    if (!username || !namaLengkap || !kelas || !tempatPKL) {
-      alert("Harap isi semua field yang wajib!");
-      return;
-    }
-    try {
-      const body: Record<string, string> = {
-        username,
-        namaLengkap,
-        kelas,
-        tempatPKL,
-      };
-      if (password) body.password = password;
-      const res = await fetch(`/api/data-siswa/${selectedSiswa.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Gagal mengupdate siswa");
-      }
-      alert("Siswa berhasil diupdate");
-      setShowEditModal(false);
-      closeDetailModal();
-      setSelectedClass("Semua Kelas");
-    } catch (error) {
-      alert((error as Error).message);
-    }
+      const res = await fetch(`/api/data-siswa/${id}`, { method: "DELETE" });
+      if (!res.ok) { const j = await res.json(); return alert(j.error); }
+      loadData();
+    } catch { alert("Gagal menghapus"); }
   };
 
-  const uniquePKL = new Set(allSiswa.map((s) => s.tempatPKL).filter(Boolean))
-    .size;
+  // styles
+  const page: React.CSSProperties = { display: "flex", height: "100vh", background: "#00182E", overflow: "hidden" };
+  const main: React.CSSProperties = { flex: 1, overflowY: "auto", padding: "28px 32px", background: "#00182E" };
+  const card = (id: number): React.CSSProperties => ({
+    position: "relative", background: hoveredId === id ? "#01305e" : "#012444",
+    borderRadius: "16px", padding: "20px", cursor: "pointer",
+    border: hoveredId === id ? "1px solid rgba(172,236,0,0.35)" : "1px solid rgba(255,255,255,0.07)",
+    transition: "all 0.18s",
+    transform: hoveredId === id ? "translateY(-3px)" : "none",
+    boxShadow: hoveredId === id ? "0 10px 32px rgba(0,0,0,0.4)" : "none",
+  });
+  const avatar: React.CSSProperties = { width: 52, height: 52, borderRadius: "50%", background: "#013FF6", color: "white", fontWeight: 700, fontSize: 17, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 };
+  const badge = (active: boolean): React.CSSProperties => ({ display: "inline-block", padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600, background: active ? "rgba(172,236,0,0.15)" : "rgba(255,255,255,0.08)", color: active ? "#ACEC00" : "rgba(255,255,255,0.4)" });
+  const kelasBadge: React.CSSProperties = { display: "inline-block", padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600, background: "rgba(1,63,246,0.2)", color: "#6ca3ff" };
+  const inputStyle: React.CSSProperties = { width: "100%", padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: "10px", fontSize: 14, outline: "none", boxSizing: "border-box", color: "#111827" };
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div style={page}>
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
         <TopBar />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-7">
-          {/* Page Header */}
-          <div className="mb-7 flex items-start justify-between gap-4">
+        <main style={main}>
+
+          {/* Header */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
             <div>
-              <div className="flex items-center gap-2.5 mb-1">
-                <span className="block w-1 h-6 bg-indigo-600 rounded-full" />
-                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-                  Data Siswa PKL
-                </h1>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+                <span style={{ display: "block", width: 4, height: 28, background: "#ACEC00", borderRadius: 4 }} />
+                <h1 style={{ color: "white", fontSize: 24, fontWeight: 800, margin: 0 }}>Data Siswa PKL</h1>
               </div>
-              <p className="text-gray-500 text-sm pl-3.5">
-                Kelola dan pantau data siswa yang mengikuti PKL.
+              <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 13, marginLeft: 14 }}>
+                {loading ? "Memuat..." : `${list.length} siswa terdaftar`}
               </p>
             </div>
-            <button
-              onClick={openAddModal}
-              className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors"
-            >
-              <Plus className="w-4 h-4" /> Tambah Siswa
+            <button onClick={openAdd} style={{ background: "#ACEC00", color: "#00182E", padding: "10px 20px", borderRadius: 10, fontWeight: 700, border: "none", cursor: "pointer", fontSize: 14, flexShrink: 0 }}>
+              + Tambah Siswa
             </button>
           </div>
 
-          {/* Stat Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+          {/* Stats */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
             {[
-              {
-                label: "Total Siswa",
-                value: allSiswa.length,
-                icon: <Users className="w-4 h-4 text-indigo-600" />,
-                bg: "bg-indigo-50",
-                ring: "ring-indigo-200",
-              },
-              {
-                label: "Total Kelas",
-                value: classes.length,
-                icon: <School className="w-4 h-4 text-emerald-600" />,
-                bg: "bg-emerald-50",
-                ring: "ring-emerald-200",
-              },
-              {
-                label: "Tempat PKL",
-                value: uniquePKL,
-                icon: <MapPin className="w-4 h-4 text-amber-600" />,
-                bg: "bg-amber-50",
-                ring: "ring-amber-200",
-              },
-            ].map((s) => (
-              <div
-                key={s.label}
-                className={`bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex items-center gap-4 ${s.label === "Tempat PKL" ? "hidden sm:flex" : ""}`}
-              >
-                <div
-                  className={`p-2.5 rounded-xl ${s.bg} ring-1 ${s.ring} shrink-0`}
-                >
-                  {s.icon}
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-500 mb-0.5">
-                    {s.label}
-                  </p>
-                  <p className="text-2xl font-bold text-gray-800">{s.value}</p>
-                </div>
+              { label: "Total Siswa", value: list.length, color: "#ACEC00" },
+              { label: "Total Kelas", value: new Set(list.map(s => s.kelas)).size, color: "#013FF6" },
+              { label: "Aktif", value: list.filter(s => s.isActive).length, color: "#ACEC00" },
+            ].map(s => (
+              <div key={s.label} style={{ background: "#012444", borderRadius: 14, padding: "16px 20px", border: "1px solid rgba(255,255,255,0.07)" }}>
+                <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, margin: "0 0 6px 0" }}>{s.label}</p>
+                <p style={{ color: s.color, fontSize: 28, fontWeight: 800, margin: 0 }}>{s.value}</p>
               </div>
             ))}
           </div>
 
-          {/* Filter Bar */}
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-4 py-3 mb-5 flex flex-wrap items-center gap-2.5">
-            <SlidersHorizontal className="w-4 h-4 text-gray-400 shrink-0" />
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Cari nama / NIS..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="pl-8 pr-3 py-1.5 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 w-44"
-              />
-            </div>
-            <span className="hidden sm:block w-px h-5 bg-gray-200" />
-            <select
-              value={selectedClass}
-              onChange={(e) => {
-                setSelectedClass(e.target.value);
-                setCurrentPage(1);
-                setSearchQuery("");
-              }}
-              className="px-3 py-1.5 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-            >
-              <option>Semua Kelas</option>
-              {kelasOptions.map((k) => (
-                <option key={k} value={k}>
-                  {k}
-                </option>
-              ))}
-            </select>
+          {/* Search */}
+          <div style={{ marginBottom: 20 }}>
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="🔍  Cari nama, NIS, atau kelas..."
+              style={{ width: "100%", maxWidth: 420, padding: "10px 16px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.06)", color: "white", fontSize: 14, outline: "none", boxSizing: "border-box" }}
+            />
           </div>
 
-          {/* Tables */}
-          {searched ? (
-            <TableCard
-              title="Hasil Pencarian"
-              icon={<Search className="w-4 h-4 text-indigo-500" />}
-              count={searched.length}
-              countLabel="siswa"
-              data={searchedPage}
-              startIndex={(currentPage - 1) * itemsPerPage}
-              onRowClick={openDetailModal}
-              pagination={
-                searched.length > itemsPerPage
-                  ? {
-                      currentPage,
-                      totalPages,
-                      total: searched.length,
-                      itemsPerPage,
-                      onPrev: () => setCurrentPage((p) => p - 1),
-                      onNext: () => setCurrentPage((p) => p + 1),
-                    }
-                  : undefined
-              }
-            />
-          ) : (
-            filteredClasses.map((kelas) => (
-              <TableCard
-                key={kelas}
-                title={kelas}
-                icon={<School className="w-4 h-4 text-indigo-500" />}
-                count={siswaData[kelas]?.length || 0}
-                countLabel="siswa"
-                data={displayedSiswa(kelas)}
-                startIndex={
-                  selectedClass === kelas ? (currentPage - 1) * itemsPerPage : 0
-                }
-                onRowClick={openDetailModal}
-                pagination={
-                  showPagination && selectedClass === kelas
-                    ? {
-                        currentPage,
-                        totalPages,
-                        total: siswaData[kelas]?.length || 0,
-                        itemsPerPage,
-                        onPrev: () => setCurrentPage((p) => p - 1),
-                        onNext: () => setCurrentPage((p) => p + 1),
-                      }
-                    : undefined
-                }
-              />
-            ))
+          {/* Loading skeleton */}
+          {loading && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+              {[1,2,3,4,5,6].map(i => (
+                <div key={i} style={{ background: "#012444", borderRadius: 16, padding: 20, border: "1px solid rgba(255,255,255,0.07)" }}>
+                  <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 16 }}>
+                    <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(255,255,255,0.08)" }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ height: 14, background: "rgba(255,255,255,0.08)", borderRadius: 6, marginBottom: 8, width: "70%" }} />
+                      <div style={{ height: 11, background: "rgba(255,255,255,0.05)", borderRadius: 6, width: "50%" }} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Empty */}
+          {!loading && filtered.length === 0 && (
+            <div style={{ textAlign: "center", paddingTop: 80 }}>
+              <div style={{ width: 64, height: 64, background: "#012444", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 28 }}>👥</div>
+              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 15, marginBottom: 8 }}>{search ? "Tidak ada hasil" : "Belum ada data siswa"}</p>
+              {!search && <button onClick={openAdd} style={{ background: "#ACEC00", color: "#00182E", padding: "9px 20px", borderRadius: 9, fontWeight: 700, border: "none", cursor: "pointer", fontSize: 13 }}>+ Tambah Siswa</button>}
+            </div>
+          )}
+
+          {/* Card grid */}
+          {!loading && filtered.length > 0 && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+              {filtered.map(s => (
+                <div key={s.id} style={card(s.id)}
+                  onClick={() => setDetail(s)}
+                  onMouseEnter={() => setHoveredId(s.id)}
+                  onMouseLeave={() => setHoveredId(null)}>
+                  <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 14 }}>
+                    <div style={avatar}>{initials(s.name)}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ color: "white", fontWeight: 700, fontSize: 15, margin: "0 0 4px 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</p>
+                      <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, margin: 0, fontFamily: "monospace" }}>{s.userId}</p>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+                    <span style={kelasBadge}>{s.kelas}</span>
+                    {s.jurusan && <span style={{ ...kelasBadge, background: "rgba(172,236,0,0.1)", color: "#ACEC00" }}>{s.jurusan}</span>}
+                    <span style={badge(s.isActive)}>{s.isActive ? "Aktif" : "Nonaktif"}</span>
+                  </div>
+                  {s.tempatPKL && <p style={{ color: "rgba(255,255,255,0.35)", fontSize: 11, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>📍 {s.tempatPKL}</p>}
+                  {/* Hover actions */}
+                  {hoveredId === s.id && (
+                    <div style={{ position: "absolute", top: 12, right: 12, display: "flex", gap: 6 }} onClick={e => e.stopPropagation()}>
+                      <button onClick={() => openEdit(s)} style={{ background: "rgba(1,63,246,0.2)", border: "1px solid rgba(1,63,246,0.4)", color: "#6ca3ff", borderRadius: 8, padding: "4px 10px", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>Edit</button>
+                      <button onClick={() => handleDelete(s.id)} style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171", borderRadius: 8, padding: "4px 10px", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>Hapus</button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
         </main>
       </div>
 
-      {/* Modal Detail */}
-      {showModal && selectedSiswa && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div
-            className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
-            onClick={closeDetailModal}
-          />
-          <div
-            className="relative bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden"
-            style={{ animation: "slideUp .25s cubic-bezier(.32,1.25,.6,1)" }}
-          >
-            {/* Header */}
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Avatar name={selectedSiswa.name} size="md" />
-                <div>
-                  <p className="font-semibold text-gray-800 text-sm">
-                    {selectedSiswa.name}
-                  </p>
-                  <p className="text-xs text-gray-400">Detail Siswa</p>
-                </div>
+      {/* Detail Modal */}
+      {detail && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }}
+          onClick={() => setDetail(null)}>
+          <div style={{ background: "white", borderRadius: 20, padding: 28, maxWidth: 480, width: "100%", maxHeight: "88vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}
+            onClick={e => e.stopPropagation()}>
+            {/* Avatar + name */}
+            <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 20, paddingBottom: 20, borderBottom: "1px solid #f3f4f6" }}>
+              <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#013FF6", color: "white", fontWeight: 700, fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                {initials(detail.name)}
               </div>
-              <button
-                onClick={closeDetailModal}
-                className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
-              >
-                <XCircle className="w-5 h-5 text-gray-400" />
-              </button>
+              <div>
+                <h2 style={{ color: "#00182E", fontWeight: 800, fontSize: 18, margin: "0 0 4px 0" }}>{detail.name}</h2>
+                <p style={{ color: "#013FF6", fontSize: 12, margin: 0, fontFamily: "monospace" }}>{detail.userId}</p>
+              </div>
             </div>
-            {/* Body */}
-            <div className="p-5 space-y-2.5">
+            {/* Fields */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 24 }}>
               {[
-                {
-                  label: "Nama Lengkap",
-                  value: selectedSiswa.name,
-                  icon: <Users className="w-3.5 h-3.5 text-indigo-500" />,
-                },
-                {
-                  label: "NIS",
-                  value: selectedSiswa.userId,
-                  icon: <Hash className="w-3.5 h-3.5 text-indigo-500" />,
-                },
-                {
-                  label: "Kelas",
-                  value: selectedSiswa.kelas,
-                  icon: <BookOpen className="w-3.5 h-3.5 text-indigo-500" />,
-                },
-                {
-                  label: "Tempat PKL",
-                  value: selectedSiswa.tempatPKL || "—",
-                  icon: <MapPin className="w-3.5 h-3.5 text-indigo-500" />,
-                },
-                {
-                  label: "Guru Pembimbing",
-                  value: selectedSiswa.guruPembimbing || "—",
-                  icon: <Users className="w-3.5 h-3.5 text-indigo-500" />,
-                },
-              ].map((f) => (
-                <div
-                  key={f.label}
-                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100"
-                >
-                  <div className="p-1.5 bg-white rounded-lg border border-gray-200 shrink-0">
-                    {f.icon}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide">
-                      {f.label}
-                    </p>
-                    <p className="text-sm font-semibold text-gray-800 truncate">
-                      {f.value}
-                    </p>
-                  </div>
+                { label: "Kelas", value: detail.kelas },
+                { label: "Jurusan", value: detail.jurusan || "—" },
+                { label: "Email", value: detail.email },
+                { label: "No HP", value: detail.noHp || "—" },
+                { label: "Tempat PKL", value: detail.tempatPKL || "—" },
+                { label: "Status", value: detail.isActive ? "Aktif" : "Nonaktif" },
+              ].map(f => (
+                <div key={f.label} style={{ background: "#f9fafb", borderRadius: 10, padding: "10px 14px" }}>
+                  <p style={{ color: "#9ca3af", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 4px 0" }}>{f.label}</p>
+                  <p style={{ color: "#111827", fontSize: 13, fontWeight: 600, margin: 0 }}>{f.value}</p>
                 </div>
               ))}
+              {detail.alamat && (
+                <div style={{ background: "#f9fafb", borderRadius: 10, padding: "10px 14px", gridColumn: "1/-1" }}>
+                  <p style={{ color: "#9ca3af", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 4px 0" }}>Alamat</p>
+                  <p style={{ color: "#111827", fontSize: 13, fontWeight: 600, margin: 0 }}>{detail.alamat}</p>
+                </div>
+              )}
             </div>
-            {/* Footer */}
-            <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
-              <button
-                onClick={closeDetailModal}
-                className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium"
-              >
-                Tutup
-              </button>
-              <button
-                onClick={() => {
-                  closeDetailModal();
-                  openEditModal();
-                }}
-                className="flex-1 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center gap-2 text-sm"
-              >
-                <Edit className="w-4 h-4" /> Edit Data
-              </button>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => openEdit(detail)} style={{ background: "#013FF6", color: "white", padding: "9px 20px", borderRadius: 9, border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13 }}>Edit</button>
+              <button onClick={() => handleDelete(detail.id)} style={{ background: "#fee2e2", color: "#dc2626", padding: "9px 20px", borderRadius: 9, border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13 }}>Hapus</button>
+              <button onClick={() => setDetail(null)} style={{ background: "#f3f4f6", color: "#6b7280", padding: "9px 20px", borderRadius: 9, border: "none", cursor: "pointer", fontSize: 13 }}>Tutup</button>
             </div>
           </div>
-          <style>{`@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`}</style>
         </div>
       )}
 
-      {showAddModal && (
-        <ModalSiswaForm
-          title="Tambah Siswa Baru"
-          formData={formData}
-          setFormData={setFormData}
-          onClose={() => setShowAddModal(false)}
-          onSubmit={handleAddSiswa}
-          kelasOptions={kelasOptions}
-          isEdit={false}
-        />
-      )}
-      {showEditModal && (
-        <ModalSiswaForm
-          title="Edit Data Siswa"
-          formData={formData}
-          setFormData={setFormData}
-          onClose={() => setShowEditModal(false)}
-          onSubmit={handleEditSiswa}
-          kelasOptions={classes}
-          isEdit={true}
-        />
-      )}
-    </div>
-  );
-}
-
-// ── Reusable Table Card ────────────────────────────────────────────────────────
-type PaginationProps = {
-  currentPage: number;
-  totalPages: number;
-  total: number;
-  itemsPerPage: number;
-  onPrev: () => void;
-  onNext: () => void;
-};
-type TableCardProps = {
-  title: string;
-  icon: React.ReactNode;
-  count: number;
-  countLabel: string;
-  data: SiswaType[];
-  startIndex: number;
-  onRowClick: (s: SiswaType) => void;
-  pagination?: PaginationProps;
-};
-function TableCard({
-  title,
-  icon,
-  count,
-  countLabel,
-  data,
-  startIndex,
-  onRowClick,
-  pagination,
-}: TableCardProps) {
-  return (
-    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-5">
-      <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
-        <h2 className="font-semibold text-gray-700 text-sm flex items-center gap-2">
-          {icon}
-          {title}
-        </h2>
-        <span className="text-xs text-gray-500 bg-gray-100 border border-gray-200 px-2.5 py-0.5 rounded-full font-medium">
-          {count} {countLabel}
-        </span>
-      </div>
-      {data.length === 0 ? (
-        <div className="py-12 flex flex-col items-center text-gray-400 text-sm">
-          <Users className="w-8 h-8 mb-2 opacity-30" />
-          Tidak ada data.
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[500px]">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/80">
-                {["#", "Nama Siswa", "NIS", "Kelas", "Tempat PKL"].map(
-                  (h, i) => (
-                    <th
-                      key={h}
-                      className={`px-5 py-2.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider ${i >= 3 ? "hidden sm:table-cell" : ""}`}
-                    >
-                      {h}
-                    </th>
-                  ),
-                )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {data.map((siswa, idx) => (
-                <tr
-                  key={siswa.id}
-                  onClick={() => onRowClick(siswa)}
-                  className="hover:bg-indigo-50/40 transition-colors cursor-pointer group"
-                >
-                  <td className="px-5 py-3.5 text-xs text-gray-400 font-mono w-10">
-                    {startIndex + idx + 1}
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center shrink-0">
-                        {siswa.name.slice(0, 2).toUpperCase()}
-                      </div>
-                      <span className="font-semibold text-gray-800 group-hover:text-indigo-700 transition-colors">
-                        {siswa.name}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3.5 text-gray-500 font-mono text-xs">
-                    {siswa.userId}
-                  </td>
-                  <td className="px-5 py-3.5 hidden sm:table-cell">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200">
-                      <BookOpen className="w-3 h-3" />
-                      {siswa.kelas}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5 text-gray-500 text-xs hidden sm:table-cell max-w-[160px] truncate">
-                    {siswa.tempatPKL || "—"}
-                  </td>
-                </tr>
+      {/* Form Modal */}
+      {showForm && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }}
+          onClick={closeForm}>
+          <div style={{ background: "white", borderRadius: 20, padding: 28, maxWidth: 560, width: "100%", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}
+            onClick={e => e.stopPropagation()}>
+            <h2 style={{ color: "#00182E", fontWeight: 700, fontSize: 18, margin: "0 0 20px 0" }}>
+              {editingId ? "Edit Data Siswa" : "Tambah Siswa Baru"}
+            </h2>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+              {[
+                { label: "Nama Lengkap *", key: "namaLengkap", type: "text", placeholder: "Nama lengkap siswa", disabled: false, colSpan: 2 },
+                { label: "NIS (Username) *", key: "username", type: "text", placeholder: "NIS siswa", disabled: !!editingId, colSpan: 1 },
+                { label: "Email *", key: "email", type: "email", placeholder: "email@siswa.sch.id", disabled: !!editingId, colSpan: 1 },
+                { label: editingId ? "Password (kosongkan jika tidak ubah)" : "Password *", key: "password", type: "password", placeholder: "••••••••", disabled: false, colSpan: 2 },
+              ].map(f => (
+                <div key={f.key} style={{ gridColumn: f.colSpan === 2 ? "1/-1" : undefined }}>
+                  <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#6b7280", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>{f.label}</label>
+                  <input type={f.type} value={(form as any)[f.key]} disabled={f.disabled}
+                    onChange={e => setForm({ ...form, [f.key]: e.target.value })}
+                    placeholder={f.placeholder}
+                    style={{ ...inputStyle, opacity: f.disabled ? 0.5 : 1 }} />
+                </div>
               ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      {pagination && (
-        <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/60 flex items-center justify-between">
-          <p className="text-xs text-gray-400">
-            {(pagination.currentPage - 1) * pagination.itemsPerPage + 1}–
-            {Math.min(
-              pagination.currentPage * pagination.itemsPerPage,
-              pagination.total,
-            )}{" "}
-            dari {pagination.total}
-          </p>
-          <div className="flex items-center gap-1">
-            <button
-              disabled={pagination.currentPage === 1}
-              onClick={pagination.onPrev}
-              className="flex items-center gap-1 px-3 py-1.5 border border-gray-200 bg-white rounded-lg text-xs hover:bg-gray-50 disabled:opacity-40 transition-colors"
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-              Prev
-            </button>
-            <span className="px-2.5 text-xs font-semibold text-gray-600">
-              {pagination.currentPage}/{pagination.totalPages}
-            </span>
-            <button
-              disabled={pagination.currentPage >= pagination.totalPages}
-              onClick={pagination.onNext}
-              className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs disabled:opacity-40 transition-colors"
-            >
-              Next
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
+              <div>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#6b7280", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>Kelas *</label>
+                <select value={form.kelas} onChange={e => setForm({ ...form, kelas: e.target.value })} style={{ ...inputStyle }}>
+                  {KELAS.map(k => <option key={k} value={k}>{k}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#6b7280", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>Jurusan</label>
+                <input type="text" value={form.jurusan} onChange={e => setForm({ ...form, jurusan: e.target.value })} placeholder="Jurusan siswa" style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#6b7280", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>Tempat PKL</label>
+                <input type="text" value={form.tempatPKL} onChange={e => setForm({ ...form, tempatPKL: e.target.value })} placeholder="Nama tempat PKL" style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#6b7280", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>No HP</label>
+                <input type="text" value={form.noHp} onChange={e => setForm({ ...form, noHp: e.target.value })} placeholder="08xxxxxxxxxx" style={inputStyle} />
+              </div>
+              <div style={{ gridColumn: "1/-1" }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#6b7280", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>Alamat</label>
+                <textarea value={form.alamat} onChange={e => setForm({ ...form, alamat: e.target.value })} placeholder="Alamat lengkap" rows={3}
+                  style={{ ...inputStyle, resize: "vertical" }} />
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 8, marginTop: 20 }}>
+              <button onClick={handleSubmit} disabled={submitting}
+                style={{ background: "#ACEC00", color: "#00182E", padding: "10px 24px", borderRadius: 10, fontWeight: 700, border: "none", cursor: "pointer", fontSize: 14 }}>
+                {submitting ? "Menyimpan..." : editingId ? "Simpan" : "Tambahkan"}
+              </button>
+              <button onClick={closeForm} style={{ background: "#f3f4f6", color: "#6b7280", padding: "10px 20px", borderRadius: 10, border: "none", cursor: "pointer", fontSize: 14 }}>Batal</button>
+            </div>
           </div>
         </div>
       )}

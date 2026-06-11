@@ -27,8 +27,12 @@ model DataSiswa {
   id             Int     @id @default(autoincrement())
   userId         String  @unique
   kelas          String
+  jurusan        String?
   tempatPKL      String?
   guruPembimbing String?
+  noHp           String?
+  alamat         String?
+  isActive       Boolean @default(true)
 
   absensi Absensi[]
 }
