@@ -55,36 +55,6 @@ function groupByDate(messages: Message[]) {
   return groups;
 }
 
-// ─── Toast ────────────────────────────────────────────────────────────────────
-function ToastNotif({ toast, onClose, onOpen }: {
-  toast: { id: number; name: string; content: string; convId: number };
-  onClose: (id: number) => void;
-  onOpen: (convId: number) => void;
-}) {
-  useEffect(() => {
-    const t = setTimeout(() => onClose(toast.id), 4000);
-    return () => clearTimeout(t);
-  }, [toast.id, onClose]);
-
-  return (
-    <div
-      onClick={() => { onOpen(toast.convId); onClose(toast.id); }}
-      style={{ display: "flex", alignItems: "flex-start", gap: "10px", padding: "12px 14px", borderRadius: "14px", boxShadow: "0 8px 30px rgba(0,0,0,0.5)", cursor: "pointer", minWidth: "240px", maxWidth: "300px", background: "#00182E", animation: "slideInRight .25s ease" }}
-    >
-      <div style={{ width: "34px", height: "34px", borderRadius: "50%", background: getAvatarColor(toast.name), display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "11px", fontWeight: "bold", flexShrink: 0 }}>
-        {getInitials(toast.name)}
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ color: "#ffffff", fontSize: "13px", fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{toast.name}</p>
-        <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{toast.content}</p>
-      </div>
-      <button onClick={(e) => { e.stopPropagation(); onClose(toast.id); }} style={{ background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", padding: "2px", flexShrink: 0 }}>
-        <X style={{ width: "14px", height: "14px" }} />
-      </button>
-    </div>
-  );
-}
-
 // ─── Main Widget ──────────────────────────────────────────────────────────────
 export default function ChatWidget({
   isOpen: isOpenProp,
@@ -106,8 +76,6 @@ export default function ChatWidget({
   const handleOpen = () => setInternalOpen(true);
 
   const [unreadFAB, setUnreadFAB] = useState(0);
-  const [toasts, setToasts] = useState<{ id: number; name: string; content: string; convId: number }[]>([]);
-  const prevConvsRef = useRef<Conversation[]>([]);
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
 
@@ -151,18 +119,9 @@ export default function ChatWidget({
         setLoadingConvs(false);
         const total = fresh.reduce((s, c) => s + c.unreadCount, 0);
         setUnreadFAB(total);
-        if (!isOpen) {
-          for (const conv of fresh) {
-            const prev = prevConvsRef.current.find((c) => c.id === conv.id);
-            if (conv.unreadCount > (prev?.unreadCount ?? 0) && conv.lastMessage) {
-              setToasts((t) => [...t, { id: Date.now() + Math.random(), name: conv.otherUser?.name ?? "Pesan baru", content: conv.lastMessage!.content, convId: conv.id }]);
-            }
-          }
-        }
-        prevConvsRef.current = fresh;
       }
     } catch {}
-  }, [isOpen]);
+  }, []);
 
   useEffect(() => {
     loadConversations();
@@ -266,11 +225,6 @@ export default function ChatWidget({
     }
   };
 
-  const openFromToast = (convId: number) => {
-    handleOpen();
-    setTimeout(() => { const conv = conversations.find((c) => c.id === convId); if (conv) selectConversation(conv); }, 100);
-  };
-
   const goBack = () => { setView("list"); setActiveConv(null); setMessages([]); };
 
   const handleBroadcast = async () => {
@@ -293,10 +247,6 @@ export default function ChatWidget({
 
   return (
     <>
-      <style>{`
-        @keyframes slideInRight { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
-      `}</style>
-
       {/* FAB */}
       {showFAB && (
         <button
@@ -314,13 +264,6 @@ export default function ChatWidget({
           )}
         </button>
       )}
-
-      {/* Toast */}
-      <div style={{ position: "fixed", top: "16px", right: "16px", zIndex: 60, display: "flex", flexDirection: "column", gap: "8px", pointerEvents: "auto" }}>
-        {toasts.map((t) => (
-          <ToastNotif key={t.id} toast={t} onClose={(id) => setToasts((x) => x.filter((y) => y.id !== id))} onOpen={openFromToast} />
-        ))}
-      </div>
 
       {/* Broadcast Modal */}
       {showBroadcast && (
@@ -387,14 +330,14 @@ export default function ChatWidget({
       {/* Widget Panel */}
       {mounted && (
         <div
-          className="sm:w-[740px]"
+          className="sm:w-185"
           style={{ position: "fixed", bottom: "84px", right: "16px", zIndex: 50, width: "calc(100vw - 2rem)", maxWidth: "740px", transition: "opacity .28s, transform .28s cubic-bezier(.32,1.25,.6,1)", opacity: visible ? 1 : 0, transform: visible ? "translateY(0) scale(1)" : "translateY(16px) scale(.97)", pointerEvents: visible ? "auto" : "none" }}
         >
           <div style={{ background: "#00182E", borderRadius: "16px", boxShadow: "0 20px 60px rgba(0,0,0,0.6)", overflow: "hidden", display: "flex", height: "520px" }}>
 
             {/* ── SIDEBAR KIRI ── */}
             <div
-              className={`flex flex-col w-full sm:w-[260px] shrink-0 ${view === "thread" ? "hidden sm:flex" : "flex"}`}
+              className={`flex flex-col w-full sm:w-65 shrink-0 ${view === "thread" ? "hidden sm:flex" : "flex"}`}
               style={{ background: "#00182E" }}
             >
               {/* Sidebar Header */}
