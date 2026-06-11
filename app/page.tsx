@@ -23,7 +23,7 @@ export default function Home() {
           background: "#00182E",
           display: "flex",
           flexDirection: "column",
-          fontFamily: "'Inter', 'Segoe UI', sans-serif",
+          fontFamily: "var(--font-satoshi, 'Inter', 'Segoe UI', sans-serif)",
         }}
       >
         {/* ── Hero ── */}
