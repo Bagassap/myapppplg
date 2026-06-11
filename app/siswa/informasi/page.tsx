@@ -3,7 +3,7 @@
 import Sidebar from "@/components/layout/SidebarSiswa";
 import TopBar from "@/components/layout/TopBar";
 import { useState, useEffect, useCallback } from "react";
-import { Loader2, Megaphone } from "lucide-react";
+import { X, Loader2, Megaphone } from "lucide-react";
 
 interface Informasi {
   id: number;
@@ -28,7 +28,7 @@ function formatRelTime(raw: string) {
 export default function SiswaInformasi() {
   const [items, setItems] = useState<Informasi[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+  const [detailItem, setDetailItem] = useState<Informasi | null>(null);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -45,9 +45,6 @@ export default function SiswaInformasi() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const toggleExpand = (id: number) =>
-    setExpandedIds(p => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
-
   return (
     <div className="flex h-screen bg-[#00182E] overflow-hidden">
       <Sidebar />
@@ -60,8 +57,8 @@ export default function SiswaInformasi() {
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
               Informasi PKL
             </h1>
-            <p className="text-white/45 text-sm mt-1.5">
-              {isLoading ? "Memuat..." : `${items.length} pengumuman untukmu`}
+            <p className="text-white/50 text-sm mt-1.5">
+              {isLoading ? "Memuat..." : `${items.length} informasi`}
             </p>
           </div>
 
@@ -72,53 +69,68 @@ export default function SiswaInformasi() {
             </div>
           ) : items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-28 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-5">
-                <Megaphone className="w-7 h-7 text-white/20" />
+              <div className="w-16 h-16 rounded-2xl bg-white/8 flex items-center justify-center mb-5">
+                <Megaphone className="w-7 h-7 text-white/30" />
               </div>
-              <p className="font-bold text-white/50 text-sm mb-1.5">Belum ada informasi</p>
-              <p className="text-white/30 text-[12px]">Pengumuman dari guru atau admin akan tampil di sini.</p>
+              <p className="font-bold text-white/60 text-sm mb-1.5">Belum ada informasi</p>
+              <p className="text-white/30 text-xs">Informasi dari guru atau admin akan muncul di sini.</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {items.map((item, idx) => {
-                const isExpanded = expandedIds.has(item.id);
-                const isLong = item.konten.length > 120;
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => toggleExpand(item.id)}
-                    style={{ animation: `fadeInUp .35s ease ${idx * 0.06}s both` }}
-                    className="bg-white/5 border border-white/8 rounded-2xl p-5 cursor-pointer hover:bg-white/8 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/30 transition-all duration-200"
-                  >
-                    <div className="flex items-start gap-3">
-                      <span className="shrink-0 mt-2 w-2 h-2 rounded-full bg-[#ACEC00]" />
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-white text-[15px] leading-snug mb-2">
-                          {item.judul}
-                        </h3>
-                        <p className={`text-white/60 text-sm leading-relaxed whitespace-pre-wrap ${isExpanded ? "" : "line-clamp-2"}`}>
-                          {item.konten}
-                        </p>
-                        {!isExpanded && isLong && (
-                          <span className="text-[#ACEC00] text-[11px] font-semibold mt-1.5 block">
-                            Baca selengkapnya →
-                          </span>
-                        )}
-                        <div className="flex items-center gap-2 mt-3">
-                          <span className="text-[11px] font-semibold text-white/50">{item.pembuat}</span>
-                          <span className="w-1 h-1 rounded-full bg-white/20" />
-                          <span className="text-[11px] text-white/35">{formatRelTime(item.createdAt)}</span>
-                        </div>
-                      </div>
+            <div className="space-y-3 max-w-3xl">
+              {items.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => setDetailItem(item)}
+                  className="relative bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200"
+                >
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#ACEC00]" />
+                  <div className="pl-6 pr-5 py-5">
+                    <h3 className="font-bold text-[#00182E] text-base leading-snug">
+                      {item.judul}
+                    </h3>
+                    <p className="text-gray-500 text-sm leading-relaxed mt-1.5 line-clamp-2">
+                      {item.konten}
+                    </p>
+                    <div className="flex items-center gap-2 mt-3">
+                      <span className="text-xs font-semibold text-gray-400">{item.pembuat}</span>
+                      <span className="w-1 h-1 rounded-full bg-gray-300" />
+                      <span className="text-xs text-gray-400">{formatRelTime(item.createdAt)}</span>
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           )}
         </main>
       </div>
-      <style>{`@keyframes fadeInUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}`}</style>
+
+      {/* Detail Modal */}
+      {detailItem && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setDetailItem(null)} />
+          <div className="relative bg-white w-full sm:max-w-lg max-h-[90vh] sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col">
+            <div className="flex items-start justify-between px-5 pt-5 pb-4 border-b border-gray-100">
+              <div className="flex-1 min-w-0 pr-3">
+                <h2 className="font-extrabold text-[#00182E] text-lg leading-snug">{detailItem.judul}</h2>
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className="text-xs text-gray-400 font-medium">{detailItem.pembuat}</span>
+                  <span className="text-gray-300">·</span>
+                  <span className="text-xs text-gray-400">{formatRelTime(detailItem.createdAt)}</span>
+                </div>
+              </div>
+              <button
+                onClick={() => setDetailItem(null)}
+                className="p-2 rounded-xl text-gray-400 hover:bg-gray-100 transition-colors shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-5">
+              <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{detailItem.konten}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
