@@ -2,260 +2,158 @@
 
 import Sidebar from "@/components/layout/SidebarAdmin";
 import TopBar from "@/components/layout/TopBar";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
-  Info,
-  Megaphone,
-  CheckCircle,
-  CheckCircle2,
-  Plus,
-  XCircle,
-  Edit,
-  Trash2,
-  Calendar,
-  Loader2,
-  FileText,
-  Bell,
-  AlertTriangle,
-  BarChart2,
-  Search,
-  Sparkles,
-  ChevronRight,
-  Clock,
+  Info, Bell, AlertTriangle, CheckCircle2, Plus, X, Edit2, Trash2,
+  Pin, PinOff, Search, Eye, MessageCircle, Calendar, Loader2,
+  Megaphone, ChevronRight, BarChart2, Clock, Users,
 } from "lucide-react";
 
-interface Announcement {
+interface Informasi {
   id: number;
   judul: string;
   isi: string;
   tanggal: string;
   kategori: string;
+  tipe: string;
+  tempatPKL: string | null;
+  isPinned: boolean;
+  viewCount: number;
+  target: string;
+  createdAt: string;
+  _count: { komentar: number };
 }
 
-function formatTanggal(raw: string) {
+type KategoriKey = "Pengumuman" | "Update" | "Perhatian" | "Penting";
+type TargetKey = "SEMUA" | "GURU" | "SISWA";
+
+const KATEGORI_CFG: Record<KategoriKey, {
+  Icon: React.ComponentType<{ className?: string }>;
+  bg: string; text: string; border: string; dot: string;
+}> = {
+  Pengumuman: { Icon: Info, bg: "bg-[#013FF6]/10", text: "text-[#013FF6]", border: "border-[#013FF6]/20", dot: "bg-[#013FF6]" },
+  Update: { Icon: CheckCircle2, bg: "bg-[#ACEC00]/10", text: "text-[#00182E]", border: "border-[#ACEC00]/30", dot: "bg-[#ACEC00]" },
+  Perhatian: { Icon: AlertTriangle, bg: "bg-[#013FF6]/10", text: "text-[#013FF6]", border: "border-[#013FF6]/20", dot: "bg-[#013FF6]" },
+  Penting: { Icon: Bell, bg: "bg-[#00182E]/10", text: "text-[#00182E]", border: "border-[#00182E]/20", dot: "bg-[#00182E]" },
+};
+
+const TARGET_CFG: Record<TargetKey, { label: string; bg: string; text: string; border: string }> = {
+  SEMUA: { label: "Semua", bg: "bg-[#013FF6]/10", text: "text-[#013FF6]", border: "border-[#013FF6]/20" },
+  GURU: { label: "Guru", bg: "bg-[#00182E]/10", text: "text-[#00182E]", border: "border-[#00182E]/20" },
+  SISWA: { label: "Siswa", bg: "bg-[#ACEC00]/10", text: "text-[#00182E]", border: "border-[#ACEC00]/30" },
+};
+
+const KATEGORI_LIST: KategoriKey[] = ["Pengumuman", "Update", "Perhatian", "Penting"];
+const TARGET_LIST: TargetKey[] = ["SEMUA", "GURU", "SISWA"];
+
+function formatRelTime(raw: string) {
+  const d = new Date(raw);
+  const diff = Date.now() - d.getTime();
+  const mins = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  if (mins < 1) return "Baru saja";
+  if (mins < 60) return `${mins} mnt lalu`;
+  if (hours < 24) return `${hours} jam lalu`;
+  if (days < 7) return `${days} hari lalu`;
+  return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function formatDate(raw: string) {
   if (!raw) return "-";
   const d = new Date(raw);
   if (isNaN(d.getTime())) return raw;
-  return d.toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
 }
 
-function formatTanggalShort(raw: string) {
-  if (!raw) return "-";
-  const d = new Date(raw);
-  if (isNaN(d.getTime())) return raw;
-  return d.toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-const ITEM_STYLES = [
-  {
-    accentCls: "border-l-indigo-500",
-    numCls: "bg-indigo-50 text-indigo-700",
-    iconBg: "bg-indigo-50",
-    iconColor: "text-indigo-600",
-    badgeCls: "bg-indigo-50 text-indigo-700 border-indigo-200",
-    hoverCls: "hover:bg-indigo-50/30",
-    icon: <Info className="w-4 h-4" />,
-    label: "Pengumuman",
-  },
-  {
-    accentCls: "border-l-emerald-500",
-    numCls: "bg-emerald-50 text-emerald-700",
-    iconBg: "bg-emerald-50",
-    iconColor: "text-emerald-600",
-    badgeCls: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    hoverCls: "hover:bg-emerald-50/30",
-    icon: <CheckCircle className="w-4 h-4" />,
-    label: "Update",
-  },
-  {
-    accentCls: "border-l-amber-500",
-    numCls: "bg-amber-50 text-amber-700",
-    iconBg: "bg-amber-50",
-    iconColor: "text-amber-600",
-    badgeCls: "bg-amber-50 text-amber-700 border-amber-200",
-    hoverCls: "hover:bg-amber-50/30",
-    icon: <AlertTriangle className="w-4 h-4" />,
-    label: "Perhatian",
-  },
-  {
-    accentCls: "border-l-rose-500",
-    numCls: "bg-rose-50 text-rose-700",
-    iconBg: "bg-rose-50",
-    iconColor: "text-rose-600",
-    badgeCls: "bg-rose-50 text-rose-700 border-rose-200",
-    hoverCls: "hover:bg-rose-50/30",
-    icon: <Bell className="w-4 h-4" />,
-    label: "Penting",
-  },
-];
-
-function AnnouncementItem({
-  p,
-  idx,
-  onEdit,
-  onDelete,
-  isLast,
-}: {
-  p: Announcement;
-  idx: number;
-  onEdit: (i: number) => void;
-  onDelete: (i: number) => void;
-  isLast: boolean;
-}) {
-  const s = ITEM_STYLES[idx % ITEM_STYLES.length];
-  return (
-    <div
-      className={`group relative flex items-start gap-4 px-6 py-5 border-l-[3px] ${s.accentCls} ${s.hoverCls} transition-all duration-150 ${!isLast ? "border-b border-gray-100" : ""}`}
-    >
-      <span
-        className={`shrink-0 mt-0.5 w-7 h-7 rounded-lg text-[11px] font-bold flex items-center justify-center ${s.numCls}`}
-      >
-        {String(idx + 1).padStart(2, "0")}
-      </span>
-      <div
-        className={`shrink-0 mt-0.5 w-9 h-9 rounded-xl ${s.iconBg} flex items-center justify-center`}
-      >
-        <span className={s.iconColor}>{s.icon}</span>
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap mb-1.5">
-          <span
-            className={`inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full border ${s.badgeCls}`}
-          >
-            {s.label}
-          </span>
-          <span className="flex items-center gap-1 text-[11px] text-gray-400">
-            <Calendar className="w-3 h-3" />
-            {formatTanggal(p.tanggal)}
-          </span>
-          <span className="w-1 h-1 rounded-full bg-gray-300" />
-          <span className="text-[11px] text-gray-400">Admin PKL</span>
-        </div>
-        <h4 className="font-bold text-gray-800 text-sm leading-snug mb-1.5">
-          {p.judul}
-        </h4>
-        <p className="text-gray-500 text-[12.5px] leading-relaxed whitespace-pre-wrap line-clamp-2 group-hover:line-clamp-none transition-all duration-200">
-          {p.isi}
-        </p>
-      </div>
-      <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150 mt-0.5">
-        <button
-          onClick={() => onEdit(idx)}
-          className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-colors"
-        >
-          <Edit className="w-3.5 h-3.5" />
-        </button>
-        <button
-          onClick={() => onDelete(idx)}
-          className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
-      </div>
-    </div>
-  );
-}
+const EMPTY_FORM = { judul: "", isi: "", tanggal: "", kategori: "Pengumuman", target: "SEMUA", isPinned: false };
 
 export default function AdminInformasi() {
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editingAnnouncement, setEditingAnnouncement] = useState<number | null>(
-    null,
-  );
-  const [newAnnouncement, setNewAnnouncement] = useState({
-    judul: "",
-    isi: "",
-    tanggal: "",
-    kategori: "Pengumuman",
-  });
-  const [pengumuman, setPengumuman] = useState<Announcement[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [items, setItems] = useState<Informasi[]>([]);
+  const [total, setTotal] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [filterTarget, setFilterTarget] = useState<"" | TargetKey | "PINNED">("");
+  const [showModal, setShowModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<Informasi | null>(null);
+  const [form, setForm] = useState<typeof EMPTY_FORM>(EMPTY_FORM);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
 
-  const fetchInformasi = async () => {
-    try {
-      const res = await fetch("/api/informasi");
-      const data = await res.json();
-      setPengumuman(data);
-    } catch (error) {
-      console.error("Gagal mengambil data:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchInformasi();
-  }, []);
-
-  const handleAddAnnouncement = async () => {
+  const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      if (editingAnnouncement !== null) {
-        const res = await fetch(
-          `/api/informasi/${pengumuman[editingAnnouncement].id}`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(newAnnouncement),
-          },
-        );
-        if (!res.ok) throw new Error("Gagal update");
-      } else {
-        const res = await fetch("/api/informasi", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newAnnouncement),
-        });
-        if (!res.ok) throw new Error("Gagal simpan");
-      }
-      await fetchInformasi();
-      handleCloseModal();
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      if (filterTarget === "PINNED") params.set("pinned", "true");
+      else if (filterTarget) params.set("target", filterTarget);
+      const res = await fetch(`/api/informasi?${params}`);
+      if (!res.ok) throw new Error();
+      const json = await res.json();
+      setItems(json.data || []);
+      setTotal(json.total || 0);
     } catch {
-      alert("Terjadi kesalahan saat menyimpan data.");
+      setItems([]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [search, filterTarget]);
 
-  const handleEditAnnouncement = (idx: number) => {
-    setEditingAnnouncement(idx);
-    setNewAnnouncement({
-      judul: pengumuman[idx].judul,
-      isi: pengumuman[idx].isi,
-      tanggal: pengumuman[idx].tanggal,
-      kategori: "Pengumuman",
-    });
-    setShowAddModal(true);
-  };
+  useEffect(() => {
+    const t = setTimeout(fetchData, 300);
+    return () => clearTimeout(t);
+  }, [fetchData]);
 
-  const handleDeleteAnnouncement = async (idx: number) => {
-    if (confirm("Apakah Anda yakin ingin menghapus pengumuman ini?")) {
-      try {
-        await fetch(`/api/informasi/${pengumuman[idx].id}`, {
-          method: "DELETE",
-        });
-        await fetchInformasi();
-      } catch {
-        alert("Gagal menghapus data");
-      }
+  const openCreate = () => { setEditingItem(null); setForm(EMPTY_FORM); setShowModal(true); };
+  const openEdit = (item: Informasi) => {
+    setEditingItem(item);
+    setForm({ judul: item.judul, isi: item.isi, tanggal: item.tanggal, kategori: item.kategori, target: item.target, isPinned: item.isPinned });
+    setShowModal(true);
+  };
+  const closeModal = () => { setShowModal(false); setEditingItem(null); setForm(EMPTY_FORM); };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      const url = editingItem ? `/api/informasi/${editingItem.id}` : "/api/informasi";
+      const method = editingItem ? "PUT" : "POST";
+      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      if (!res.ok) throw new Error();
+      closeModal();
+      fetchData();
+    } catch {
+      alert("Terjadi kesalahan. Coba lagi.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleCloseModal = () => {
-    setShowAddModal(false);
-    setEditingAnnouncement(null);
-    setNewAnnouncement({
-      judul: "",
-      isi: "",
-      tanggal: "",
-      kategori: "Pengumuman",
-    });
+  const handleDelete = async (id: number) => {
+    if (!confirm("Hapus informasi ini?")) return;
+    try {
+      await fetch(`/api/informasi/${id}`, { method: "DELETE" });
+      fetchData();
+    } catch { alert("Gagal menghapus."); }
   };
+
+  const handlePin = async (item: Informasi) => {
+    try {
+      await fetch(`/api/informasi/${item.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isPinned: !item.isPinned }),
+      });
+      fetchData();
+    } catch { alert("Gagal mengubah pin."); }
+  };
+
+  const toggleExpand = (id: number) => {
+    setExpandedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  };
+
+  const pinnedCount = items.filter(i => i.isPinned).length;
+  const totalComments = items.reduce((a, b) => a + b._count.komentar, 0);
 
   return (
     <div className="flex h-screen bg-slate-100 overflow-hidden">
@@ -267,332 +165,332 @@ export default function AdminInformasi() {
           <nav className="flex items-center gap-1.5 mb-5 text-[11px]">
             <span className="text-gray-400">absensipkl</span>
             <ChevronRight className="w-3 h-3 text-gray-300" />
-            <span className="text-gray-400">dashboard</span>
+            <span className="text-gray-400">admin</span>
             <ChevronRight className="w-3 h-3 text-gray-300" />
             <span className="font-semibold text-gray-700">informasi</span>
           </nav>
 
-          {/* ── Hero Banner ── */}
-          <div className="relative bg-[#1e2d5a] rounded-2xl overflow-hidden mb-5 p-6 sm:p-8">
-            {/* Decorative */}
-            <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-[#2d4070] opacity-70 pointer-events-none" />
-            <div className="absolute -bottom-12 right-20 w-36 h-36 rounded-full bg-[#253660] opacity-60 pointer-events-none" />
-            <div className="absolute top-5 right-32 w-16 h-16 rounded-full bg-[#3a5090] opacity-40 pointer-events-none" />
-            <div className="absolute -top-5 left-[58%] w-56 h-56 rounded-full border border-white/5 pointer-events-none" />
-            <div className="absolute -bottom-16 left-[48%] w-44 h-44 rounded-full border border-white/[0.04] pointer-events-none" />
-            <div className="absolute top-4 right-8 grid grid-cols-5 gap-1.5 opacity-20 pointer-events-none">
+          {/* Hero Banner */}
+          <div className="relative bg-[#00182E] rounded-2xl overflow-hidden mb-5 p-6 sm:p-8">
+            <div className="absolute -top-12 -right-12 w-52 h-52 rounded-full bg-[#013FF6]/10 pointer-events-none" />
+            <div className="absolute -bottom-10 right-24 w-36 h-36 rounded-full bg-[#ACEC00]/8 pointer-events-none" />
+            <div className="absolute top-6 right-36 w-14 h-14 rounded-full bg-[#013FF6]/10 pointer-events-none" />
+            <div className="absolute top-4 right-8 grid grid-cols-5 gap-1.5 opacity-15 pointer-events-none">
               {Array.from({ length: 15 }).map((_, i) => (
                 <div key={i} className="w-1 h-1 rounded-full bg-white" />
               ))}
             </div>
 
-            {/* Top row */}
-            <div className="relative z-10 flex items-start justify-between gap-4 mb-6">
+            <div className="relative z-10 flex items-start justify-between gap-4 mb-5">
               <span className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-3 py-1.5 text-[11px] font-semibold text-white/90 tracking-wide">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                Informasi PKL Aktif
+                <span className="w-1.5 h-1.5 rounded-full bg-[#ACEC00]" />
+                Board Informasi PKL
               </span>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowAddModal(true)}
-                  className="flex items-center gap-1.5 bg-white text-[#1e2d5a] rounded-xl px-4 py-2 text-xs font-bold shadow-sm hover:bg-gray-50 transition-colors"
-                >
-                  <Plus className="w-3.5 h-3.5" /> Tambah Informasi
-                </button>
-                <button className="flex items-center gap-1.5 bg-white/10 border border-white/20 text-white/85 rounded-xl px-3.5 py-2 text-xs font-semibold hover:bg-white/15 transition-colors">
-                  <Search className="w-3.5 h-3.5" /> Filter
-                </button>
-              </div>
+              <button
+                onClick={openCreate}
+                className="flex items-center gap-1.5 bg-[#013FF6] text-white rounded-xl px-4 py-2 text-xs font-bold hover:bg-blue-700 transition-colors shadow-sm"
+              >
+                <Plus className="w-3.5 h-3.5" /> Buat Informasi
+              </button>
             </div>
 
-            {/* Title */}
             <div className="relative z-10 mb-6">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-2">
-                Informasi PKL
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-1.5">
+                Papan Informasi
               </h1>
               <p className="text-sm text-white/55 max-w-md leading-relaxed">
-                Pusat pengumuman &amp; informasi resmi Program Kerja Lapangan
-                semester ini.
+                Kelola pengumuman &amp; informasi PKL untuk semua civitas.
               </p>
             </div>
 
-            {/* Stats */}
             <div className="relative z-10 grid grid-cols-3 gap-3">
               {[
-                {
-                  icon: <BarChart2 className="w-3.5 h-3.5" />,
-                  val: pengumuman.length,
-                  label: "TOTAL INFORMASI",
-                },
-                {
-                  icon: <FileText className="w-3.5 h-3.5" />,
-                  val: pengumuman.length,
-                  label: "PENGUMUMAN",
-                },
-                {
-                  icon: <Calendar className="w-3.5 h-3.5" />,
-                  val:
-                    pengumuman.length > 0
-                      ? formatTanggalShort(pengumuman[0].tanggal)
-                      : "—",
-                  label: "DIPOSTING TERBARU",
-                  small: true,
-                },
+                { icon: <BarChart2 className="w-3.5 h-3.5" />, val: total, label: "TOTAL INFORMASI" },
+                { icon: <Pin className="w-3.5 h-3.5" />, val: pinnedCount, label: "DISEMATKAN" },
+                { icon: <Users className="w-3.5 h-3.5" />, val: totalComments, label: "TOTAL KOMENTAR" },
               ].map((st, i) => (
-                <div
-                  key={i}
-                  className="bg-white/[0.08] border border-white/10 rounded-2xl p-4"
-                >
-                  <div className="w-7 h-7 rounded-lg bg-white/[0.12] flex items-center justify-center mb-3 text-white/75">
+                <div key={i} className="bg-white/8 border border-white/10 rounded-2xl p-4">
+                  <div className="w-7 h-7 rounded-lg bg-white/12 flex items-center justify-center mb-3 text-white/75">
                     {st.icon}
                   </div>
-                  <div
-                    className={`font-bold text-white leading-none ${st.small ? "text-base mt-1" : "text-2xl"}`}
-                  >
-                    {st.val}
-                  </div>
-                  <div className="text-[10px] font-semibold text-white/45 mt-1.5 tracking-wider">
-                    {st.label}
-                  </div>
+                  <div className="text-2xl font-bold text-white leading-none">{st.val}</div>
+                  <div className="text-[10px] font-semibold text-white/45 mt-1.5 tracking-wider">{st.label}</div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* ── Ticker Strip ── */}
-          {pengumuman.length > 0 && (
-            <div className="flex items-center gap-3 bg-white border border-gray-200 rounded-2xl px-4 py-3 mb-4 shadow-sm">
-              <div className="shrink-0 w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-indigo-600" />
+          {/* Search + Filter */}
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Cari judul atau isi informasi..."
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 placeholder:text-gray-400 focus:ring-2 focus:ring-[#013FF6]/30 outline-none transition-all shadow-sm"
+              />
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {([["", "Semua"], ["SEMUA", "Untuk Semua"], ["GURU", "Guru"], ["SISWA", "Siswa"], ["PINNED", "Sematkan"]] as const).map(([f, label]) => (
+                <button
+                  key={f}
+                  onClick={() => setFilterTarget(f as typeof filterTarget)}
+                  className={`px-3.5 py-2 rounded-xl text-[12px] font-semibold transition-colors whitespace-nowrap ${
+                    filterTarget === f
+                      ? "bg-[#00182E] text-white"
+                      : "bg-white border border-gray-200 text-gray-600 hover:border-[#013FF6]/40 hover:text-[#013FF6]"
+                  }`}
+                >
+                  {f === "PINNED" ? "📌 " : ""}{label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Feed */}
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#00182E] flex items-center justify-center">
+                  <Megaphone className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-gray-800 text-[15px]">Daftar Informasi</h2>
+                  <p className="text-[11px] text-gray-400">Pengumuman &amp; informasi terkini</p>
+                </div>
               </div>
-              <p className="flex-1 text-[12px] text-gray-600 truncate">
-                <span className="font-semibold text-gray-800">Terbaru: </span>
-                {pengumuman[0].judul} — {formatTanggal(pengumuman[0].tanggal)}
-              </p>
-              <span className="shrink-0 text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-1 rounded-full">
-                Baru
+              <span className="text-[11px] font-bold text-[#013FF6] bg-[#013FF6]/10 border border-[#013FF6]/20 px-2.5 py-1 rounded-full">
+                {total} item
               </span>
             </div>
-          )}
 
-          {/* ── Main Card ── */}
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-            {/* Card Header */}
-            <div className="px-6 pt-5 pb-0 border-b border-gray-100">
-              <div className="flex items-center justify-between gap-4 mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center shadow-sm">
-                    <Bell className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="font-bold text-gray-800 text-base">
-                      Daftar Informasi PKL
-                    </h2>
-                    <p className="text-[11px] text-gray-400 mt-0.5">
-                      Pengumuman &amp; informasi terkini seputar PKL
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    Live
-                  </span>
-                  <span className="text-[11px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-full">
-                    {pengumuman.length} item
-                  </span>
-                  <span className="hidden sm:inline text-[11px] font-semibold text-gray-500 bg-gray-100 border border-gray-200 px-2.5 py-1 rounded-full">
-                    Apr 2025
-                  </span>
-                </div>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-6 h-6 text-[#013FF6] animate-spin" />
               </div>
-              {/* Tabs */}
-              <div className="flex -mb-px">
-                {["Semua", "Pengumuman", "Penting"].map((tab, i) => (
-                  <button
-                    key={tab}
-                    className={`px-5 py-2.5 text-[12px] font-semibold border-b-2 transition-colors whitespace-nowrap ${i === 0 ? "text-indigo-600 border-indigo-500" : "text-gray-400 border-transparent hover:text-gray-600"}`}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* List */}
-            {pengumuman.length === 0 ? (
+            ) : items.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center px-6">
                 <div className="w-20 h-20 rounded-full border-2 border-dashed border-gray-200 flex items-center justify-center mb-5">
-                  <div className="w-14 h-14 rounded-full bg-gray-50 flex items-center justify-center">
-                    <Megaphone className="w-6 h-6 text-gray-300" />
-                  </div>
+                  <Megaphone className="w-7 h-7 text-gray-300" />
                 </div>
-                <p className="font-bold text-gray-700 text-sm mb-1.5">
-                  Belum ada informasi
+                <p className="font-bold text-gray-700 text-sm mb-1.5">Belum ada informasi</p>
+                <p className="text-gray-400 text-[12px] max-w-xs leading-relaxed mb-4">
+                  Buat informasi pertama untuk civitas PKL.
                 </p>
-                <p className="text-gray-400 text-[12px] max-w-xs leading-relaxed">
-                  Klik tombol{" "}
-                  <button
-                    onClick={() => setShowAddModal(true)}
-                    className="font-semibold text-indigo-500 underline underline-offset-2"
-                  >
-                    Tambah Informasi
-                  </button>{" "}
-                  untuk membuat pengumuman baru.
-                </p>
+                <button
+                  onClick={openCreate}
+                  className="flex items-center gap-2 bg-[#00182E] text-white rounded-xl px-4 py-2 text-xs font-bold hover:bg-[#013FF6] transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Buat Informasi
+                </button>
               </div>
             ) : (
               <div>
-                {pengumuman.map((p, idx) => (
-                  <AnnouncementItem
-                    key={p.id}
-                    p={p}
-                    idx={idx}
-                    onEdit={handleEditAnnouncement}
-                    onDelete={handleDeleteAnnouncement}
-                    isLast={idx === pengumuman.length - 1}
-                  />
-                ))}
+                {items.map((item, idx) => {
+                  const katKey = KATEGORI_LIST.includes(item.kategori as KategoriKey) ? item.kategori as KategoriKey : "Pengumuman";
+                  const tgtKey = TARGET_LIST.includes(item.target as TargetKey) ? item.target as TargetKey : "SEMUA";
+                  const cfg = KATEGORI_CFG[katKey];
+                  const tgtCfg = TARGET_CFG[tgtKey];
+                  const { Icon } = cfg;
+                  const isExpanded = expandedIds.has(item.id);
+                  const isLast = idx === items.length - 1;
+
+                  return (
+                    <div key={item.id} className={`group relative ${!isLast ? "border-b border-gray-100" : ""}`}>
+                      {item.isPinned && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#ACEC00]" />}
+                      <div className={`flex items-start gap-4 py-5 pr-5 transition-all duration-150 hover:bg-gray-50/70 ${item.isPinned ? "pl-7" : "pl-6"}`}>
+                        <div className={`shrink-0 mt-0.5 w-10 h-10 rounded-xl ${cfg.bg} flex items-center justify-center`}>
+                          <Icon className={`w-5 h-5 ${cfg.text}`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                            {item.isPinned && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#ACEC00]/10 text-[#00182E] border border-[#ACEC00]/30">
+                                <Pin className="w-2.5 h-2.5" /> Disematkan
+                              </span>
+                            )}
+                            <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${cfg.bg} ${cfg.text} ${cfg.border}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                              {item.kategori}
+                            </span>
+                            <span className={`inline-flex text-[10px] font-bold px-2 py-0.5 rounded-full border ${tgtCfg.bg} ${tgtCfg.text} ${tgtCfg.border}`}>
+                              {tgtCfg.label}
+                            </span>
+                            <span className="text-[11px] text-gray-400 flex items-center gap-1">
+                              <Clock className="w-3 h-3" />{formatRelTime(item.createdAt)}
+                            </span>
+                          </div>
+                          <h4
+                            onClick={() => toggleExpand(item.id)}
+                            className="font-bold text-gray-800 text-sm leading-snug mb-1.5 cursor-pointer hover:text-[#013FF6] transition-colors"
+                          >
+                            {item.judul}
+                          </h4>
+                          <p
+                            onClick={() => toggleExpand(item.id)}
+                            className={`text-gray-500 text-[12.5px] leading-relaxed whitespace-pre-wrap cursor-pointer ${isExpanded ? "" : "line-clamp-2"}`}
+                          >
+                            {item.isi}
+                          </p>
+                          <div className="flex items-center gap-4 mt-3">
+                            <span className="flex items-center gap-1 text-[11px] text-gray-400">
+                              <Eye className="w-3 h-3" /> {item.viewCount}
+                            </span>
+                            <span className="flex items-center gap-1 text-[11px] text-gray-400">
+                              <MessageCircle className="w-3 h-3" /> {item._count.komentar}
+                            </span>
+                            <span className="flex items-center gap-1 text-[11px] text-gray-400">
+                              <Calendar className="w-3 h-3" /> {formatDate(item.tanggal)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">
+                          <button
+                            onClick={() => handlePin(item)}
+                            title={item.isPinned ? "Lepas sematkan" : "Sematkan"}
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${item.isPinned ? "bg-[#ACEC00]/20 text-[#00182E]" : "hover:bg-gray-100 text-gray-400 hover:text-gray-700"}`}
+                          >
+                            {item.isPinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
+                          </button>
+                          <button
+                            onClick={() => openEdit(item)}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[#013FF6]/10 text-gray-400 hover:text-[#013FF6] transition-colors"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(item.id)}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-rose-50 text-gray-400 hover:text-rose-500 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
-            {/* Footer */}
-            {pengumuman.length > 0 && (
-              <div className="flex items-center justify-between flex-wrap gap-3 px-6 py-4 bg-slate-50 border-t border-gray-100">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-3.5 h-3.5 text-gray-400" />
-                  <span className="text-[11px] text-gray-400">Menampilkan</span>
-                  <span className="w-1 h-1 rounded-full bg-gray-300" />
-                  <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg">
-                    {pengumuman.length} informasi aktif
-                  </span>
-                </div>
+            {items.length > 0 && (
+              <div className="flex items-center justify-between px-6 py-4 bg-slate-50 border-t border-gray-100">
+                <span className="text-[11px] text-gray-400">{total} informasi tersedia</span>
                 <button
-                  onClick={() => setShowAddModal(true)}
-                  className="flex items-center gap-2 bg-[#1e2d5a] text-white rounded-xl px-4 py-2 text-[11px] font-bold hover:bg-[#16234a] transition-colors shadow-sm"
+                  onClick={openCreate}
+                  className="flex items-center gap-2 bg-[#00182E] text-white rounded-xl px-4 py-2 text-[11px] font-bold hover:bg-[#013FF6] transition-colors"
                 >
-                  <Plus className="w-3.5 h-3.5" /> Tambah Informasi
+                  <Plus className="w-3.5 h-3.5" /> Buat Informasi
                 </button>
               </div>
             )}
           </div>
 
-          {/* ── Modal ── */}
-          {showAddModal && (
+          {/* Create / Edit Modal */}
+          {showModal && (
             <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-              <div
-                className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
-                onClick={handleCloseModal}
-              />
+              <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={closeModal} />
               <div
                 className="relative bg-white w-full sm:max-w-xl max-h-[92vh] sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col"
-                style={{
-                  animation: "slideUp .25s cubic-bezier(.32,1.25,.6,1)",
-                }}
+                style={{ animation: "slideUp .25s cubic-bezier(.32,1.25,.6,1)" }}
               >
                 <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center">
-                      <CheckCircle2 className="w-4 h-4 text-white" />
+                    <div className="w-9 h-9 rounded-xl bg-[#00182E] flex items-center justify-center">
+                      <Megaphone className="w-4 h-4 text-white" />
                     </div>
-                    <p className="font-bold text-gray-800">
-                      {editingAnnouncement !== null
-                        ? "Edit Pengumuman"
-                        : "Tambah Pengumuman"}
-                    </p>
+                    <p className="font-bold text-gray-800">{editingItem ? "Edit Informasi" : "Buat Informasi Baru"}</p>
                   </div>
-                  <button
-                    onClick={handleCloseModal}
-                    className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
-                  >
-                    <XCircle className="w-5 h-5 text-gray-400" />
+                  <button onClick={closeModal} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                    <X className="w-5 h-5 text-gray-400" />
                   </button>
                 </div>
                 <div className="flex-1 overflow-y-auto px-5 py-5">
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      handleAddAnnouncement();
-                    }}
-                    className="space-y-4"
-                  >
+                  <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider">
-                        Judul Pengumuman
-                      </label>
+                      <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider">Judul</label>
                       <input
                         type="text"
-                        value={newAnnouncement.judul}
+                        value={form.judul}
                         required
-                        onChange={(e) =>
-                          setNewAnnouncement({
-                            ...newAnnouncement,
-                            judul: e.target.value,
-                          })
-                        }
-                        placeholder="Masukkan judul pengumuman..."
-                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm focus:ring-2 focus:ring-indigo-300 outline-none transition-all"
+                        onChange={e => setForm({ ...form, judul: e.target.value })}
+                        placeholder="Judul informasi..."
+                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm focus:ring-2 focus:ring-[#013FF6]/30 outline-none transition-all"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider">
-                        Isi Pengumuman
-                      </label>
+                      <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider">Isi</label>
                       <textarea
-                        value={newAnnouncement.isi}
+                        value={form.isi}
                         required
                         rows={5}
-                        onChange={(e) =>
-                          setNewAnnouncement({
-                            ...newAnnouncement,
-                            isi: e.target.value,
-                          })
-                        }
-                        placeholder="Tulis isi pengumuman di sini..."
-                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm focus:ring-2 focus:ring-indigo-300 outline-none resize-none transition-all"
+                        onChange={e => setForm({ ...form, isi: e.target.value })}
+                        placeholder="Tulis isi informasi di sini..."
+                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm focus:ring-2 focus:ring-[#013FF6]/30 outline-none resize-none transition-all"
                       />
                     </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider">Kategori</label>
+                        <select
+                          value={form.kategori}
+                          onChange={e => setForm({ ...form, kategori: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm focus:ring-2 focus:ring-[#013FF6]/30 outline-none"
+                        >
+                          {KATEGORI_LIST.map(k => <option key={k}>{k}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider">Target</label>
+                        <select
+                          value={form.target}
+                          onChange={e => setForm({ ...form, target: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm focus:ring-2 focus:ring-[#013FF6]/30 outline-none"
+                        >
+                          <option value="SEMUA">Semua</option>
+                          <option value="GURU">Guru</option>
+                          <option value="SISWA">Siswa</option>
+                        </select>
+                      </div>
+                    </div>
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider">
-                        Tanggal
-                      </label>
+                      <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider">Tanggal</label>
                       <input
                         type="date"
-                        value={newAnnouncement.tanggal}
+                        value={form.tanggal}
                         required
-                        onChange={(e) =>
-                          setNewAnnouncement({
-                            ...newAnnouncement,
-                            tanggal: e.target.value,
-                          })
-                        }
-                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm focus:ring-2 focus:ring-indigo-300 outline-none transition-all"
+                        onChange={e => setForm({ ...form, tanggal: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm focus:ring-2 focus:ring-[#013FF6]/30 outline-none"
                       />
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-[#ACEC00]/10 border border-[#ACEC00]/20">
+                      <Pin className="w-4 h-4 text-[#00182E] shrink-0" />
+                      <span className="text-sm font-semibold text-gray-700 flex-1">Sematkan di atas</span>
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, isPinned: !form.isPinned })}
+                        className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${form.isPinned ? "bg-[#00182E]" : "bg-gray-200"}`}
+                      >
+                        <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${form.isPinned ? "translate-x-5" : "translate-x-0.5"}`} />
+                      </button>
                     </div>
                     <div className="flex gap-3 pt-2">
                       <button
                         type="button"
-                        onClick={handleCloseModal}
-                        className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors text-sm font-semibold"
+                        onClick={closeModal}
+                        className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors text-sm font-semibold"
                       >
                         Batal
                       </button>
                       <button
                         type="submit"
-                        disabled={isLoading}
-                        className="flex-1 py-2.5 bg-[#1e2d5a] text-white font-bold rounded-xl hover:bg-[#16234a] transition-colors shadow-sm disabled:opacity-60 flex justify-center items-center gap-2 text-sm"
+                        disabled={isSubmitting}
+                        className="flex-1 py-2.5 bg-[#00182E] text-white font-bold rounded-xl hover:bg-[#013FF6] transition-colors shadow-sm disabled:opacity-60 flex justify-center items-center gap-2 text-sm"
                       >
-                        {isLoading ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin" />{" "}
-                            Menyimpan...
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle className="w-4 h-4" />{" "}
-                            {editingAnnouncement !== null ? "Simpan" : "Tambah"}
-                          </>
-                        )}
+                        {isSubmitting
+                          ? <><Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...</>
+                          : editingItem ? "Simpan Perubahan" : "Buat Informasi"
+                        }
                       </button>
                     </div>
                   </form>

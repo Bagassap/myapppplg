@@ -62,6 +62,9 @@ model Informasi {
   kategori  String
   tipe      String   @default("umum")
   tempatPKL String?
+  isPinned  Boolean  @default(false)
+  viewCount Int      @default(0)
+  target    String   @default("SEMUA")
   createdAt DateTime @default(now())
 
   komentar Komentar[]

@@ -1,69 +1,87 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
     try {
+        const session = await getServerSession(authOptions);
         const { searchParams } = new URL(request.url);
-        const tipe = searchParams.get("tipe");
 
-        const whereClause: any = {};
-        if (tipe && tipe !== "Semua") {
-            whereClause.tipe = tipe;
+        const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+        const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "20")));
+        const search = searchParams.get("search") || "";
+        const isPinnedParam = searchParams.get("pinned");
+        const targetParam = searchParams.get("target");
+        const skip = (page - 1) * limit;
+
+        const where: any = {};
+
+        const role = session?.user?.role;
+        if (role === "GURU") {
+            where.target = { in: ["SEMUA", "GURU"] };
+        } else if (role === "SISWA") {
+            where.target = { in: ["SEMUA", "SISWA"] };
+        } else if (targetParam) {
+            where.target = targetParam;
         }
 
-        const data = await prisma.informasi.findMany({
-            where: whereClause,
-            include: {
-                komentar: true,
-            },
-            orderBy: {
-                createdAt: "desc",
-            },
-        });
+        if (isPinnedParam === "true") where.isPinned = true;
+        if (search) {
+            where.OR = [
+                { judul: { contains: search, mode: "insensitive" } },
+                { isi: { contains: search, mode: "insensitive" } },
+            ];
+        }
 
-        return NextResponse.json(data, { status: 200 });
+        const [items, total] = await Promise.all([
+            prisma.informasi.findMany({
+                where,
+                orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }],
+                skip,
+                take: limit,
+                include: { _count: { select: { komentar: true } } },
+            }),
+            prisma.informasi.count({ where }),
+        ]);
 
+        return NextResponse.json({ data: items, total, page, totalPages: Math.ceil(total / limit) });
     } catch (error: any) {
         console.error("❌ [API GET ERROR]:", error);
-
-        return NextResponse.json(
-            { error: "Internal Server Error", details: error.message },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
 
 export async function POST(request: Request) {
     try {
-        const body = await request.json();
-        const { judul, isi, tanggal, tipe, tempatPKL } = body;
-
-        if (!judul || !isi || !tanggal) {
-            return NextResponse.json(
-                { error: "Judul, Isi, dan Tanggal wajib diisi" },
-                { status: 400 }
-            );
+        const session = await getServerSession(authOptions);
+        if (!session || !["ADMIN", "GURU"].includes(session.user.role)) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const newData = await prisma.informasi.create({
+        const body = await request.json();
+        const { judul, isi, tanggal, kategori, tipe, tempatPKL, target, isPinned } = body;
+
+        if (!judul || !isi || !tanggal) {
+            return NextResponse.json({ error: "Judul, Isi, dan Tanggal wajib diisi" }, { status: 400 });
+        }
+
+        const item = await prisma.informasi.create({
             data: {
                 judul,
                 isi,
                 tanggal,
-                kategori: "Pengumuman",
+                kategori: kategori || "Pengumuman",
                 tipe: tipe || "umum",
                 tempatPKL: tempatPKL || null,
+                target: target || "SEMUA",
+                isPinned: isPinned === true,
             },
         });
 
-        return NextResponse.json(newData, { status: 201 });
-
+        return NextResponse.json(item, { status: 201 });
     } catch (error: any) {
         console.error("❌ [API POST ERROR]:", error);
-
-        return NextResponse.json(
-            { error: "Gagal menyimpan data", details: error.message },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: "Gagal menyimpan data" }, { status: 500 });
     }
 }
