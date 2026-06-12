@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     const userEmail = user.email;
 
     try {
-        // Ambil daftar tanggal unik dari absensi (30 hari terakhir)
+
         const tiga0HariLalu = new Date();
         tiga0HariLalu.setDate(tiga0HariLalu.getDate() - 30);
 
@@ -27,7 +27,6 @@ export async function GET(req: NextRequest) {
             orderBy: { tanggal: "desc" },
         });
 
-        // Format tanggal menjadi YYYY-MM-DD (string unik per hari)
         const tanggalSet = new Set<string>();
         absensiList.forEach((a) => {
             const dateStr = a.tanggal.toISOString().split("T")[0];
@@ -35,7 +34,6 @@ export async function GET(req: NextRequest) {
         });
         const tanggal = Array.from(tanggalSet).sort((a, b) => b.localeCompare(a));
 
-        // ── ADMIN: kembalikan daftar kelas ──
         if (userRole === "ADMIN") {
             const kelasRows = await prisma.dataSiswa.groupBy({
                 by: ["kelas"],
@@ -50,7 +48,6 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ kelas, tanggal });
         }
 
-        // ── GURU: kembalikan daftar tempat PKL dari siswa bimbingannya ──
         if (userRole === "GURU") {
             const guruUser = await prisma.user.findUnique({
                 where: { email: userEmail },

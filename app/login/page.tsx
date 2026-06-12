@@ -123,14 +123,12 @@ export default function LoginPage() {
   return (
     <main className="relative flex min-h-screen items-center justify-center bg-[#00182E] overflow-hidden font-sans px-4 sm:px-6 md:px-0">
 
-      {/* Dekoratif blob */}
       <div className="absolute -top-24 -left-16 w-96 h-96 bg-[#013FF6]/20 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-28 -right-12 w-80 h-80 bg-[#ACEC00]/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-1/3 right-1/3 w-64 h-64 bg-[#013FF6]/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative z-10 flex flex-col md:flex-row w-full max-w-sm sm:max-w-md md:max-w-5xl rounded-3xl shadow-2xl overflow-hidden mx-auto border border-white/10">
 
-        {/* Panel kiri — hanya desktop */}
         <div className="hidden md:flex w-1/2 flex-col items-center justify-center bg-[#00182E] p-12 gap-8 relative overflow-hidden border-r border-white/10">
           <div className="absolute top-0 right-0 w-48 h-48 bg-[#013FF6]/15 rounded-full blur-2xl" />
           <div className="absolute bottom-0 left-0 w-40 h-40 bg-[#ACEC00]/10 rounded-full blur-2xl" />
@@ -156,7 +154,6 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Dot indicators */}
           <div className="flex gap-2">
             <div className="w-2.5 h-2.5 rounded-full bg-[#ACEC00]" />
             <div className="w-2.5 h-2.5 rounded-full bg-[#013FF6]" />
@@ -164,9 +161,8 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Panel kanan — form */}
         <div className="w-full md:w-1/2 bg-white p-6 sm:p-8 md:p-12 flex flex-col items-center justify-center relative">
-          {/* Logo mobile only */}
+
           <div className="flex justify-center mb-5 md:hidden mt-3">
             <Image
               src="/img/PPLG.png"
@@ -177,7 +173,6 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Judul */}
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-linear-to-r from-[#00182E] via-[#013FF6] to-[#00182E] bg-clip-text text-transparent text-center mb-1">
             Selamat Datang
           </h1>
@@ -188,7 +183,6 @@ export default function LoginPage() {
             Masuk ke akun Anda untuk melakukan presensi
           </p>
 
-          {/* Error */}
           {error && (
             <div className="w-full mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2">
               <svg className="w-4 h-4 text-red-500 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -200,7 +194,6 @@ export default function LoginPage() {
 
           <form className="space-y-4 w-full" onSubmit={handleSubmit}>
 
-            {/* Email */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-primary)" }}>
                 Email
@@ -221,7 +214,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Password */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-primary)" }}>
                 Password
@@ -249,7 +241,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading}

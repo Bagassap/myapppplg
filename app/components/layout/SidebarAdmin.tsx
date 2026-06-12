@@ -56,7 +56,7 @@ export default function SidebarAdmin() {
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
-        {/* Header sidebar */}
+
         <div className="shrink-0 flex flex-col gap-5 p-5">
           <div className="flex items-center justify-between">
             {isOpen && (
@@ -98,7 +98,6 @@ export default function SidebarAdmin() {
           )}
         </div>
 
-        {/* Menu navigasi */}
         <nav className="flex-1 flex flex-col gap-1 px-3 overflow-y-auto">
           {menu.map((item, idx) => {
             const active = pathname === item.href;
@@ -140,7 +139,6 @@ export default function SidebarAdmin() {
           })}
         </nav>
 
-        {/* Footer sidebar */}
         <div className="p-3 border-t border-white/10 flex flex-col gap-2 shrink-0">
           <button
             onClick={handleLogout}

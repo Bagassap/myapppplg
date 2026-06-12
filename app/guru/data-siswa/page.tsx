@@ -42,7 +42,7 @@ function KelasTable({ kelas, siswa, onDetail, page, setPage }: KelasTableProps) 
 
   return (
     <div style={{ background: "var(--surface)", borderRadius: 16, border: "1px solid var(--bd)", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-      {/* Class header */}
+
       <div style={{ background: "#00182E", padding: "13px 18px", display: "flex", alignItems: "center", gap: 10 }}>
         <span style={{ fontSize: 16 }}>📚</span>
         <span style={{ color: "white", fontWeight: 700, fontSize: 14 }}>Kelas {kelas}</span>
@@ -101,7 +101,6 @@ function KelasTable({ kelas, siswa, onDetail, page, setPage }: KelasTableProps) 
         </table>
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div style={{ padding: "10px 16px", borderTop: "1px solid var(--bd2)", display: "flex", gap: 6, alignItems: "center", justifyContent: "flex-end" }}>
           <button onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1}
@@ -163,7 +162,6 @@ export default function GuruDataSiswa() {
         <TopBar />
         <main style={{ flex: 1, overflowY: "auto", padding: "28px 32px", background: "var(--bg)" }}>
 
-          {/* Header */}
           <div style={{ marginBottom: 24 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
               <span style={{ display: "block", width: 4, height: 32, background: "#ACEC00", borderRadius: 2, flexShrink: 0 }} />
@@ -175,14 +173,12 @@ export default function GuruDataSiswa() {
             </p>
           </div>
 
-          {/* Search */}
           <div style={{ marginBottom: 24 }}>
             <input value={search} onChange={e => setSearch(e.target.value)}
               placeholder="🔍  Cari nama, NIS, atau kelas... (kosongkan untuk tampilan per kelas)"
               style={{ width: "100%", maxWidth: 480, padding: "9px 14px", borderRadius: 9, border: "1.5px solid var(--bd)", background: "var(--inp)", fontSize: 13, outline: "none", boxSizing: "border-box", color: "var(--t1)" }} />
           </div>
 
-          {/* Loading */}
           {loading && (
             <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
               {[1, 2].map(g => (
@@ -200,7 +196,6 @@ export default function GuruDataSiswa() {
             </div>
           )}
 
-          {/* Search mode — flat table */}
           {!loading && search.trim() && (
             <div>
               <p style={{ color: "var(--t3)", fontSize: 13, marginBottom: 12 }}>
@@ -275,7 +270,6 @@ export default function GuruDataSiswa() {
             </div>
           )}
 
-          {/* Grouped mode */}
           {!loading && !search.trim() && (
             <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
               {groups.length === 0 && (
@@ -298,7 +292,6 @@ export default function GuruDataSiswa() {
         </main>
       </div>
 
-      {/* Detail Modal */}
       {detail && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }}
           onClick={() => setDetail(null)}>

@@ -14,7 +14,6 @@ export async function POST(req: NextRequest) {
 
     if (!content) return NextResponse.json({ error: "Pesan tidak boleh kosong" }, { status: 400 });
 
-
     const siswa = await prisma.user.findMany({
         where: { role: "SISWA" },
         select: { id: true },

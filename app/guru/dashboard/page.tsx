@@ -229,7 +229,6 @@ export default function GuruDashboard() {
           <PageHeader icon="📊" title="Dashboard" subtitle="Rekap kehadiran siswa PKL bimbingan Anda" />
           <GreetingBanner />
 
-          {/* ═══ HERO CARD ═══ */}
           <div className="relative rounded-3xl overflow-hidden mb-5 shadow-xl">
             <div className="absolute inset-0 bg-[#00182E]" />
             <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-[#ACEC00]/8 blur-3xl pointer-events-none" />
@@ -365,9 +364,8 @@ export default function GuruDashboard() {
             </div>
           </div>
 
-          {/* ═══ ROW 2: Distribusi + Daftar Siswa ═══ */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-            {/* Distribusi */}
+
             <div className="lg:col-span-2 bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
               <div className="flex items-center justify-between mb-5">
                 <div>
@@ -500,7 +498,6 @@ export default function GuruDashboard() {
               )}
             </div>
 
-            {/* Daftar Siswa PKL */}
             <div className="lg:col-span-3 bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
               <div className="flex items-center justify-between mb-5">
                 <div>

@@ -22,7 +22,7 @@ export function getDateRange(period: string) {
                 lte: endOfYear(now),
             };
         default:
-            // Default fallback to today
+
             return {
                 gte: startOfDay(now),
                 lte: endOfDay(now),

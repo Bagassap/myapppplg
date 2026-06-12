@@ -292,7 +292,6 @@ export default function AdminDashboard() {
           <PageHeader icon="📊" title="Dashboard" subtitle="Ringkasan kehadiran siswa hari ini" />
           <GreetingBanner />
 
-          {/* ═══ HERO CARD ═══ */}
           <div className="relative rounded-3xl overflow-hidden mb-5 shadow-xl">
             <div className="absolute inset-0 bg-[#00182E]" />
             <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-[#ACEC00]/8 blur-3xl pointer-events-none" />
@@ -421,9 +420,8 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* ═══ ROW 2: Distribution + Kehadiran Per Kelas ═══ */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-5">
-            {/* Distribusi */}
+
             <div className="lg:col-span-2 bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
               <div className="flex items-center justify-between mb-5">
                 <div>
@@ -549,7 +547,6 @@ export default function AdminDashboard() {
               )}
             </div>
 
-            {/* Kehadiran Per Kelas */}
             <div className="lg:col-span-3 bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
               <div className="flex items-center justify-between mb-5">
                 <div>
@@ -612,7 +609,6 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* ═══ ABSENSI TERBARU ═══ */}
           <div className="bg-white rounded-3xl shadow-sm border border-slate-200 mb-5 overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -682,7 +678,6 @@ export default function AdminDashboard() {
             )}
           </div>
 
-          {/* ═══ TREN 7 HARI ═══ */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">

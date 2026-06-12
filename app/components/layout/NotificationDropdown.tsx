@@ -100,7 +100,7 @@ export default function NotificationDropdown({ onOpenChat }: { onOpenChat?: (con
 
   return (
     <div ref={dropdownRef} style={{ position: "relative" }}>
-      {/* Bell button */}
+
       <button
         onClick={() => { setOpen((v) => !v); }}
         title="Notifikasi"
@@ -114,12 +114,11 @@ export default function NotificationDropdown({ onOpenChat }: { onOpenChat?: (con
         )}
       </button>
 
-      {/* Dropdown panel */}
       {open && (
         <div
           style={{ position: "fixed", top: "60px", right: "8px", width: "min(360px, calc(100vw - 16px))", maxHeight: "80vh", background: "var(--surface, #ffffff)", borderRadius: "16px", boxShadow: "0 8px 40px rgba(0,0,0,0.18)", zIndex: 1000, overflow: "hidden", border: "1px solid var(--bd, #e5e7eb)", display: "flex", flexDirection: "column" }}
         >
-          {/* Header */}
+
           <div style={{ background: "#00182E", padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ color: "#ACEC00", fontWeight: 700, fontSize: "15px" }}>🔔 Notifikasi</span>
             {unread > 0 && (
@@ -132,7 +131,6 @@ export default function NotificationDropdown({ onOpenChat }: { onOpenChat?: (con
             )}
           </div>
 
-          {/* List */}
           <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
             {merged.length === 0 ? (
               <div style={{ padding: "36px 20px", textAlign: "center" }}>

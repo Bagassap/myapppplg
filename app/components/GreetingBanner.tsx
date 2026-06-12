@@ -64,7 +64,7 @@ export default function GreetingBanner() {
         transition: "opacity .5s ease, transform .5s ease",
       }}
     >
-      {/* Kiri: icon + teks */}
+
       <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
         <span style={{ fontSize: 30, lineHeight: 1, flexShrink: 0 }}>{greeting.icon}</span>
         <div style={{ minWidth: 0 }}>
@@ -94,7 +94,6 @@ export default function GreetingBanner() {
         </div>
       </div>
 
-      {/* Kanan: role badge */}
       {roleLabel && (
         <div
           style={{

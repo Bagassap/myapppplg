@@ -5,7 +5,6 @@ const nextConfig: NextConfig = {
   compress: true,
   poweredByHeader: false,
 
-  // Cegah Turbopack meng-trace 14600+ file di public/uploads saat build
   outputFileTracingExcludes: {
     '/api/uploads/[...filename]': ['./public/uploads/**/*'],
   },

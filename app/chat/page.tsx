@@ -8,14 +8,12 @@ import {
   Check, CheckCheck, Loader2, Users, X,
 } from "lucide-react";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 interface OtherUser { id: number; name: string | null; role: string; }
 interface LastMessage { id: number; content: string; senderId: number; isRead: boolean; createdAt: string; }
 interface Conversation { id: number; otherUser: OtherUser | null; lastMessage: LastMessage | null; unreadCount: number; updatedAt: string; }
 interface Message { id: number; conversationId: number; senderId: number; content: string; isRead: boolean; readAt: string | null; createdAt: string; sender: { id: number; name: string | null; role: string }; }
 interface Recipient { id: number; name: string; username: string; kelas: string; tempatPKL: string; }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatTime(iso: string) {
   const d = new Date(iso), now = new Date();
   const diffMin = Math.floor((now.getTime() - d.getTime()) / 60000);
@@ -62,7 +60,6 @@ function groupByDate(messages: Message[]) {
   return groups;
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function ChatPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -105,14 +102,12 @@ export default function ChatPage() {
     if (status === "authenticated") loadConversations();
   }, [status, loadConversations]);
 
-  // Polling daftar percakapan setiap 3 detik
   useEffect(() => {
     if (status !== "authenticated") return;
     const id = setInterval(loadConversations, 3000);
     return () => clearInterval(id);
   }, [status, loadConversations]);
 
-  // SSE real-time untuk pesan aktif
   useEffect(() => {
     if (!activeConvId) return;
     const es = new EventSource(`/api/chat/stream?conversationId=${activeConvId}`);
@@ -125,7 +120,7 @@ export default function ChatPage() {
         );
         setLoadingMsgs(false);
         setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
-      } catch { /* ignore parse errors */ }
+      } catch {  }
     };
     es.onerror = () => es.close();
     return () => es.close();
@@ -144,7 +139,7 @@ export default function ChatPage() {
     setSending(true);
     const content = messageInput.trim();
     setMessageInput("");
-    // reset textarea height
+
     if (inputRef.current) { inputRef.current.style.height = "auto"; }
     try {
       const r = await fetch("/api/chat/messages", {
@@ -220,7 +215,6 @@ export default function ChatPage() {
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#00182E" }}>
 
-      {/* ── SIDEBAR ── */}
       <div
         className="md:flex"
         style={{
@@ -232,7 +226,7 @@ export default function ChatPage() {
           borderRight: "1px solid #013FF6",
         }}
       >
-        {/* Sidebar Header */}
+
         <div style={{ padding: "20px", borderBottom: "1px solid #013FF6", background: "#00182E" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
             <span style={{ color: "#ACEC00", fontWeight: "bold", fontSize: "20px" }}>💬 Chat</span>
@@ -258,7 +252,6 @@ export default function ChatPage() {
           </div>
         </div>
 
-        {/* Conversation List */}
         <div style={{ flex: 1, overflowY: "auto" }}>
           {loadingConvs ? (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "80px", gap: "8px" }}>
@@ -285,14 +278,13 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* ── CHAT AREA ── */}
       <div
         className="md:flex"
         style={{ flex: 1, display: showMobile === "list" ? "none" : "flex", flexDirection: "column" }}
       >
         {activeConv ? (
           <>
-            {/* Chat Header */}
+
             <div style={{ background: "#00182E", padding: "16px 24px", borderBottom: "2px solid #ACEC00", display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 }}>
               <button
                 onClick={() => { setShowMobile("list"); setActiveConv(null); }}
@@ -314,7 +306,6 @@ export default function ChatPage() {
               </div>
             </div>
 
-            {/* Messages Area */}
             <div style={{ flex: 1, overflowY: "auto", padding: "24px", display: "flex", flexDirection: "column", gap: "4px", background: "#010d1a" }}>
               {loadingMsgs ? (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
@@ -350,7 +341,6 @@ export default function ChatPage() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Area */}
             <div style={{ background: "#00182E", padding: "16px 24px", borderTop: "2px solid #ACEC00", display: "flex", gap: "12px", alignItems: "flex-end", flexShrink: 0 }}>
               <textarea
                 ref={inputRef}
@@ -376,7 +366,7 @@ export default function ChatPage() {
             </div>
           </>
         ) : (
-          // Empty state — belum pilih percakapan
+
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px", background: "#010d1a" }}>
             <div style={{ width: "80px", height: "80px", borderRadius: "20px", background: "#012444", border: "2px solid #013FF6", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <MessageCircle style={{ width: "40px", height: "40px", color: "#013FF6" }} />
@@ -399,7 +389,6 @@ export default function ChatPage() {
         )}
       </div>
 
-      {/* ── MODAL: NEW CHAT ── */}
       {showNewChat && (
         <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px", background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)" }}>
           <div style={{ background: "#00182E", border: "1px solid #013FF6", borderRadius: "16px", boxShadow: "0 20px 60px rgba(0,0,0,0.6)", width: "100%", maxWidth: "420px", overflow: "hidden" }}>
@@ -466,7 +455,6 @@ export default function ChatPage() {
   );
 }
 
-// ─── Conversation Item ────────────────────────────────────────────────────────
 function ConvItem({
   conv, isActive, currentUserId, onClick,
 }: { conv: Conversation; isActive: boolean; currentUserId: number; onClick: () => void; }) {
@@ -494,7 +482,7 @@ function ConvItem({
       onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "#011f3a"; }}
       onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
     >
-      {/* Avatar */}
+
       <div style={{ position: "relative", flexShrink: 0 }}>
         <div style={{ width: "46px", height: "46px", borderRadius: "50%", background: getAvatarColor(conv.otherUser?.name ?? null), display: "flex", alignItems: "center", justifyContent: "center", color: "#ffffff", fontWeight: "bold", fontSize: "15px" }}>
           {getInitials(conv.otherUser?.name ?? null)}
@@ -506,7 +494,6 @@ function ConvItem({
         )}
       </div>
 
-      {/* Content */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
           <p style={{ color: "#ffffff", fontWeight: conv.unreadCount > 0 ? 700 : 600, fontSize: "14px", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -537,13 +524,12 @@ function ConvItem({
   );
 }
 
-// ─── Message Bubble ───────────────────────────────────────────────────────────
 function MessageBubble({
   message, isOwn, showAvatar,
 }: { message: Message; isOwn: boolean; showAvatar: boolean; }) {
   return (
     <div style={{ display: "flex", alignItems: "flex-end", gap: "8px", marginBottom: "4px", justifyContent: isOwn ? "flex-end" : "flex-start" }}>
-      {/* Avatar lawan */}
+
       {!isOwn && (
         <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: getAvatarColor(message.sender.name), display: "flex", alignItems: "center", justifyContent: "center", color: "#ffffff", fontSize: "10px", fontWeight: "bold", flexShrink: 0, marginBottom: "2px", visibility: showAvatar ? "visible" : "hidden" }}>
           {getInitials(message.sender.name)}
@@ -557,7 +543,6 @@ function MessageBubble({
           </span>
         )}
 
-        {/* Bubble */}
         <div style={
           isOwn
             ? { alignSelf: "flex-end", background: "#013FF6", color: "#ffffff", padding: "10px 16px", borderRadius: "18px 18px 4px 18px", maxWidth: "100%", fontSize: "14px" }

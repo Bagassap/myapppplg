@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
           });
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(messages)}\n\n`));
         } catch {
-          // connection closed
+
         }
       };
 

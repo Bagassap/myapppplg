@@ -19,7 +19,7 @@ const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 export async function uploadFile(file: File): Promise<string> {
-    // Validasi ukuran & tipe lebih awal = hemat memory
+
     if (file.size > MAX_SIZE_BYTES) {
         throw new Error(`File terlalu besar. Maks 5MB, ukuran: ${(file.size / 1024 / 1024).toFixed(1)}MB`);
     }

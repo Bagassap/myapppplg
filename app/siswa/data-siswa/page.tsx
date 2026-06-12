@@ -60,7 +60,6 @@ export default function SiswaDataSiswa() {
         <TopBar />
         <main style={{ flex: 1, overflowY: "auto", padding: "28px 32px", background: "var(--bg)" }}>
 
-          {/* Header */}
           <div style={{ marginBottom: 24 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
               <span style={{ display: "block", width: 4, height: 32, background: "#ACEC00", borderRadius: 2, flexShrink: 0 }} />
@@ -70,7 +69,6 @@ export default function SiswaDataSiswa() {
             <p style={{ color: "var(--text-secondary)", fontSize: 13, paddingLeft: 16 }}>Data diri dan informasi PKL</p>
           </div>
 
-          {/* Loading skeleton */}
           {loading && (
             <div style={{ maxWidth: 680, background: "var(--surface)", borderRadius: 16, padding: 28, border: "1px solid var(--bd)", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
               <div style={{ display: "flex", gap: 20, alignItems: "center", marginBottom: 28, paddingBottom: 24, borderBottom: "1px solid var(--bd2)" }}>
@@ -86,7 +84,6 @@ export default function SiswaDataSiswa() {
             </div>
           )}
 
-          {/* No profile */}
           {!loading && !profile && (
             <div style={{ maxWidth: 680, background: "var(--surface)", borderRadius: 16, padding: "56px 28px", textAlign: "center", border: "1px solid var(--bd)" }}>
               <div style={{ width: 56, height: 56, background: "var(--sk)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 24 }}>👤</div>
@@ -95,12 +92,10 @@ export default function SiswaDataSiswa() {
             </div>
           )}
 
-          {/* Profile card */}
           {!loading && profile && (
             <div style={{ maxWidth: 680 }}>
               <div style={{ background: "var(--surface)", borderRadius: 16, border: "1px solid var(--bd)", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
 
-                {/* Top banner + avatar */}
                 <div style={{ background: "#00182E", padding: "24px 28px 0", position: "relative" }}>
                   <div style={{ display: "flex", alignItems: "flex-end", gap: 20, paddingBottom: 20 }}>
                     <div style={{ width: 80, height: 80, borderRadius: "50%", background: "#013FF6", color: "white", fontWeight: 800, fontSize: 26, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: "4px solid white", boxShadow: "0 4px 16px rgba(0,0,0,0.3)" }}>
@@ -119,7 +114,6 @@ export default function SiswaDataSiswa() {
                   </div>
                 </div>
 
-                {/* Info grid */}
                 <div style={{ padding: 24 }}>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
                     {[
@@ -134,7 +128,6 @@ export default function SiswaDataSiswa() {
                       </div>
                     ))}
 
-                    {/* No HP — editable */}
                     <div style={{ background: "var(--field)", borderRadius: 10, padding: "12px 16px", border: editing ? "1.5px solid #ACEC00" : "1px solid var(--bd2)" }}>
                       <p style={{ color: "var(--t4)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 5px 0" }}>📱 No HP <span style={{ color: "#ACEC00", fontSize: 9 }}>{editing ? "✎ Edit" : ""}</span></p>
                       {editing ? (
@@ -145,7 +138,6 @@ export default function SiswaDataSiswa() {
                       )}
                     </div>
 
-                    {/* Alamat — editable, full width */}
                     <div style={{ background: "var(--field)", borderRadius: 10, padding: "12px 16px", border: editing ? "1.5px solid #ACEC00" : "1px solid var(--bd2)", gridColumn: "1/-1" }}>
                       <p style={{ color: "var(--t4)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 5px 0" }}>📍 Alamat <span style={{ color: "#ACEC00", fontSize: 9 }}>{editing ? "✎ Edit" : ""}</span></p>
                       {editing ? (
@@ -156,7 +148,6 @@ export default function SiswaDataSiswa() {
                       )}
                     </div>
 
-                    {/* Password — only when editing */}
                     {editing && (
                       <div style={{ background: "var(--field)", borderRadius: 10, padding: "12px 16px", border: "1.5px solid #ACEC00", gridColumn: "1/-1" }}>
                         <p style={{ color: "var(--t4)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 5px 0" }}>🔑 Ganti Password (opsional)</p>
@@ -166,7 +157,6 @@ export default function SiswaDataSiswa() {
                     )}
                   </div>
 
-                  {/* Actions */}
                   <div style={{ display: "flex", gap: 8, paddingTop: 8, borderTop: "1px solid var(--bd2)" }}>
                     {editing ? (
                       <>

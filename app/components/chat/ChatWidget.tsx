@@ -7,14 +7,12 @@ import {
   Check, CheckCheck, Loader2, Users, Plus, Megaphone,
 } from "lucide-react";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
 interface OtherUser { id: number; name: string | null; role: string; }
 interface LastMessage { id: number; content: string; senderId: number; isRead: boolean; createdAt: string; }
 interface Conversation { id: number; otherUser: OtherUser | null; lastMessage: LastMessage | null; unreadCount: number; updatedAt: string; }
 interface Message { id: number; conversationId: number; senderId: number; content: string; isRead: boolean; createdAt: string; sender: { id: number; name: string | null; role: string }; }
 interface Recipient { id: number; name: string; username: string; kelas: string; tempatPKL: string; }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatTime(iso: string) {
   const d = new Date(iso), now = new Date();
   const diffMin = Math.floor((now.getTime() - d.getTime()) / 60000);
@@ -55,7 +53,6 @@ function groupByDate(messages: Message[]) {
   return groups;
 }
 
-// ─── Main Widget ──────────────────────────────────────────────────────────────
 export default function ChatWidget({
   isOpen: isOpenProp,
   onClose: onCloseProp,
@@ -129,7 +126,6 @@ export default function ChatWidget({
     return () => clearInterval(id);
   }, [loadConversations]);
 
-  // SSE real-time untuk pesan
   useEffect(() => {
     if (!activeConvId || view !== "thread") return;
     const es = new EventSource(`/api/chat/stream?conversationId=${activeConvId}`);
@@ -167,13 +163,12 @@ export default function ChatWidget({
     }
   };
 
-  // Buka conversation tertentu dari luar (via openConversationId prop)
   useEffect(() => {
     if (!openConversationId) { openedConvIdRef.current = null; return; }
     if (openedConvIdRef.current === openConversationId) return;
     const conv = conversations.find((c) => c.id === openConversationId);
     if (conv) { openedConvIdRef.current = openConversationId; selectConversation(conv); }
-  }, [openConversationId, conversations]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [openConversationId, conversations]);
 
   const handleSend = async () => {
     if (!activeConv || !messageInput.trim() || sending) return;
@@ -247,7 +242,7 @@ export default function ChatWidget({
 
   return (
     <>
-      {/* FAB */}
+
       {showFAB && (
         <button
           onClick={isOpen ? (onCloseProp ?? handleClose) : (onOpenProp ?? handleOpen)}
@@ -265,7 +260,6 @@ export default function ChatWidget({
         </button>
       )}
 
-      {/* Broadcast Modal */}
       {showBroadcast && (
         <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
           <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={() => { setShowBroadcast(false); setBroadcastMsg(""); setBroadcastResult(null); }} />
@@ -319,7 +313,6 @@ export default function ChatWidget({
         </div>
       )}
 
-      {/* Backdrop */}
       {mounted && (
         <div
           style={{ position: "fixed", inset: 0, zIndex: 40, backdropFilter: visible ? "blur(4px)" : "blur(0px)", backgroundColor: visible ? "rgba(0,0,0,0.3)" : "rgba(0,0,0,0)", transition: "backdrop-filter .28s, background-color .28s", pointerEvents: visible ? "auto" : "none" }}
@@ -327,7 +320,6 @@ export default function ChatWidget({
         />
       )}
 
-      {/* Widget Panel */}
       {mounted && (
         <div
           className="sm:w-185 chat-widget-panel"
@@ -335,12 +327,11 @@ export default function ChatWidget({
         >
           <div className="chat-widget-inner" style={{ background: "#00182E", borderRadius: "16px", boxShadow: "0 20px 60px rgba(0,0,0,0.6)", overflow: "hidden", display: "flex", height: "520px" }}>
 
-            {/* ── SIDEBAR KIRI ── */}
             <div
               className={`flex flex-col w-full sm:w-65 shrink-0 ${view === "thread" ? "hidden sm:flex" : "flex"}`}
               style={{ background: "#00182E" }}
             >
-              {/* Sidebar Header */}
+
               <div style={{ padding: "16px", background: "#001525" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -386,7 +377,6 @@ export default function ChatWidget({
                 )}
               </div>
 
-              {/* New Chat view */}
               {view === "new" && (
                 <>
                   <div style={{ padding: "10px 12px", display: "flex", alignItems: "center", gap: "8px" }}>
@@ -442,7 +432,6 @@ export default function ChatWidget({
                 </>
               )}
 
-              {/* List view */}
               {view !== "new" && (
                 <div style={{ flex: 1, overflowY: "auto" }}>
                   {loadingConvs ? (
@@ -465,13 +454,12 @@ export default function ChatWidget({
               )}
             </div>
 
-            {/* ── AREA CHAT KANAN ── */}
             <div
               className={`flex-1 flex flex-col min-w-0 ${view !== "thread" ? "hidden sm:flex" : "flex"}`}
             >
               {activeConv ? (
                 <>
-                  {/* Chat Header */}
+
                   <div style={{ background: "#00182E", padding: "14px 20px", borderBottom: "2px solid #ACEC00", display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 }}>
                     <button onClick={goBack} className="sm:hidden" style={{ background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.5)", display: "flex", padding: "4px" }}>
                       <ChevronLeft style={{ width: "18px", height: "18px" }} />
@@ -489,7 +477,6 @@ export default function ChatWidget({
                     </div>
                   </div>
 
-                  {/* Messages */}
                   <div style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: "2px", background: "#001525" }}>
                     {loadingMsgs ? (
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
@@ -522,7 +509,6 @@ export default function ChatWidget({
                     <div ref={messagesEndRef} />
                   </div>
 
-                  {/* Input */}
                   <div style={{ background: "#00182E", padding: "12px 16px", display: "flex", gap: "10px", alignItems: "flex-end", flexShrink: 0 }}>
                     <textarea
                       ref={inputRef}
@@ -565,7 +551,6 @@ export default function ChatWidget({
   );
 }
 
-// ─── Conversation Item ─────────────────────────────────────────────────────────
 function ConvItem({ conv, isActive, currentUserId, onClick }: { conv: Conversation; isActive: boolean; currentUserId: number; onClick: () => void; }) {
   const isMine = conv.lastMessage?.senderId === currentUserId;
   return (
@@ -614,7 +599,6 @@ function ConvItem({ conv, isActive, currentUserId, onClick }: { conv: Conversati
   );
 }
 
-// ─── Message Bubble ────────────────────────────────────────────────────────────
 function MsgBubble({ message, isOwn, showAvatar }: { message: Message; isOwn: boolean; showAvatar: boolean; }) {
   return (
     <div style={{ display: "flex", alignItems: "flex-end", gap: "6px", marginBottom: "3px", justifyContent: isOwn ? "flex-end" : "flex-start" }}>

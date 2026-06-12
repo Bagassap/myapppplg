@@ -24,7 +24,6 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   const toggleMobileSidebar = () => setIsMobileOpen(!isMobileOpen);
   const closeMobileSidebar = () => setIsMobileOpen(false);
 
-  // Tutup sidebar otomatis saat ganti halaman (UX Mobile standard)
   useEffect(() => {
     closeMobileSidebar();
   }, [pathname]);

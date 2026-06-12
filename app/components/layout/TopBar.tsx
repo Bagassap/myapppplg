@@ -1,4 +1,4 @@
-// components/layout/TopBar.tsx
+
 "use client";
 
 import { useState } from "react";
@@ -24,7 +24,7 @@ export default function TopBar() {
   const handleOpenChat = (convId: number) => {
     setChatOpen(true);
     setOpenConvId(convId);
-    // reset setelah widget memproses, agar klik notif yg sama bisa buka lagi
+
     setTimeout(() => setOpenConvId(null), 400);
   };
 
@@ -59,7 +59,7 @@ export default function TopBar() {
         className="flex items-center justify-between px-4 sm:px-6 py-3 border-b-2 border-[#ACEC00] sticky top-0 z-30 shadow-sm"
         style={{ background: "var(--bg-topbar)" }}
       >
-        {/* Kiri: toggle + judul */}
+
         <div className="flex items-center gap-3">
           <button
             onClick={toggleMobileSidebar}
@@ -85,10 +85,8 @@ export default function TopBar() {
           </div>
         </div>
 
-        {/* Kanan: search + notif + theme + user */}
         <div className="flex items-center gap-2 sm:gap-3">
 
-          {/* Search */}
           <div
             className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl border"
             style={{ background: "var(--bg-input)", borderColor: "var(--border-color)" }}
@@ -102,10 +100,8 @@ export default function TopBar() {
             />
           </div>
 
-          {/* Notification Bell */}
           <NotificationDropdown onOpenChat={handleOpenChat} />
 
-          {/* Theme toggle */}
           <button
             onClick={toggleTheme}
             title={theme === "Dark" ? "Ganti ke Light Mode" : "Ganti ke Dark Mode"}
@@ -118,7 +114,6 @@ export default function TopBar() {
             )}
           </button>
 
-          {/* User avatar */}
           <div className="flex items-center gap-2">
             {session.user?.image ? (
               <img

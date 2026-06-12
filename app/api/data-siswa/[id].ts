@@ -18,7 +18,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
             if (!siswa) return res.status(404).json({ error: "Data siswa tidak ditemukan" });
 
-            // Ambil user berdasarkan userId yang disimpan sebagai string di dataSiswa
             const userIdNumber = Number(siswa.userId);
             const user = await prisma.user.findUnique({
                 where: { id: userIdNumber },
@@ -56,7 +55,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             });
             if (!existingUser) return res.status(404).json({ error: "Data user tidak ditemukan" });
 
-            // Cek username unik jika berubah
             if (username !== existingUser.username) {
                 const cekUser = await prisma.user.findUnique({
                     where: { username },

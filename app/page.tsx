@@ -70,7 +70,7 @@ export default function Home() {
           padding: "60px 24px",
         }}
       >
-        {/* Floating particles */}
+
         {PARTICLES.map((p, i) => (
           <div
             key={i}
@@ -90,7 +90,6 @@ export default function Home() {
           />
         ))}
 
-        {/* Badge */}
         <div
           style={{
             display: "inline-flex",
@@ -109,7 +108,6 @@ export default function Home() {
           </span>
         </div>
 
-        {/* Icon */}
         <div
           style={{
             width: 96,
@@ -129,7 +127,6 @@ export default function Home() {
           🎓
         </div>
 
-        {/* Title */}
         <h1
           style={{
             color: "#fff",
@@ -146,7 +143,6 @@ export default function Home() {
           <span style={{ color: "#ACEC00" }}>Online PKL</span>
         </h1>
 
-        {/* Subtitle */}
         <p
           style={{
             color: "#94a3b8",
@@ -161,7 +157,6 @@ export default function Home() {
           Pengembangan Perangkat Lunak dan GIM
         </p>
 
-        {/* Divider */}
         <div
           style={{
             height: 3,
@@ -172,7 +167,6 @@ export default function Home() {
           }}
         />
 
-        {/* CTA */}
         <Link
           href="/login"
           className="cta-btn"
@@ -193,7 +187,6 @@ export default function Home() {
           Masuk Sekarang →
         </Link>
 
-        {/* Stats */}
         <div
           style={{
             display: "flex",
@@ -212,7 +205,6 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Footer */}
         <p
           style={{
             position: "absolute",

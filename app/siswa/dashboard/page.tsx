@@ -149,7 +149,6 @@ export default function SiswaDashboard() {
           <PageHeader icon="📊" title="Dashboard" subtitle="Rekap kehadiran PKL bulan ini" />
           <GreetingBanner />
 
-          {/* ═══ HERO CARD ═══ */}
           <div className="relative rounded-3xl overflow-hidden mb-5 shadow-xl">
             <div className="absolute inset-0 bg-[#00182E]" />
             <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-[#ACEC00]/8 blur-3xl pointer-events-none" />
@@ -301,7 +300,6 @@ export default function SiswaDashboard() {
             </div>
           </div>
 
-          {/* ═══ MOTIVASI BANNER ═══ */}
           {!loading && (
             <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-200 flex items-center gap-4 mb-5">
               <div
@@ -332,7 +330,6 @@ export default function SiswaDashboard() {
             </div>
           )}
 
-          {/* ═══ INFORMASI TERBARU ═══ */}
           <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2.5">

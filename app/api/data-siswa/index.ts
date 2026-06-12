@@ -14,25 +14,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 where.kelas = kelasFilter;
             }
 
-            // Ambil data siswa tanpa include user
             const dataSiswa = await prisma.dataSiswa.findMany({
                 where,
             });
 
-            // Ambil semua userId dari dataSiswa (userId bertipe string)
             const userIds = dataSiswa.map(ds => Number(ds.userId));
 
-            // Ambil data user yang sesuai userId
             const users = await prisma.user.findMany({
-                where: { id: { in: userIds } }, // user.id bertipe number
+                where: { id: { in: userIds } },
                 select: { id: true, name: true, username: true }
             });
 
-            // Buat mapping id user => user data
             const userMap = new Map<number, { name: string | null; username: string | null }>();
             users.forEach(u => userMap.set(u.id, { name: u.name, username: u.username }));
 
-            // Gabungkan data siswa dengan data user
             const result = dataSiswa.map(ds => {
                 const userIdAsNumber = Number(ds.userId);
                 const user = userMap.get(userIdAsNumber);
@@ -65,7 +60,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
             const hashedPassword = bcrypt.hashSync(password, 10);
 
-            // Cek unique username/email
             const cekUser = await prisma.user.findFirst({
                 where: {
                     OR: [
@@ -78,7 +72,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 return res.status(409).json({ error: "Username atau email sudah digunakan" });
             }
 
-            // Buat user baru
             const user = await prisma.user.create({
                 data: {
                     username,
@@ -89,7 +82,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 },
             });
 
-            // Buat dataSiswa dan simpan userId sebagai string dari nomor id user
             const dataSiswa = await prisma.dataSiswa.create({
                 data: {
                     userId: user.id.toString(),

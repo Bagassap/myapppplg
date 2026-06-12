@@ -5,9 +5,6 @@ import fs from "fs";
 import path from "path";
 import { parse } from "csv-parse";
 
-
-
-
 interface UserCsvRecord {
     username: string;
     email: string;
@@ -29,7 +26,7 @@ interface SiswaCsvRecord {
 
 }
 
-type Role = 'ADMIN' | 'GURU' | 'SISWA'; 
+type Role = 'ADMIN' | 'GURU' | 'SISWA';
 
 function normalizeName(name: string): string {
     return name
@@ -62,7 +59,6 @@ async function GuruReadCsv(fileName: string): Promise<GuruCsvRecord[]> {
     });
 }
 
-
 async function SiswaReadCsv(fileName: string): Promise<SiswaCsvRecord[]> {
     const filePath = path.resolve(process.cwd(), fileName);
     const fileContent = fs.readFileSync(filePath, 'utf-8');
@@ -79,7 +75,6 @@ async function main() {
     const guruData = await GuruReadCsv('./csv/guru.csv');
     const siswaData = await SiswaReadCsv('./csv/siswa.csv');
 
-    // Seed Admin (tidak berubah)
 for (const user of userData) {
         if (!user.email || !user.password || !user.username || !user.name || !user.role) {
             console.warn("Admin data incomplete:", user);
@@ -98,8 +93,6 @@ for (const user of userData) {
         console.log(`User dengan email ${user.name} berhasil di-import`);
     }
 
-
-    // Seed Guru (diperbaiki: buat User DAN DataGuru, simpan DataGuru.id di guruMap)
     for (const guru of guruData) {
         if (!guru.userId) {
             console.warn("Guru data incomplete:", guru);
@@ -115,8 +108,6 @@ for (const user of userData) {
 
     }
 
-
-    // Seed Siswa (diperbaiki: guruPembimbing sekarang mereferensikan DataGuru.id)
     for (const siswa of siswaData) {
         if (!siswa.userId || !siswa.kelas || !siswa.tempatPKL || !siswa.guruPembimbing) {
             console.warn("Siswa data incomplete:", siswa);

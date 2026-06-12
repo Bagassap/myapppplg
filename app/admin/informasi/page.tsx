@@ -76,7 +76,6 @@ export default function AdminInformasiPage() {
         <TopBar />
         <main style={{ flex: 1, overflowY: "auto", padding: "28px 32px", background: "var(--bg)" }}>
 
-          {/* Header */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "28px" }}>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
@@ -98,7 +97,6 @@ export default function AdminInformasiPage() {
             </button>
           </div>
 
-          {/* Loading */}
           {loading && (
             <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxWidth: "768px" }}>
               {[1, 2, 3].map(i => (
@@ -111,7 +109,6 @@ export default function AdminInformasiPage() {
             </div>
           )}
 
-          {/* Empty */}
           {!loading && list.length === 0 && (
             <div style={{ textAlign: "center", marginTop: "80px" }}>
               <div style={{ width: "56px", height: "56px", background: "#00182E", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: "24px" }}>
@@ -125,7 +122,6 @@ export default function AdminInformasiPage() {
             </div>
           )}
 
-          {/* Card List */}
           {!loading && list.length > 0 && (
             <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxWidth: "768px" }}>
               {list.map(item => (
@@ -188,7 +184,6 @@ export default function AdminInformasiPage() {
         </main>
       </div>
 
-      {/* Detail Modal */}
       {selected && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: "16px" }}
           onClick={() => setSelected(null)}>
@@ -216,7 +211,6 @@ export default function AdminInformasiPage() {
         </div>
       )}
 
-      {/* Form Modal */}
       {showForm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: "16px" }}
           onClick={closeForm}>

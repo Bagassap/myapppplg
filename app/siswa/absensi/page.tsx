@@ -468,7 +468,6 @@ export default function SiswaAbsensi() {
             </button>
           </div>
 
-          {/* ── 1 Stat Card ── */}
           <div className="mb-6">
             <div className="relative bg-[#00182E] rounded-2xl shadow-xl overflow-hidden">
               <div className="absolute -top-8 -right-8 w-40 h-40 bg-white/10 rounded-full" />
@@ -574,7 +573,6 @@ export default function SiswaAbsensi() {
             </div>
           </div>
 
-          {/* ── Tabel Riwayat ── */}
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-6">
             <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
               <h2 className="font-semibold text-gray-700 text-sm flex items-center gap-2">

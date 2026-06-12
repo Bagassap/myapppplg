@@ -9,7 +9,6 @@ export async function GET() {
 
   const userId = Number(session.user.id);
 
-  // ─── Chat: pesan belum dibaca per conversation ────────────────────────────
   const participants = await prisma.conversationParticipant.findMany({
     where: { userId },
     select: { conversationId: true, lastReadAt: true },
@@ -44,7 +43,6 @@ export async function GET() {
     }
   }
 
-  // ─── Informasi: 7 hari terakhir ───────────────────────────────────────────
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const infos = await prisma.informasi.findMany({
     where: { createdAt: { gte: since } },

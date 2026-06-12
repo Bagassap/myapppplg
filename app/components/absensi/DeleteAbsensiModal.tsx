@@ -1,4 +1,4 @@
-// components/absensi/DeleteAbsensiModal.tsx
+
 "use client";
 
 import { useState } from "react";
@@ -51,7 +51,7 @@ export default function DeleteAbsensiModal({
 
   return (
     <>
-      {/* Trigger button */}
+
       <button
         onClick={() => {
           setOpen(true);
@@ -64,9 +64,8 @@ export default function DeleteAbsensiModal({
         <span className="hidden sm:inline">Hapus</span>
       </button>
 
-      {/* Modal */}
       {open && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-200 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
             onClick={() => !loading && setOpen(false)}
@@ -75,7 +74,7 @@ export default function DeleteAbsensiModal({
             className="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden"
             style={{ animation: "scaleIn .2s cubic-bezier(0.34,1.56,0.64,1)" }}
           >
-            {/* Header */}
+
             <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="p-1.5 bg-red-100 rounded-lg">
@@ -91,13 +90,11 @@ export default function DeleteAbsensiModal({
               </button>
             </div>
 
-            {/* Body */}
             <div className="px-5 py-5">
               <p className="text-sm text-gray-500 mb-4">
                 Data berikut akan dihapus secara permanen:
               </p>
 
-              {/* Info card */}
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4 space-y-2.5">
                 {[
                   {

@@ -70,7 +70,6 @@ function hitungStatus(userIds: string[], statusMap: Map<string, string>) {
     return { hadir, izin, alfa };
 }
 
-
 export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session?.user) {

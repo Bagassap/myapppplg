@@ -6,12 +6,7 @@ type LimitEntry = {
 class RateLimiter {
     private store = new Map<string, LimitEntry>();
 
-    /**
-     * @param key
-     * @param limit
-     * @param windowMs 
-     * @returns { allowed, remaining, resetIn }
-     */
+
     check(
         key: string,
         limit: number,

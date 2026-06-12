@@ -67,7 +67,7 @@ export default function MediaModal({ type, data, onClose, meta }: MediaModalProp
           animation: "mmScaleIn .2s cubic-bezier(0.34,1.56,0.64,1)",
         }}
       >
-        {/* ── Header ── */}
+
         <div
           style={{
             background: "#00182E",
@@ -109,7 +109,6 @@ export default function MediaModal({ type, data, onClose, meta }: MediaModalProp
           </button>
         </div>
 
-        {/* ── Body: FOTO ── */}
         {type === "foto" && (
           <>
             <div style={{ background: "#000", lineHeight: 0 }}>
@@ -170,7 +169,6 @@ export default function MediaModal({ type, data, onClose, meta }: MediaModalProp
           </>
         )}
 
-        {/* ── Body: TTD ── */}
         {type === "ttd" && (
           <>
             <div
@@ -237,7 +235,6 @@ export default function MediaModal({ type, data, onClose, meta }: MediaModalProp
           </>
         )}
 
-        {/* ── Body: LOKASI ── */}
         {type === "lokasi" && (
           <div style={{ background: "var(--bg-card, #fff)", padding: 24 }}>
             <div

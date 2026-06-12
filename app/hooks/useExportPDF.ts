@@ -206,7 +206,6 @@ export function useExportPDF() {
                         sy = drawTableHeader(sy);
                     }
 
-
                     doc.setFillColor(255, 255, 255);
                     doc.rect(margin, sy, contentW, rowH, "F");
                     doc.setDrawColor(...colorBorder);
@@ -226,10 +225,8 @@ export function useExportPDF() {
 
                     let cx = margin + 2;
 
-
                     doc.text(row.tanggal || "-", cx, sy + 6);
                     cx += cols[0].w;
-
 
                     doc.setTextColor(...statusColor);
                     doc.setFont("helvetica", "bold");
@@ -237,7 +234,6 @@ export function useExportPDF() {
                     doc.setFont("helvetica", "normal");
                     doc.setTextColor(...colorText);
                     cx += cols[1].w;
-
 
                     doc.text(row.waktu || "-", cx, sy + 6);
                     cx += cols[2].w;
@@ -247,7 +243,6 @@ export function useExportPDF() {
                     const ketLines = doc.splitTextToSize(ket, cols[3].w - 2);
                     doc.text(ketLines.slice(0, 3), cx, sy + 6);
                     cx += cols[3].w;
-
 
                     doc.text(row.lokasi ? "Ada (GPS)" : "-", cx, sy + 6);
                     cx += cols[4].w;

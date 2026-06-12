@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     const tanggalFilter = searchParams.get("tanggal");
 
     try {
-        // Filter tanggal
+
         let tanggalWhere: any = {};
         if (tanggalFilter) {
             const start = new Date(tanggalFilter);
@@ -38,7 +38,6 @@ export async function GET(req: NextRequest) {
             tanggalWhere = { gte: startBulan, lte: endBulan };
         }
 
-        // Ambil data absensi dengan relasi dataSiswa
         const absensiList = await prisma.absensi.findMany({
             where: {
                 tanggal: tanggalWhere,
@@ -50,7 +49,6 @@ export async function GET(req: NextRequest) {
             orderBy: { tanggal: "desc" },
         });
 
-        // Ambil nama siswa
         const userIds = [...new Set(absensiList.map((a) => a.userId))];
         const users = await prisma.user.findMany({
             where: { username: { in: userIds } },
@@ -58,7 +56,6 @@ export async function GET(req: NextRequest) {
         });
         const userMap = new Map(users.map((u) => [u.username, u.name]));
 
-        // Build CSV
         const headers = ["Tanggal", "Nama Siswa", "Kelas", "Tempat PKL", "Status", "Waktu", "Keterangan"];
         const rows = absensiList.map((a) => [
             `"${a.tanggal.toLocaleDateString("id-ID")}"`,
